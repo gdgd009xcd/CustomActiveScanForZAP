@@ -23,9 +23,9 @@ public class LoadGsonInjectionPatterns {
             "   \"errorpattern\": null  " +
             "}," +
             "{ " +
-            "   \"truepattern\": \"1'='1' -- \",  " +
-            "   \"falsepattern\": \"0'='1' -- \", " +
-            "   \"errorpattern\": \"1'='1' - - \"  " +
+            "   \"truepattern\":  \"' or  1=1 -- \",  " +
+            "   \"falsepattern\": \"' and 1=1 -- \", " +
+            "   \"errorpattern\": \"' rr  1=1 -- \"  " +
             "}" +
             "]" +
             "}"
