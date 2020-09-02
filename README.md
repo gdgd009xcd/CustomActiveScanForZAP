@@ -3,7 +3,7 @@
 A OWASP AddOn ActiveScan for detecting SQL injections.
 Real Web application page has dynamic contents such as special sale products list or CSRF token, which is not affected by input parameters.
 Web application vulnerability scanner detects problems by input parameter affected page contents. 
-The scanner may fail to detect vulnerabilities if the dynamic content of the web page is configured to be unaffected by the input parameters.
+The scanner may fail to detect vulnerabilities if the dynamic content of the web page has contents which is unaffected by the input parameters. 
 Therefore, this CustomActiveScan uses LCS (Longest Common Sequece) algorithm to erase these unnecessarily dynamic content.
 
 ### how to erase these dynamic contents which is not affected input parameters.
