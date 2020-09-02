@@ -28,7 +28,7 @@ LCS remove the different token values ​​from the two responses as follows:
 &lt;input type="hidden" name="token"
 ... 
 </PRE>
-* Before calculating LCS, This addon splits the content into an array with blanks(white space) as words.
+* Before calculating LCS, This addon splits the response content into words by white space and stores it as words in an array.
 
 
 ## Building
