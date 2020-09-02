@@ -1,5 +1,4 @@
 import java.nio.charset.StandardCharsets
-import java.util.Locale
 import org.zaproxy.gradle.addon.AddOnPlugin
 import org.zaproxy.gradle.addon.AddOnPluginExtension
 import org.zaproxy.gradle.addon.apigen.ApiClientGenExtension
@@ -61,6 +60,7 @@ subprojects {
     }
 }
 
+/**
 tasks.register("reportMissingHelp") {
     description = "Reports the add-ons that do not have help pages."
     doLast {
@@ -80,6 +80,7 @@ tasks.register("reportMissingHelp") {
         }
     }
 }
+*/
 
 /**
 tasks.register<TestReport>("testReport") {
