@@ -16,17 +16,22 @@ LCS remove the different token values ​​from the two responses as follows:
  
 <PRE>
 [response1]
-...
+&lt;form action="add.php" method="POST"&gt;
 &lt;input type="hidden" name="token" value="dbc8ee88f64bf794505ef74e41d6e5a4"&gt;
-...
+&lt;input type="submit"  value="Complete"&gt;
+&lt;/form&gt;
+
 [response2]
-...
+&lt;form action="add.php" method="POST"&gt;
 &lt;input type="hidden" name="token" value="dbc8ee88f64bf794505ef74e41d6e5a4"&gt;
-...
+&lt;input type="submit"  value="Complete"&gt;
+&lt;/form&gt;
+
 [LCS]
-...
+&lt;form action="add.php" method="POST"&gt;
 &lt;input type="hidden" name="token"
-... 
+&lt;input type="submit"  value="Complete"&gt;
+&lt;/form&gt;
 </PRE>
 * Before calculating LCS, This addon splits the response content into words by white space and stores it as words in an array.
 
