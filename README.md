@@ -2,17 +2,17 @@
 
 A OWASP ZAP AddOn ActiveScan for detecting SQL injections.
 Real Web application page has dynamic contents such as special sale products list or CSRF token, which is not affected by input parameters.
-Web application vulnerability scanner detects problems by input parameter affected page contents. 
+The web application vulnerability scanner manipulates input parameters to detect vulnerabilities by affecting page content. 
 The scanner may fail to detect vulnerabilities if the dynamic content of the web page has contents which is unaffected by the input parameters. 
-Therefore, this CustomActiveScan uses LCS (Longest Common Sequece) algorithm to erase these unnecessarily dynamic content.
+Therefore, this CustomActiveScan uses LCS (Longest Common Sequece) algorithm to remove these unnecessarily dynamic content.
 Due to this method, this scanner has a superior vulnerability detection capability.
 
-### how to erase these dynamic contents which is not affected input parameters.
+### how to remove these dynamic contents which is not affected input parameters.
 
 LCS(Longest Common Sequence) algorighm extracts the content that is common to two array elements.
 For example, you have a web page that contains a CSRF token. The CSRF token has a unique value for each http request.
 To erase this token, this addon sends two identical http requests and computes the response LCS of the two requests.
-LCS clears the different token values ​​from the two responses as follows:
+LCS remove the different token values ​​from the two responses as follows:
  
 <PRE>
 [response1]
