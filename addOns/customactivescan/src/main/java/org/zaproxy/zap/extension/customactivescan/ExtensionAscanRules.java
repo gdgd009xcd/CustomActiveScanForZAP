@@ -31,8 +31,9 @@ import java.io.File;
 import java.net.URI;
 
 /**
- * A null extension just to cause the message bundle and help file to get loaded 
- * @author psiinon
+ * A new Extension AscanRules
+ *
+ * @author gdgd009xcd
  *
  */
 public class ExtensionAscanRules extends ExtensionAdaptor {

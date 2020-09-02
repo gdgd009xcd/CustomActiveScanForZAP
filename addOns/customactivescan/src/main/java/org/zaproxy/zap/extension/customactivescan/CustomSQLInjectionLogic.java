@@ -14,6 +14,8 @@ import java.util.List;
 /**
  * this is special custmizable SQL injection logic test.
  *
+ * @author gdgd009xcd
+ *
  */
 public class CustomSQLInjectionLogic extends AbstractAppParamPlugin {
 
