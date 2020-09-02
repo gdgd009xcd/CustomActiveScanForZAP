@@ -5,6 +5,7 @@ Real Web application page has dynamic contents such as special sale products lis
 Web application vulnerability scanner detects problems by input parameter affected page contents. 
 The scanner may fail to detect vulnerabilities if the dynamic content of the web page has contents which is unaffected by the input parameters. 
 Therefore, this CustomActiveScan uses LCS (Longest Common Sequece) algorithm to erase these unnecessarily dynamic content.
+Due to this method, this scanner has a superior vulnerability detection capability.
 
 ### how to erase these dynamic contents which is not affected input parameters.
 
@@ -27,7 +28,7 @@ LCS clears the different token values ​​from the two responses as follows:
 &lt;input type="hidden" name="token"
 ... 
 </PRE>
-
+* Before calculating LCS, This addon splits the content into an array with blanks(white space) as words.
 
 
 ## Building
