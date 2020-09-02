@@ -17,13 +17,13 @@ LCS remove the different token values ​​from the two responses as follows:
 <PRE>
 [response1]
 &lt;form action="add.php" method="POST"&gt;
-&lt;input type="hidden" name="token" value="dbc8ee88f64bf794505ef74e41d6e5a4"&gt;
+&lt;input type="hidden" name="token" value="<font color="red">dbc8ee88f64bf794505ef74e41d6e5a4</font>"&gt;
 &lt;input type="submit"  value="Complete"&gt;
 &lt;/form&gt;
 
 [response2]
 &lt;form action="add.php" method="POST"&gt;
-&lt;input type="hidden" name="token" value="dbc8ee88f64bf794505ef74e41d6e5a4"&gt;
+&lt;input type="hidden" name="token" value="bcb138585064356efa927ab196cbf8ec"&gt;
 &lt;input type="submit"  value="Complete"&gt;
 &lt;/form&gt;
 
