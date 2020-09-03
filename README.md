@@ -39,8 +39,8 @@ LCS remove the different token values ​​from the two responses as follows:
 
 <TABLE>
  <TR><TH>URL</TH><TH>parameter</TH><TH>ascanrules release ver 36.0.0</TH><TH>CustomActiveScan ver0.0.1</TH></TR>
- <TR><TD>http://glide:3000/rest/products/search?q=</TD><TD>q</TD><TD>NO</TD><TD>DETECTED</TD></TR>
- <TR><TD>http://glide:3000/rest/user/login</TD><TD>email</TD><TD>NO</TD><TD>DETECTED</TD></TR>
+ <TR><TD>http://localhost:3000/rest/products/search?q=</TD><TD>q</TD><TD>NO</TD><TD>DETECTED</TD></TR>
+ <TR><TD>http://localhost:3000/rest/user/login</TD><TD>email</TD><TD>NO</TD><TD>DETECTED</TD></TR>
 </TABLE> 
 
 ## Building
