@@ -35,7 +35,12 @@ LCS remove the different token values ​​from the two responses as follows:
 </PRE>
 * Before calculating LCS, This addon splits the response content into words by Whitespace/JSON/HTML dlimiters and stores it as words in an array.  
 
+## OWASP juice-shop site SQL injection test some results.
 
+<TABLE>
+ <TR><TH>URL</TH><TH>parameter</TH><TH>ascanrules release ver 36.0.0</TH><TH>CustomActiveScan ver0.0.1</TH></TR>
+ <TR><TD>http://glide:3000/rest/products/search?q=</TD><TD>q</TD><TD>NO</TD><TD>DETECTED</TD></TR>
+</TABLE> 
 
 ## Building
 
