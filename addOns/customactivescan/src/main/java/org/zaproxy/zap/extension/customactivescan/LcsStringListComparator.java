@@ -15,7 +15,7 @@ public class LcsStringListComparator extends LcsOnp<String>{
 	String WHITESPC = "[ \r\t\n]+";
 
 	// more precise split delimiter.
-	String WHITESPCPLUS = "[ {}:\"\r\t\n]+";
+	String WHITESPCPLUS = "[ ,{}:\"\r\t\n]+";
 	
 	LcsStringListComparator(){
 		super(log);
