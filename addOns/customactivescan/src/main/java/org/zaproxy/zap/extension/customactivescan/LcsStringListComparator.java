@@ -10,6 +10,7 @@ public class LcsStringListComparator extends LcsOnp<String>{
 	int MINROWLENGTH = 500; // if contents line count < MINROWLENGTH, then split contents by whitespace.
 	int EXTRACTLCS_UNIT = 500000; // extractLCS row unit.
 	int MINWORDCNT = 50; // if word count of splitted response fewer than this value, then split again with WHITESPCPLUS delimiter.
+	int MINCHARSIZE = 4000; // if response string size is less than MINCHARSIZE, then  calculate LCS  in character units
 
 	// default split delimiter.
 	String WHITESPC = "[ \r\t\n]+";
@@ -36,6 +37,16 @@ public class LcsStringListComparator extends LcsOnp<String>{
 		
 		if(b==null) {
 			b = "";
+		}
+
+		// response string size is less than MINCHARSIZE, then  calculate LCS  in character units
+		if (a.length() < MINCHARSIZE && b.length() < MINCHARSIZE) {
+			CharacterList ca = new CharacterList(a);
+			CharacterList cb = new CharacterList(b);
+			LcsCharacterList clcs = new LcsCharacterList();
+			int cpercent = calcPercentChar(ca, cb,  clcs) ;
+			LCSresult.initLcsCharacterList(clcs);
+			return cpercent;
 		}
 
 		ListStringFactory w_lsfctA = new ListStringFactory(WHITESPC, EXTRACTLCS_UNIT);
@@ -66,24 +77,20 @@ public class LcsStringListComparator extends LcsOnp<String>{
 		
 		
 	}
-	
-	int calcPercentChar(CharacterList ca, CharacterList cb, LcsCharacterList clcs) {
+
+	/**
+	 * calculate LCS  in character units
+	 *
+	 * @param ca
+	 * @param cb
+	 * @param clcs
+	 * @return
+	 */
+	private int calcPercentChar(CharacterList ca, CharacterList cb, LcsCharacterList clcs) {
 		LcsOnp<Character> onp = new LcsOnp<Character>(getLogger());
-		LcsCharacterList cresult = new LcsCharacterList();
-		
+
 		int cpercent = onp.calcPercent(ca, cb, clcs);
-		{
-			String diffCA = cresult.getDiffAString();
-			int sa = diffCA.length();
-			String diffCB = cresult.getDiffBString();
-			int sb = diffCB.length();
-			//System.out.println("diffCA[" + diffCA.substring(0, sa>50?50:sa) + "...]");
-			//System.out.println("diffCB[" + diffCB.substring(0, sb>50?50:sb) + "...]");
-			String lcsstr = cresult.getLCS().getString();
-			int lcssiz = lcsstr.length();
-			String samelcs = lcsstr.substring(0, lcssiz>50?50:lcssiz);
-			//System.out.println("lcs[" + samelcs + "...]");
-		}
+
 		return cpercent;
 	}
 
@@ -106,6 +113,16 @@ public class LcsStringListComparator extends LcsOnp<String>{
 
 		if(b==null) {
 			b = "";
+		}
+
+		// response string size is less than MINCHARSIZE, then  calculate LCS  in character units
+		if (a.length() < MINCHARSIZE && b.length() < MINCHARSIZE) {
+			CharacterList ca = new CharacterList(a);
+			CharacterList cb = new CharacterList(b);
+			LcsCharacterList clcs = new LcsCharacterList();
+			int cpercent = calcPercentChar(ca, cb,  clcs) ;
+			result.initLcsCharacterList(clcs);
+			return cpercent;
 		}
 
 		ListStringFactory lsfctA = new ListStringFactory("[\n]+", -1);

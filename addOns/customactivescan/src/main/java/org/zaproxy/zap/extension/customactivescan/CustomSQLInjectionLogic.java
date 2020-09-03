@@ -141,7 +141,7 @@ public class CustomSQLInjectionLogic extends AbstractAppParamPlugin {
                         break LOOPTRUE;
                     }
                 }
-                // 2-1. LCS(Longest Common Sequence) of true and original  matched oririnal response.
+                // 2-1. LCS(Longest Common Sequence) response matched oririnal response.
                 //     that means true response contains original.
                 int truecontainoriginalpercent = comparator.compare(trueLCSs[i].getLCSString(), normalBodyOutputs[i] , null);
                 LOGGER4J.debug("origParamName["
@@ -191,6 +191,61 @@ public class CustomSQLInjectionLogic extends AbstractAppParamPlugin {
                                 + "\n 2-2.falsepercent["
                                 + falsepercent + "<" + this.NEALYDIFFERPERCENT);
                         String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.truecontainoriginal.evidence");
+                        raiseAlertBooleanBased(Alert.RISK_HIGH, Alert.CONFIDENCE_MEDIUM, i > 0 ? true : false, truemessage,origParamName, trueValue, falseValue, null,evidence);
+                        sqlInjectionFoundForUrl = true;
+                        break LOOPTRUE;
+                    }
+                }
+
+                // 2-3. LCS(Longest Common Sequence) response matched true response.
+                //     that means original contains true response.
+                int originalcontaintruepercent = comparator.compare(trueLCSs[i].getLCSString(), trueBodyOutputs[i] , null);
+                LOGGER4J.debug("origParamName["
+                        + origParamName
+                        + "] value["
+                        + trueValue
+                        + "] originalcontaintruepercent["
+                        + originalcontaintruepercent
+                        + "]"
+                        + (originalcontaintruepercent >= this.NEALYEQUALPERCENT ? ">=" : "<")
+                        + "NEALYEQUALPERCENT["
+                        + this.NEALYEQUALPERCENT
+                        + "]"
+                        + " trueLCS.length="
+                        + (trueLCSs[i].getLCSString() == null ? "0(null)" : trueLCSs[i].getLCSString().length())
+                        + " trueBodyOutput.lenght=" +  (trueBodyOutputs[i] == null ? "0(null)" : trueBodyOutputs[i].length()));
+                if (originalcontaintruepercent >= this.NEALYEQUALPERCENT){
+                    if (falseBodyOutputs == null) {
+                        falseValue = origParamValue + tfrpattern.falsepattern;
+                        HttpMessage falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
+                        if (falsemessage == null) continue;
+                        falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, origParamValue, tfrpattern.falsepattern);
+
+                    }
+
+                    int truefalsepercent = comparator.compare(trueBodyOutputs[i], falseBodyOutputs[i], null);
+
+                    LOGGER4J.debug("origParamName["
+                            + origParamName
+                            + "] value["
+                            + falseValue
+                            + "] truefalsepercent["
+                            + truefalsepercent
+                            + "]"
+                            + (truefalsepercent < this.NEALYDIFFERPERCENT ? "<" : ">=")
+                            + "NEALYDIFFERPERCENT["
+                            + this.NEALYDIFFERPERCENT
+                            + "]");
+                    // 2-4. true response is diffrent from false response.
+                    if (truefalsepercent < this.NEALYDIFFERPERCENT) {
+                        // bingo.
+                        LOGGER4J.debug("bingo 2-3.originalcontaintruepercent["
+                                + originalcontaintruepercent
+                                + "]>="
+                                + this.NEALYEQUALPERCENT
+                                + "\n 2-4.truefalsepercent["
+                                + truefalsepercent + "<" + this.NEALYDIFFERPERCENT);
+                        String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.originalcontaintrue.evidence");
                         raiseAlertBooleanBased(Alert.RISK_HIGH, Alert.CONFIDENCE_MEDIUM, i > 0 ? true : false, truemessage,origParamName, trueValue, falseValue, null,evidence);
                         sqlInjectionFoundForUrl = true;
                         break LOOPTRUE;

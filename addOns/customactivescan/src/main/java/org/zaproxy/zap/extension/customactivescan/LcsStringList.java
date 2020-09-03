@@ -17,6 +17,17 @@ public class LcsStringList implements LcsBuilder<String>{
 	LcsStringList(){
 		clear();
 	}
+
+	public void initLcsCharacterList(LcsCharacterList cl) {
+		clear();
+		strings = new ArrayList<>();
+		strings.add(cl.getLCS().getString());
+		diffa = new ArrayList<>();
+		diffb = new ArrayList<>();
+		diffa.add(cl.getDiffAString());
+		diffb.add(cl.getDiffBString());
+
+	}
 	
 	@Override
 	public void append(String s) {
