@@ -23,6 +23,11 @@ public class LoadGsonInjectionPatterns {
             "   \"errorpattern\": null  " +
             "}," +
             "{ " +
+            "   \"truepattern\": \"+0\",  " +
+            "   \"falsepattern\": \"+9\", " +
+            "   \"errorpattern\": \"+-\"  " +
+            "}," +
+            "{ " +
             "   \"truepattern\":  \"' or  1=1 -- \",  " +
             "   \"falsepattern\": \"' and 1=1 -- \", " +
             "   \"errorpattern\": \"' rr  1=1 -- \"  " +

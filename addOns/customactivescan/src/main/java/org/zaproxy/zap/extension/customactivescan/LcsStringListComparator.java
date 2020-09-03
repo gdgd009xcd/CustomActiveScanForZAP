@@ -9,6 +9,13 @@ public class LcsStringListComparator extends LcsOnp<String>{
 
 	int MINROWLENGTH = 500; // if contents line count < MINROWLENGTH, then split contents by whitespace.
 	int EXTRACTLCS_UNIT = 500000; // extractLCS row unit.
+	int MINWORDCNT = 50; // if word count of splitted response fewer than this value, then split again with WHITESPCPLUS delimiter.
+
+	// default split delimiter.
+	String WHITESPC = "[ \r\t\n]+";
+
+	// more precise split delimiter.
+	String WHITESPCPLUS = "[ {}:\"\r\t\n]+";
 	
 	LcsStringListComparator(){
 		super(log);
@@ -31,12 +38,18 @@ public class LcsStringListComparator extends LcsOnp<String>{
 			b = "";
 		}
 
-		ListStringFactory w_lsfctA = new ListStringFactory("[ \r\t\n]+", EXTRACTLCS_UNIT);
-		ListStringFactory w_lsfctB = new ListStringFactory("[ \r\t\n]+", EXTRACTLCS_UNIT);
+		ListStringFactory w_lsfctA = new ListStringFactory(WHITESPC, EXTRACTLCS_UNIT);
+		ListStringFactory w_lsfctB = new ListStringFactory(WHITESPC, EXTRACTLCS_UNIT);
 		int w_rowsizA = w_lsfctA.calcRowSize(a);
-		int w_origAsiz = w_lsfctA.getOrigRowSize();
 		int w_rowsizB = w_lsfctB.calcRowSize(b);
-		int w_origBsiz = w_lsfctB.getOrigRowSize();
+		if ( w_rowsizA < MINWORDCNT) {
+			w_lsfctA = new ListStringFactory(WHITESPCPLUS, EXTRACTLCS_UNIT);
+			w_rowsizA = w_lsfctA.calcRowSize(a);
+		}
+		if (w_rowsizB < MINWORDCNT) {
+			w_lsfctB = new ListStringFactory(WHITESPCPLUS, EXTRACTLCS_UNIT);
+			w_rowsizB = w_lsfctB.calcRowSize(b);
+		}
 
 		if(w_rowsizA>w_rowsizB) {
 			w_lsfctB.setRowSize(w_rowsizA);
@@ -107,13 +120,21 @@ public class LcsStringListComparator extends LcsOnp<String>{
 		int origMaxsiz = origAsiz>origBsiz?origAsiz:origBsiz;
 
 		if(origMaxsiz<MINROWLENGTH) {
-			ListStringFactory w_lsfctA = new ListStringFactory("[ \r\t\n]+", -1);
-			ListStringFactory w_lsfctB = new ListStringFactory("[ \r\t\n]+", -1);
+			ListStringFactory w_lsfctA = new ListStringFactory(WHITESPC, -1);
+			ListStringFactory w_lsfctB = new ListStringFactory(WHITESPC, -1);
 			int w_rowsiza = w_lsfctA.calcRowSize(a);
-			int w_origAsiz = w_lsfctA.getOrigRowSize();
 			int w_rowsizb = w_lsfctB.calcRowSize(b);
-			int w_origBsiz = w_lsfctB.getOrigRowSize();
-			origMaxsiz = w_origAsiz>w_origBsiz?w_origAsiz:w_origBsiz;
+
+			if (w_rowsiza < MINWORDCNT) {
+				w_lsfctA = new ListStringFactory(WHITESPCPLUS, -1);
+				w_rowsiza = w_lsfctA.calcRowSize(a);
+			}
+
+			if (w_rowsizb < MINWORDCNT) {
+				w_lsfctB = new ListStringFactory(WHITESPCPLUS, -1);
+				w_rowsizb = w_lsfctB.calcRowSize(b);
+			}
+
 			lsfctA = w_lsfctA;
 			lsfctB = w_lsfctB;
 			rowsiza = w_rowsiza;
