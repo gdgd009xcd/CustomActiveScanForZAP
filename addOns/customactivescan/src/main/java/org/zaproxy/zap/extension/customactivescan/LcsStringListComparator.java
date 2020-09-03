@@ -42,11 +42,9 @@ public class LcsStringListComparator extends LcsOnp<String>{
 		ListStringFactory w_lsfctB = new ListStringFactory(WHITESPC, EXTRACTLCS_UNIT);
 		int w_rowsizA = w_lsfctA.calcRowSize(a);
 		int w_rowsizB = w_lsfctB.calcRowSize(b);
-		if ( w_rowsizA < MINWORDCNT) {
+		if ( w_rowsizA < MINWORDCNT || w_rowsizB < MINWORDCNT) {
 			w_lsfctA = new ListStringFactory(WHITESPCPLUS, EXTRACTLCS_UNIT);
 			w_rowsizA = w_lsfctA.calcRowSize(a);
-		}
-		if (w_rowsizB < MINWORDCNT) {
 			w_lsfctB = new ListStringFactory(WHITESPCPLUS, EXTRACTLCS_UNIT);
 			w_rowsizB = w_lsfctB.calcRowSize(b);
 		}
@@ -125,12 +123,9 @@ public class LcsStringListComparator extends LcsOnp<String>{
 			int w_rowsiza = w_lsfctA.calcRowSize(a);
 			int w_rowsizb = w_lsfctB.calcRowSize(b);
 
-			if (w_rowsiza < MINWORDCNT) {
+			if (w_rowsiza < MINWORDCNT || w_rowsizb < MINWORDCNT) {
 				w_lsfctA = new ListStringFactory(WHITESPCPLUS, -1);
 				w_rowsiza = w_lsfctA.calcRowSize(a);
-			}
-
-			if (w_rowsizb < MINWORDCNT) {
 				w_lsfctB = new ListStringFactory(WHITESPCPLUS, -1);
 				w_rowsizb = w_lsfctB.calcRowSize(b);
 			}
