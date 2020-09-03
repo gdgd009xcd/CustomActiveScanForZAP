@@ -33,7 +33,7 @@ LCS remove the different token values ​​from the two responses as follows:
 &lt;input type="submit"  value="Complete"&gt;
 &lt;/form&gt;
 </PRE>
-* Before calculating LCS, This addon splits the response content into words by Whitespace/JSON/HTML dlimiters and stores it as words in an array.  
+* Before calculating LCS, This addon splits the response content into words by Whitespace/JSON/HTML dlimiters or characters and stores it as words in an array.  
 
 ## OWASP juice-shop site SQL injection test some results.
 
