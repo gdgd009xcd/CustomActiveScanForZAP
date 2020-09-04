@@ -38,8 +38,8 @@ LCS remove the different token values ​​from the two responses as follows:
 ##  SQL injection test some results.
 
 Test Environment: OWASP Juice Shop <A HREF="https://hub.docker.com/r/bkimminich/juice-shop">Docker Image</A>  
-Version: ZAPROXY 2.10.0-SNAPSHOT
-Mode: Standard mode  
+ZAPROXY Version:  2.10.0-SNAPSHOT  
+ZAPROXY Mode: Standard mode  
 
 <TABLE>
  <TR><TH>URL</TH><TH>parameter</TH><TH>ascanrules release <BR>ver 36.0.0</TH><TH>ascanrules beta <BR>ver 31.0.0</TH><TH>Advanced SQLInjection Scanner <BR>Ver13 beta</TH><TH>CustomActiveScan <BR>ver0.0.1 alpha</TH></TR>
