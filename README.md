@@ -38,9 +38,9 @@ LCS remove the different token values ​​from the two responses as follows:
 ## OWASP juice-shop site SQL injection test some results.
 
 <TABLE>
- <TR><TH>URL</TH><TH>parameter</TH><TH>ascanrules release <BR>ver 36.0.0</TH><TH>Advanced SQLInjection Scanner <BR>Ver13 beta</TH><TH>CustomActiveScan <BR>ver0.0.1 alpha</TH></TR>
- <TR><TD>http://localhost:3000/rest/products/search?q=</TD><TD>q</TD><TD>NO</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
- <TR><TD>http://localhost:3000/rest/user/login</TD><TD>email</TD><TD>NO</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
+ <TR><TH>URL</TH><TH>parameter</TH><TH>ascanrules release <BR>ver 36.0.0</TH><TH>ascanrules beta <BR>ver 31.0.0</TH><TH>Advanced SQLInjection Scanner <BR>Ver13 beta</TH><TH>CustomActiveScan <BR>ver0.0.1 alpha</TH></TR>
+ <TR><TD>http://localhost:3000/rest/products/search?q=</TD><TD>q</TD><TD>NO</TD><TD>NO</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
+ <TR><TD>http://localhost:3000/rest/user/login</TD><TD>email</TD><TD>NO</TD><TD>NO</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
 </TABLE> 
 
 ## Building
