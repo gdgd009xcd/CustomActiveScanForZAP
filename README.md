@@ -35,9 +35,10 @@ LCS remove the different token values ​​from the two responses as follows:
 </PRE>
 * Before calculating the LCS, this addon splits the response content by whitespace/JSON/HTML delimiters or characters and stores it in an array.
 
-## OWASP Juice Shop: SQL injection test some results.
+##  SQL injection test some results.
 
-Version: ZAPROXY 2.10.0-SNAPSHOT  
+Test Environment: OWASP Juice Shop <A HREF="https://hub.docker.com/r/bkimminich/juice-shop">Docker Image</A>  
+Version: ZAPROXY 2.10.0-SNAPSHOT
 Mode: Standard mode  
 
 <TABLE>
