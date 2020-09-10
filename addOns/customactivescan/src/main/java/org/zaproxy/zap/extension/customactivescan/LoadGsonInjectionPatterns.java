@@ -7,6 +7,9 @@ import java.io.Reader;
 import java.util.List;
 
 public class LoadGsonInjectionPatterns {
+    private final static org.apache.logging.log4j.Logger LOGGER4J =
+            org.apache.logging.log4j.LogManager.getLogger();
+
     private InjectionPatterns patterns;
 
     static String defaultpattern = "{" +
@@ -40,8 +43,10 @@ public class LoadGsonInjectionPatterns {
         try {
             Reader gsonreader = new FileReader(gsonfile);
             this.patterns = gson.fromJson(gsonreader, InjectionPatterns.class);
+            LOGGER4J.info("SQLInjectionPatternFile Loaded[" + gsonfile + "]");
         }catch (Exception e){
             this.patterns = gson.fromJson(defaultpattern, InjectionPatterns.class);
+            LOGGER4J.info("SQLInjectionPatternFile FAILED to load. Default pattern will be applied.[" + gsonfile + "]");
         }
     }
 

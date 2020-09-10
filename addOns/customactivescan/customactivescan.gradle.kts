@@ -19,7 +19,6 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.6")
     implementation("org.apache.logging.log4j:log4j-core:2.13.2")
 
-    testImplementation(project(":testutils"))
     testImplementation("org.apache.commons:commons-lang3:3.9")
 }
 
@@ -31,7 +30,7 @@ tasks {
 
     artifacts {
         archives(sourcesJar)
-        //archives(jar)
+        // archives(jar)
     }
 }
 

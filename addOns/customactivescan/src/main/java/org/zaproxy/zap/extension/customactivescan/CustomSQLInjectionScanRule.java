@@ -8,6 +8,7 @@ import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.zap.model.Tech;
 import org.zaproxy.zap.model.TechSet;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
  * @author gdgd009xcd
  *
  */
-public class CustomSQLInjectionLogic extends AbstractAppParamPlugin {
+public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
@@ -38,7 +39,7 @@ public class CustomSQLInjectionLogic extends AbstractAppParamPlugin {
     public void init() {
         super.init();
 
-        LoadGsonInjectionPatterns gsonloader = new LoadGsonInjectionPatterns("/mnt/oldroot/home/daike/Document/Samples/Patterns/injection.txt");
+        LoadGsonInjectionPatterns gsonloader = new LoadGsonInjectionPatterns(ExtensionAscanRules.LOG4JXML_DIR + Constant.messages.getString(MESSAGE_PREFIX + "GsonInjectionPatternFileName"));
         this.patterns = gsonloader.getPatternList();
 
         this.NEALYEQUALPERCENT = getNealyEqualPercent();

@@ -2,8 +2,8 @@ rootProject.name = "zap-extensions"
 
 val addOnsProjectName = "addOns"
 include(addOnsProjectName)
-include("testutils")
-include("sharedutils")
+// include("testutils")
+// include("sharedutils")
 
 // Keep the add-ons in alphabetic order.
 var addOns = listOf(
