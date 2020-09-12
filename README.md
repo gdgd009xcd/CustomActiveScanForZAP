@@ -49,13 +49,13 @@ ZAPROXY Mode: Standard mode
 
 ## Download & Building
 
-The add-on are built with [Gradle]: https://gradle.org/
+The add-on are built with [Gradle]: https://gradle.org/  
 
-To download & build this addon, simply run:
+To download & build this addon, simply run:  
 
-$ git clone https://github.com/gdgd009xcd/CustomActiveScanForZAP.git
-$ cd CustomActiveScanForZAP
-$ ./gradlew build
+$ git clone https://github.com/gdgd009xcd/CustomActiveScanForZAP.git  
+$ cd CustomActiveScanForZAP  
+$ ./gradlew build  
 
 The add-on will be placed in the directory `CustomActiveScanForZAP/addOns/customactivescan/build/zapAddOn/bin`
 
