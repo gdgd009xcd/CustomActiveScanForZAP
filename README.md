@@ -62,7 +62,9 @@ The add-on will be placed in the directory `CustomActiveScanForZAP/addOns/custom
 $ cd addOns/customactivescan/build/zapAddOn/bin  
 $ ls  
 customactivescan-alpha-0.0.2.zap  
-$   
+$  
+
+* Gradle builds may fail due to dependency downloads. If you have such problems, please retry the gradlew command each time. 
 
 ## Install
 
