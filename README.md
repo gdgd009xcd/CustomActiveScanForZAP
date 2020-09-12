@@ -64,7 +64,7 @@ $ ls
 customactivescan-alpha-0.0.2.zap  
 $  
 
-* Gradle builds may fail due to dependency downloads. If you have such problems, please retry the gradlew command each time. or you can download addon file from [release page](https://github.com/gdgd009xcd/CustomActiveScanForZAP/releases)
+* Gradle builds may fail due to network connection timeouts for downloading dependencies. If you have such problems, please retry the gradlew command each time. or you can download addon file from [release page](https://github.com/gdgd009xcd/CustomActiveScanForZAP/releases)
 
 ## Install
 
