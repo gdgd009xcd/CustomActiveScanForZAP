@@ -49,7 +49,7 @@ ZAPROXY Mode: Standard mode
 
 ## Download & Building
 
-The add-on are built with [Gradle]: https://gradle.org/  
+The add-on is built with [Gradle]: https://gradle.org/  
 
 To download & build this addon, simply run:  
 
