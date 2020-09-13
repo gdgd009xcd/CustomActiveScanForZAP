@@ -14,8 +14,6 @@ zapAddOn {
 }
 
 dependencies {
-    implementation("com.googlecode.java-diff-utils:diffutils:1.2.1")
-    implementation("org.bitbucket.mstrobel:procyon-compilertools:0.5.25")
     implementation("com.google.code.gson:gson:2.8.6")
     implementation("org.apache.logging.log4j:log4j-core:2.13.2")
 
