@@ -363,9 +363,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     }
 
     @Override
-    // must be unique in all plugins.
+    // must be unique in https://github.com/zaproxy/zaproxy/blob/develop/docs/scanners.md
     public int getId() {
-        return 120001;
+        return 40037;
     }
 
     @Override
