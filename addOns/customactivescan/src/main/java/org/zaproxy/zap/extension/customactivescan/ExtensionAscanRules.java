@@ -38,7 +38,7 @@ import java.net.URI;
  */
 public class ExtensionAscanRules extends ExtensionAdaptor {
 
-	public static final String LOG4JXML_DIR = Constant.getZapHome();
+	public static final String ZAPHOME_DIR = Constant.getZapHome();
 
 	@Override
 	public String getAuthor() {
@@ -62,10 +62,21 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	}
 
 	@Override
+	public void unload() {
+		super.unload();
+
+		// In this addon, it's not necessary to override the method, as there's nothing to unload
+		// manually, the components added through the class ExtensionHook (in hook(ExtensionHook))
+		// are automatically removed by the base unload() method.
+		// If you use/add other components through other methods you might need to free/remove them
+		// here (if the extension declares that can be unloaded, see above method).
+	}
+
+	@Override
 	public void hook(ExtensionHook hook) {
 		super.hook(hook);
 		File log4jdir =
-				new File(LOG4JXML_DIR); // LOG4JXML_DIR: $HOME/.ZAP or .BurpSuite
+				new File(ZAPHOME_DIR); // $HOME/.ZAP or $HOME/.ZAP_D
 		String fileName = "log4j2.xml";
 		File logFile = new File(log4jdir, fileName);
 		if (logFile.exists()) {
@@ -79,27 +90,6 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 			}
 		} else {
 			System.out.println("log4j file not found.:" + logFile.getPath());
-		}
-
-		hook.addSessionListener(new SessionChangedListenerImpl());
-	}
-
-	private static class SessionChangedListenerImpl implements SessionChangedListener {
-
-		@Override
-		public void sessionScopeChanged(Session session) {
-		}
-
-		@Override
-		public void sessionModeChanged(Mode mode) {
-		}
-
-		@Override
-		public void sessionChanged(Session session) {
-		}
-
-		@Override
-		public void sessionAboutToChange(Session session) {
 		}
 	}
 }

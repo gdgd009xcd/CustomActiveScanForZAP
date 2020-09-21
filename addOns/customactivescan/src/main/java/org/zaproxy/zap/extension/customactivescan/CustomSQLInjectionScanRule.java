@@ -39,7 +39,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     public void init() {
         super.init();
 
-        LoadGsonInjectionPatterns gsonloader = new LoadGsonInjectionPatterns(ExtensionAscanRules.LOG4JXML_DIR + Constant.messages.getString(MESSAGE_PREFIX + "GsonInjectionPatternFileName"));
+        LoadGsonInjectionPatterns gsonloader = new LoadGsonInjectionPatterns(ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString(MESSAGE_PREFIX + "GsonInjectionPatternFileName"));
         this.patterns = gsonloader.getPatternList();
 
         this.NEALYEQUALPERCENT = getNealyEqualPercent();
@@ -464,8 +464,13 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * response for comparison against the original response. Reference:
      * TestInjectionSQL
      *
+     * this code derived from org/zaproxy/zap/extension/ascanrules/TestSQLInjection.java
+     *
+     * @author 70pointer
+     *
      * @param body
      * @param pattern
+     *
      * @return
      */
     protected String stripOff(String body, String pattern) {
@@ -483,6 +488,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
     /**
      * Replace body by stripping off pattern strings.
+     *
+     * this code derived from org/zaproxy/zap/extension/ascanrules/TestSQLInjection.java
+     *
+     * @author 70pointer
      */
     protected String stripOffOriginalAndAttackParam(String body, String originalPattern, String attackPattern) {
         String result = this.stripOff(
