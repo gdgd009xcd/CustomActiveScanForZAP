@@ -10,7 +10,7 @@ public class LcsStringListComparator extends LcsOnp<String>{
 	int MINROWLENGTH = 500; // if contents line count < MINROWLENGTH, then split contents by whitespace.
 	int EXTRACTLCS_UNIT = 500000; // extractLCS row unit.
 	int MINWORDCNT = 50; // if word count of splitted response fewer than this value, then split again with WHITESPCPLUS delimiter.
-	int MINCHARSIZE = 4000; // if response string size is less than MINCHARSIZE, then  calculate LCS  in character units
+	public static int MINCHARSIZE = 4000; // if response string size is less than MINCHARSIZE, then  calculate LCS  in character units
 
 	// default split delimiter.
 	String WHITESPC = "[ \r\t\n]+";

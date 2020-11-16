@@ -1,16 +1,22 @@
 package org.zaproxy.zap.extension.customactivescan;
 
+import org.omg.CORBA.ValueMember;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.scanner.AbstractAppParamPlugin;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Category;
+import org.parosproxy.paros.network.HttpHeaderField;
 import org.parosproxy.paros.network.HttpMessage;
+import org.parosproxy.paros.network.HttpResponseHeader;
 import org.zaproxy.zap.model.Tech;
 import org.zaproxy.zap.model.TechSet;
+import org.zaproxy.zap.network.HttpResponseBody;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * this is special custmizable SQL injection logic test.
@@ -26,14 +32,22 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     private int NEALYEQUALPERCENT; // If this value or more(value >= NEALYEQUALPECENT), it is considered to match
     private int NEALYDIFFERPERCENT; // If less than this value(value < NEALYDIFFERPECENT), it is considered as a mismatch
 
+    private int MAXMASKBODYSIZE = 10000; // If response body size is larger than this size, do not apply the asterisk conversion to the body
     private static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
 
     private List<InjectionPatterns.TrueFalsePattern> patterns;
 
-    private HttpMessage refreshedmessage = null;
+    private HttpMessageWithLCSResponse refreshedmessage = null;
     private String mResBodyNormalUnstripped = null;
     private String mResBodyNormalStripped = null;
 
+    // regex pattern for masking random id such as CSRF token from HttpResponse
+    private String cookieNameValueRegex = "([^\\cA-\\cZ()<>@,;:\\\\\"/\\[\\]?={} ]+)[\\r\\n\\t ]*=[\\r\\n\\t ]*\"?([\\x21\\x23-\\x2B\\x2D-\\x3A\\x3C-\\x5B\\x5D-\\x7E]+)\"?";
+    private String quotedValueRegex = "(?<!\\\\)\"([^\\r\\t\\n ]+?)(?<!\\\\)\"";
+    private String inputTagQuotedValueRegex = "value[\\t ]*=[\\t ]*(?<!\\\\)\"([^\\r\\t\\n ]+?)(?<!\\\\)\"";
+    private Pattern cookieNameValuePattern;
+    private Pattern quotedValuePattern;
+    private Pattern inputTagQuotedValuePattern;
 
     @Override
     public void init() {
@@ -56,6 +70,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             default:
                 break;
         }
+
+        cookieNameValuePattern = Pattern.compile(cookieNameValueRegex, Pattern.MULTILINE);
+        quotedValuePattern = Pattern.compile(quotedValueRegex, Pattern.MULTILINE);
+        inputTagQuotedValuePattern = Pattern.compile(inputTagQuotedValueRegex, Pattern.MULTILINE);
     }
 
     @Override
@@ -75,7 +93,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
             // 1. Original response matches true condition
             String trueValue = origParamValue + tfrpattern.truepattern;
-            HttpMessage truemessage = sendRequestAndCalcLCS(comparator, origParamName, trueValue);
+            HttpMessageWithLCSResponse truemessage = sendRequestAndCalcLCS(comparator, origParamName, trueValue);
             if (truemessage == null) continue;
 
             String[] trueBodyOutputs = getUnstrippedStrippedResponse(truemessage, origParamValue, tfrpattern.truepattern);
@@ -86,7 +104,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             String falseValue = null;
             String[] falseBodyOutputs = null;
             String[] errorBodyOutputs = null;
-            HttpMessage errormessage = null;
+            HttpMessageWithLCSResponse errormessage = null;
             boolean bingoError = false;
 
             for(int i=0;i<2;i++) {
@@ -111,7 +129,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
                     if (falseBodyOutputs == null) {
                         falseValue = origParamValue + tfrpattern.falsepattern;
-                        HttpMessage falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
+                        HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
                         if (falsemessage == null) continue;
                         falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, origParamValue, tfrpattern.falsepattern);
                     }
@@ -162,7 +180,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (truecontainoriginalpercent >= this.NEALYEQUALPERCENT) {
                     if (falseBodyOutputs == null) {
                         falseValue = origParamValue + tfrpattern.falsepattern;
-                        HttpMessage falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
+                        HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
                         if (falsemessage == null) continue;
                         falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, origParamValue, tfrpattern.falsepattern);
 
@@ -218,7 +236,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (originalcontaintruepercent >= this.NEALYEQUALPERCENT){
                     if (falseBodyOutputs == null) {
                         falseValue = origParamValue + tfrpattern.falsepattern;
-                        HttpMessage falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
+                        HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
                         if (falsemessage == null) continue;
                         falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, origParamValue, tfrpattern.falsepattern);
 
@@ -255,7 +273,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
                 if (falseBodyOutputs == null) {
                     falseValue = origParamValue + tfrpattern.falsepattern;
-                    HttpMessage falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
+                    HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, origParamName, falseValue);
                     if (falsemessage == null) continue;
                     falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, origParamValue, tfrpattern.falsepattern);
                 }
@@ -512,43 +530,44 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * @param paramValue
      * @return
      */
-    HttpMessage sendRequestAndCalcLCS(LcsStringListComparator comparator, String origParamName, String paramValue) {
+    HttpMessageWithLCSResponse sendRequestAndCalcLCS(LcsStringListComparator comparator, String origParamName, String paramValue) {
         String[] res = new String[2];
-        res[0]=null; res[1] = null;String responsebody = "";
+        res[0]=null; res[1] = null;
         HttpMessage msg2 = null;
+        HttpMessageWithLCSResponse msg2withlcs = null;
+        String lcsResponse = "";
 
         for(int cn = 0 ; cn<2; cn++) {
-            //needs a new message for each type of AND to be issued
             msg2 = getNewMsg();
             if(origParamName!=null&&paramValue!=null) {
                 setParameter(msg2, origParamName, paramValue);
             }
 
-            //send the AND with an additional TRUE statement tacked onto the end. Hopefully it will return the same results as the original (to find a vulnerability)
             try {
                 sendAndReceive(msg2, false); //do not follow redirects
             } catch (Exception ex) {
                 if (LOGGER4J.isDebugEnabled()) LOGGER4J.debug("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
                         " when accessing: " + msg2.getRequestHeader().getURI().toString());
-                return null; //Something went wrong, continue to the next item in the loop
+                return null;
             }
-            String msg2responsebody = msg2.getResponseBody().toString();
-            res[cn] =  new String(msg2responsebody == null ? "" : msg2responsebody );
-            responsebody = res[cn];
+            res[cn] =  maskRandomIdsFromResponseString(msg2);
         }
 
         if(res[0]!=null&&res[1]!=null) {
             LcsStringList clcs = new LcsStringList();
             comparator.extractLCS(res[0], res[1], clcs);
-            responsebody = clcs.getLCSString();
+            lcsResponse = clcs.getLCSString();
+            lcsResponse = lcsResponse == null ? "" : lcsResponse;
             if(LOGGER4J.isDebugEnabled()) {
-                //log.debug("ANDTRUE lcs[" + responsebody + "]");
+                LOGGER4J.debug("lcs[" + lcsResponse + "]");
             }
-
         }
 
-        msg2.setResponseBody(responsebody);
-        return msg2;
+        if (msg2 != null) {
+            msg2withlcs = new HttpMessageWithLCSResponse(msg2, lcsResponse);
+        }
+
+        return msg2withlcs;
     }
 
 
@@ -561,8 +580,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * @return
      */
 
-    String[] getUnstrippedStrippedResponse(HttpMessage message, String origParamValue, String attackPattern) {
-        String resBodyUnstripped = message.getResponseBody().toString();
+    String[] getUnstrippedStrippedResponse(HttpMessageWithLCSResponse message, String origParamValue, String attackPattern) {
+        String resBodyUnstripped = message.getLCSResponse();
         String resBodyStripped;
         if (attackPattern!=null && !attackPattern.isEmpty()) {
             resBodyStripped = stripOffOriginalAndAttackParam(resBodyUnstripped, origParamValue, attackPattern); // omit origParamValue and attackPattern from Reponse
@@ -602,5 +621,105 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 null, //url
                 origParamName, sqlInjectionAttack,
                 extraInfo, getSolution(), evidence, message);
+    }
+
+    /**
+     * mask(replace with asterisk) random ids such as CSRF token or something which is different per each request
+     * @param msg
+     * @return
+     */
+    String maskRandomIdsFromResponseString(HttpMessage msg) {
+        HttpResponseHeader responseHeader = msg.getResponseHeader();
+        HttpResponseBody responseBody = msg.getResponseBody();
+        String resBodyString = responseBody == null ? "" : responseBody.toString();
+        String primeString = responseHeader.getPrimeHeader();
+        List<HttpHeaderField> headerFields = responseHeader.getHeaders();
+        List<HttpHeaderField> maskedHeaderFields = new ArrayList<>();
+
+
+        int responseHeaderSize = primeString.length() + 2; // primeString.length + lineDelimiter.length(2)
+
+        if (headerFields != null) {
+            for (HttpHeaderField headerField : headerFields) {
+                String name = headerField.getName();
+                String value = headerField.getValue();
+                responseHeaderSize += name.length() + 4 + value.length(); // ": ".length + lineDelimiter.length == 4
+                HttpHeaderField headerFieldMasked = null;
+                if (name.equalsIgnoreCase("Set-Cookie")) {
+                    Matcher matcher = cookieNameValuePattern.matcher(value);
+                    int lastpos = 0;
+                    String tail = "";
+                    String valuemasked = "";
+                    while (matcher.find()) {
+                        int groupcount = matcher.groupCount();
+                        if (groupcount > 1) {
+                            int valuestartpos = matcher.start(2);
+                            int valueendpos = matcher.end(2);
+                            valuemasked += value.substring(lastpos, valuestartpos);
+                            String cookievalue = value.substring(valuestartpos, valueendpos);
+                            valuemasked += Utilities.convTokenPart2Asterisk(cookievalue);
+                            lastpos = valueendpos;
+                        }
+                    }
+                    if (value.length() > lastpos) {
+                        valuemasked += value.substring(lastpos);
+                    }
+                    if (valuemasked.isEmpty()) {
+                        valuemasked = value;
+                    }
+                    headerFieldMasked = new HttpHeaderField(name, valuemasked);
+                } else if (!name.equalsIgnoreCase("Date")
+                        && !name.equalsIgnoreCase("ETag")) {// we need to remove Etag , Date headers for improving vulnerability detection.
+                    String valuemasked = value;
+                    valuemasked = Utilities.convTokenPart2Asterisk(value);
+                    headerFieldMasked = new HttpHeaderField(name, valuemasked);
+                }
+                if (headerFieldMasked != null) {
+                    maskedHeaderFields.add(headerFieldMasked);
+                }
+            }
+        }
+
+        responseHeaderSize += 2;
+        int responseTotalSize = responseHeaderSize + resBodyString.length();
+
+        String maskedbody = resBodyString;
+        if (responseTotalSize < MAXMASKBODYSIZE) {
+            Matcher valueMatcher;
+            if (responseHeader.hasContentType("json")
+                    || responseTotalSize >= LcsStringListComparator.MINCHARSIZE) {
+                valueMatcher = quotedValuePattern.matcher(resBodyString);
+            } else {
+                valueMatcher = inputTagQuotedValuePattern.matcher(resBodyString);
+            }
+            // masked random ids from resBodyString
+
+            maskedbody = "";
+            int lastpos = 0;
+            while (valueMatcher.find()) {
+                int idstartpos = valueMatcher.start(1);
+                int idendpos = valueMatcher.end(1);
+                String id = resBodyString.substring(idstartpos, idendpos);
+                String maskedid = id;
+                maskedid = Utilities.convTokenPart2Asterisk(id);
+                maskedbody += resBodyString.substring(lastpos, idstartpos) + maskedid;
+                lastpos = idendpos;
+            }
+            if (lastpos < resBodyString.length()) {
+                maskedbody += resBodyString.substring(lastpos);
+            }
+        }
+
+        String lineDelimiter = responseHeader.getLineDelimiter();
+        String maskedResponseBody = primeString + lineDelimiter;
+
+        for (HttpHeaderField maskedHeaderField : maskedHeaderFields) {
+            String n = maskedHeaderField.getName();
+            String v = maskedHeaderField.getValue();
+            maskedResponseBody += n + ": " + v + lineDelimiter;
+        }
+        maskedResponseBody += lineDelimiter + maskedbody;
+
+        return maskedResponseBody;
     }
 }

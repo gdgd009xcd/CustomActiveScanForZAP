@@ -1,12 +1,12 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.0.4"
+version = "0.0.5"
 description = "a Active Scanner with custmizable rules"
 
 zapAddOn {
     addOnName.set("CustomActiveScanForZAP")
     addOnStatus.set(AddOnStatus.ALPHA)
-    zapVersion.set("2.7.0")
+    zapVersion.set("2.8.0")
 
     manifest {
         author.set("gdgd009xcd")
