@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### v0.0.5
 - Header content is also included in the response when injection is detected.
 - if response sizeody) < CustomSQLInjectionScanRule.MAXMASKBODYSIZE then, random id values convert to asterisk in response. This makes improve to detect small difference in response
-- help file added.
 ## 3 - 2020-09-21
 ### v0.0.4
 - changed addOnName, manifest.repo in .gradle.kts.
