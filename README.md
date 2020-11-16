@@ -37,14 +37,17 @@ LCS remove the different token values ​​from the two responses as follows:
 
 ##  SQL injection test some results.
 
-Test Environment: OWASP Juice Shop <A HREF="https://hub.docker.com/r/bkimminich/juice-shop">Docker Image</A>  
+Test Sites: 1)OWASP Juice Shop <A HREF="https://hub.docker.com/r/bkimminich/juice-shop">Docker Image</A>  
+　　　　　　　2)https://github.com/hclproducts/AltoroJ  
 ZAPROXY Version:  2.10.0-SNAPSHOT  
 ZAPROXY Mode: Standard mode  
 
 <TABLE>
- <TR><TH>URL</TH><TH>parameter</TH><TH>Advanced SQLInjection Scanner <BR>Ver13 beta</TH><TH>CustomActiveScan <BR>ver0.0.1 alpha</TH></TR>
- <TR><TD>http://localhost:3000/rest/products/search?q=</TD><TD>q</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
- <TR><TD>http://localhost:3000/rest/user/login</TD><TD>email</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
+ <TR><TH>Site</TH><TH>URL</TH><TH>parameter</TH><TH>Advanced SQLInjection Scanner <BR>Ver13 beta</TH><TH>CustomActiveScan <BR>ver0.0.5 alpha</TH></TR>
+ <TR><TD>1)</TD><TD>http://localhost:3000/rest/products/search?q=</TD><TD>q</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
+ <TR><TD>1)</TD><TD>http://localhost:3000/rest/user/login</TD><TD>email</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
+  <TR><TD>2)</TD><TD>http://localhost:8080/AltoroJ/doLogin</TD><TD>uid</TD><TD>NOT TESTED</TD><TD>DETECTED</TD></TR>
+  <TR><TD>2)</TD><TD>http://localhost:8080/AltoroJ/doLogin</TD><TD>passw</TD><TD>NOT TESTED</TD><TD>DETECTED</TD></TR>
 </TABLE> 
 
 ## Download & Building
