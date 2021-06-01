@@ -546,8 +546,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             try {
                 sendAndReceive(msg2, false); //do not follow redirects
             } catch (Exception ex) {
-                if (LOGGER4J.isDebugEnabled()) LOGGER4J.debug("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
-                        " when accessing: " + msg2.getRequestHeader().getURI().toString());
+                LOGGER4J.error("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
+                        " when accessing: " + msg2.getRequestHeader().getURI().toString(), ex);
                 return null;
             }
             res[cn] =  maskRandomIdsFromResponseString(msg2);
