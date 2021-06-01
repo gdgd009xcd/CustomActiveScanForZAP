@@ -2,6 +2,10 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## 5 - 2021-06-01
+- improve: LOG4J prints stacktrace when sendAndReceive raises an exception
+- bugfix: Set Multi-Release: true in the MANIFEST.MF file to use Java 9+
 ## 4 - 2020-11-16
 ### v0.0.5
 - Header content is also included in the response when injection is detected.
