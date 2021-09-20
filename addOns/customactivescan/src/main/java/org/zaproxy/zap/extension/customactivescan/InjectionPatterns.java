@@ -13,14 +13,11 @@ public class InjectionPatterns {
     }
 
     static class TrueFalsePattern {
-        String truepattern = null; // required condition true   e.g.:[1'='1' -- ]
-        String falsepattern = null; // required condition false e.g.:[1'='0' -- ]
-        String errorpattern = null; // optional condition (SQL)error e.g.:[1'='1' - - ]
-
-        public TrueFalsePattern(String tstr, String fstr, String estr) {
-            truepattern = tstr;
-            falsepattern = fstr;
-            errorpattern = estr;
-        }
+        String trueValuePattern = null; // required condition true   e.g.:[1'='1' -- ]
+        String falseValuePattern = null; // required condition false e.g.:[1'='0' -- ]
+        String errorValuePattern = null; // optional condition (SQL)error e.g.:[1'='1' - - ]
+        String trueNamePattern = null; // optional condition true for sanitizing name e.g. [$ne]
+        String falseNamePattern = null; // optional condition false for sanitizing name
+        String errorNamePattern = null; // optional condition error for sanitizing name
     }
 }

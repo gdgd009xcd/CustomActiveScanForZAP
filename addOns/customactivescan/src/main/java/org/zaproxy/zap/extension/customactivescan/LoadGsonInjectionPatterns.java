@@ -16,24 +16,30 @@ public class LoadGsonInjectionPatterns {
             "\"name\" : \"default patterns\", " +
             "\"patterns\" :  [" +
             "{ " +
-            "   \"truepattern\": \"'||'\",  " +
-            "   \"falsepattern\": \"'|''\", " +
-            "   \"errorpattern\": null " +
+            "   \"trueValuePattern\": \"'||'\",  " +
+            "   \"falseValuePattern\": \"'|''\", " +
+            "   \"errorValuePattern\": null " +
             "}," +
             "{ " +
-            "   \"truepattern\": \"/**/\",  " +
-            "   \"falsepattern\": \"/*//\", " +
-            "   \"errorpattern\": null  " +
+            "   \"trueValuePattern\": \"/**/\",  " +
+            "   \"falseValuePattern\": \"/*//\", " +
+            "   \"errorValuePattern\": null  " +
             "}," +
             "{ " +
-            "   \"truepattern\": \"+0\",  " +
-            "   \"falsepattern\": \"+9\", " +
-            "   \"errorpattern\": \"+-\"  " +
+            "   \"trueValuePattern\": \"+0\",  " +
+            "   \"falseValuePattern\": \"+9\", " +
+            "   \"errorValuePattern\": \"+-\"  " +
             "}," +
             "{ " +
-            "   \"truepattern\":  \"' or  1=1 -- \",  " +
-            "   \"falsepattern\": \"' and 1=1 -- \", " +
-            "   \"errorpattern\": \"' rr  1=1 -- \"  " +
+            "   \"trueValuePattern\":  \"' or  1=1 -- \",  " +
+            "   \"falseValuePattern\": \"' and 1=1 -- \", " +
+            "   \"errorValuePattern\": \"' rr  1=1 -- \"  " +
+            "}," +
+            "{ " +
+            "   \"trueNamePattern\":  \"[$ne]\",  " +
+            "   \"trueValuePattern\":  \"1\",  " +
+            "   \"falseNamePattern\":  \"[ne]\",  " +
+            "   \"falseValuePattern\": \"1\" " +
             "}" +
             "]" +
             "}"

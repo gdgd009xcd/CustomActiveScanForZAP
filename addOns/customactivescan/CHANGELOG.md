@@ -2,7 +2,10 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-
+## 6 - 2021-09-18
+### v0.5.0
+- improve: Enhanced detection of small changes in page content
+- new feature: detection of mongo db sql injection
 ## 5 - 2021-06-01
 - improve: LOG4J prints stacktrace when sendAndReceive raises an exception
 - bugfix: Set Multi-Release: true in the MANIFEST.MF file to use Java 9+

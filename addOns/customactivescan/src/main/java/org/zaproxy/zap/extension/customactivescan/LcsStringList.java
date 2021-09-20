@@ -12,7 +12,7 @@ public class LcsStringList implements LcsBuilder<String>{
 	Object[] diffs = null;
 	boolean reverse;
 	boolean ABreverse = false;
-	
+
 	
 	LcsStringList(){
 		clear();
@@ -26,9 +26,8 @@ public class LcsStringList implements LcsBuilder<String>{
 		diffb = new ArrayList<>();
 		diffa.add(cl.getDiffAString());
 		diffb.add(cl.getDiffBString());
-
 	}
-	
+
 	@Override
 	public void append(String s) {
 		strings.add(s);
@@ -59,8 +58,11 @@ public class LcsStringList implements LcsBuilder<String>{
 	 *
 	 * @return
 	 */
-	public String getLCSString(){
-		return String.join("", getLCS());
+	public String getLCSString(String delimiter){
+		if (delimiter == null) {
+			delimiter = "";
+		}
+		return String.join(delimiter, getLCS());
 	}
 	
 	@Override
@@ -114,10 +116,24 @@ public class LcsStringList implements LcsBuilder<String>{
 	public List<String> getDiffA(){
 		return diffa;
 	}
+
+	public String getDiffAString(String delimiter) {
+		if (delimiter == null) {
+			delimiter = "";
+		}
+		return String.join(delimiter, getDiffA());
+	}
 	
 	@Override
 	public List<String> getDiffB(){
 		return diffb;
+	}
+
+	public String getDiffBString(String delimiter) {
+		if (delimiter == null) {
+			delimiter = "";
+		}
+		return String.join(delimiter, getDiffB());
 	}
 
 	public void addDiffA(List<String> ad) {
