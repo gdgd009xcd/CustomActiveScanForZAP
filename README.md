@@ -73,6 +73,7 @@ $
 
 ## Install
 
-Start ZAPROXY in your PC's Desktop.  
-Install add-on customactivescan-alpha-N.N.N.zap file according to the ZAP add-on installation method (example: File menu "Load add-on file").<BR>
-![AddonInstall](https://raw.githubusercontent.com/gdgd009xcd/RELEASES/master/IMG/ZAP/addoninst.png)
+1）Start ZAPROXY in your PC's Desktop.  
+2）Install add-on customactivescan-alpha-N.N.N.zap file according to the ZAP add-on installation method (example: File menu "Load add-on file").<BR>
+![AddonInstall](https://raw.githubusercontent.com/gdgd009xcd/RELEASES/master/IMG/ZAP/addoninst.png)<BR>    
+3）restart zap(sorry, currently this addon does not work unless restart zap after install it.)
