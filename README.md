@@ -38,19 +38,8 @@ LCS remove the different token values ​​from the two responses as follows:
 * Before calculating the LCS, this addon splits the response content by whitespace/JSON/HTML delimiters or characters and stores it in an array.
 
 ##  SQL injection test some results.
+[See SQL injection test results with ActiveScan](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/99.1.-SQL-injection-detection-test-results-with-ActiveScan)
 
-Test Sites: 1)OWASP Juice Shop <A HREF="https://hub.docker.com/r/bkimminich/juice-shop">Docker Image</A>  
-　　　　　　　2)https://github.com/hclproducts/AltoroJ  
-ZAPROXY Version:  2.10.0-SNAPSHOT  
-ZAPROXY Mode: Standard mode  
-
-<TABLE>
- <TR><TH>Site</TH><TH>URL</TH><TH>parameter</TH><TH>Advanced SQLInjection Scanner <BR>Ver13 beta</TH><TH>CustomActiveScan <BR>ver0.0.5 alpha</TH></TR>
- <TR><TD>1)</TD><TD>http://localhost:3000/rest/products/search?q=</TD><TD>q</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
- <TR><TD>1)</TD><TD>http://localhost:3000/rest/user/login</TD><TD>email</TD><TD>DETECTED</TD><TD>DETECTED</TD></TR>
-  <TR><TD>2)</TD><TD>http://localhost:8080/AltoroJ/doLogin</TD><TD>uid</TD><TD>NOT TESTED</TD><TD>DETECTED</TD></TR>
-  <TR><TD>2)</TD><TD>http://localhost:8080/AltoroJ/doLogin</TD><TD>passw</TD><TD>NOT TESTED</TD><TD>DETECTED</TD></TR>
-</TABLE> 
 
 ## Download & Building
 
