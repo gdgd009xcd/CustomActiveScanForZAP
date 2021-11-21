@@ -1,5 +1,6 @@
 package org.zaproxy.zap.extension.customactivescan;
 
+import org.apache.logging.log4j.Level;
 import org.omg.CORBA.ValueMember;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.scanner.AbstractAppParamPlugin;
@@ -28,6 +29,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
+
+    final Level DEBUGBINGO = Level.getLevel("DEBUGBINGO");
 
     private int NEALYEQUALPERCENT; // If this value or more(value >= NEALYEQUALPECENT), it is considered to match
     private int NEALYDIFFERPERCENT; // If less than this value(value < NEALYDIFFERPECENT), it is considered as a mismatch
@@ -217,58 +220,6 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 List<String> extractedOriginalData = originalFalseLCSs[i].getDiffA();
                 String extractedOriginalDataString = String.join("", extractedOriginalData);
 
-                // 2-1. LCS(Longest Common Sequence) response matched oririnal (extracted) response
-                //     that means true response contains original and it does NOT contain false response.
-                LcsStringList originalTrueLCSandNormalResult = new LcsStringList();
-                int truecontainoriginalpercent = comparator.compare(originalTrueLCSs[i].getLCSString(null), extractedOriginalDataString, originalTrueLCSandNormalResult);
-                LOGGER4J.debug("ParamName["
-                        + trueParamName
-                        + "] value["
-                        + trueValue
-                        + "] truecontainoriginalpercent["
-                        + truecontainoriginalpercent
-                        + "]"
-                        + (truecontainoriginalpercent >= this.NEALYEQUALPERCENT ? ">=" : "<")
-                        + "NEALYEQUALPERCENT["
-                        + this.NEALYEQUALPERCENT
-                        + "]"
-                        + " oritinalTrueLCS.length="
-                        + (originalTrueLCSs[i].getLCSString(null) == null ? "0(null)" : originalTrueLCSs[i].getLCSString(null).length())
-                        + " normalBodyOutput.length="
-                        +  (normalBodyOutputs[i] == null ? "0(null)" : normalBodyOutputs[i].length())
-                );
-
-                if (truecontainoriginalpercent >= this.NEALYEQUALPERCENT && !trueHasSQLError) {
-
-                    LOGGER4J.debug("ParamName["
-                            + falseParamName
-                            + "] value["
-                            + falseValue
-                            + "] falsepercent["
-                            + falsepercent
-                            + "]"
-                            + (falsepercent < this.NEALYDIFFERPERCENT ? "<" : ">=")
-                            + "NEALYDIFFERPERCENT["
-                            + this.NEALYDIFFERPERCENT
-                            + "]"
-                            );
-                    // 2-2. original response is diffrent from false response.
-                    if (falsepercent < this.NEALYDIFFERPERCENT) {
-                        // bingo.
-                        LOGGER4J.debug("bingo 2-1.truecontainoriginalpercent["
-                                + truecontainoriginalpercent
-                                + "]>="
-                                + this.NEALYEQUALPERCENT
-                                + "\n 2-2.falsepercent["
-                                + falsepercent + "<" + this.NEALYDIFFERPERCENT
-                                + "]");
-                        String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.truecontainoriginal.evidence");
-                        raiseAlertBooleanBased(Alert.RISK_HIGH, Alert.CONFIDENCE_MEDIUM, i > 0 ? true : false, truemessage,origParamName, trueParamName, trueValue, falseParamName, falseValue, null,evidence);
-                        sqlInjectionFoundForUrl = true;
-                        break LOOPTRUE;
-                    }
-                }
-
                 // 3. compare extracted True data and extracted original data
                 List<String> extractedTrueData = new ArrayList<>();
                 LcsStringList trueFalseLCS = new LcsStringList();
@@ -291,6 +242,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 String extractedTrueDataString = String.join("", extractedTrueData);
                 LcsStringList extractedOriginalTrueLCS = new LcsStringList();
                 int extractedOriginalTrueCompPercent = comparator.compare(extractedOriginalDataString, extractedTrueDataString, extractedOriginalTrueLCS);
+                String extractedOriginalTrueLCSString = extractedOriginalTrueLCS.getLCSString(null);
                 LOGGER4J.debug("ParamName["
                         + trueParamName
                         + "] value["
@@ -307,14 +259,17 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             + "]>="
                             + this.NEALYEQUALPERCENT
                             );
+                    if (DEBUGBINGO != null) {
+                        LOGGER4J.log(DEBUGBINGO, "extractedOriginalTrueLCS[" + extractedOriginalTrueLCSString + "]");
+                    }
                     String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.extractedOrignalTrue.evidence");
                     raiseAlertBooleanBased(Alert.RISK_HIGH, Alert.CONFIDENCE_MEDIUM, i > 0 ? true : false, truemessage,origParamName, trueParamName, trueValue, falseParamName, falseValue, null,evidence);
                     sqlInjectionFoundForUrl = true;
                     break LOOPTRUE;
                 }
 
-                String extractedOriginalTrueLCSString = extractedOriginalTrueLCS.getLCSString(null);
-                int extractedOriginalTrueLCSCompPercent = comparator.compare(extractedOriginalDataString, extractedOriginalTrueLCSString, null);
+                LcsStringList extractedOriginalTrueLCSComp = new LcsStringList();
+                int extractedOriginalTrueLCSCompPercent = comparator.compare(extractedOriginalDataString, extractedOriginalTrueLCSString, extractedOriginalTrueLCSComp);
 
                 LOGGER4J.debug("ParamName["
                         + trueParamName
@@ -324,13 +279,18 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         + extractedOriginalTrueLCSCompPercent
                         + "]"
                 );
+
                 // 3-2. Extracted true response contains extracted original response
-                if (extractedOriginalTrueLCSCompPercent >= this.NEALYDIFFERPERCENT && !trueHasSQLError && !extractedOriginalDataString.isEmpty()) {
+                if (extractedOriginalTrueLCSCompPercent >= this.NEALYEQUALPERCENT && !trueHasSQLError && !extractedOriginalDataString.isEmpty()) {
                     LOGGER4J.debug("bingo 3-2.extractedOriginalTrueLCSCompPercent["
                             + extractedOriginalTrueLCSCompPercent
                             + "]>="
                             + this.NEALYEQUALPERCENT
                     );
+                    if (DEBUGBINGO != null) {
+                        String extractedOriginalTrueLCSCompString = extractedOriginalTrueLCSComp.getLCSString(null);
+                        LOGGER4J.log(DEBUGBINGO, "extractedOriginalTrueLCSComp[" + extractedOriginalTrueLCSCompString + "]");
+                    }
                     String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.extractedOrignalTrueLCS.evidence");
                     raiseAlertBooleanBased(Alert.RISK_HIGH, Alert.CONFIDENCE_MEDIUM, i > 0 ? true : false, truemessage,origParamName, trueParamName, trueValue, falseParamName, falseValue, null,evidence);
                     sqlInjectionFoundForUrl = true;

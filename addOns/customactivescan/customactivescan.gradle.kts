@@ -1,6 +1,6 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.5.1"
+version = "0.5.2"
 description = "a Active Scanner with custmizable rules"
 
 val jar by tasks.getting(Jar::class) {

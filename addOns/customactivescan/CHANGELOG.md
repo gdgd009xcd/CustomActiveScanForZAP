@@ -3,6 +3,12 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 8 - 2021-11-21
+### v0.5.2
+- bugfix: There was an false negative in the judgment code in 3-1
+- improve: removed redundant code.(2-1, 2-2) because these codes are the same as 3-1, 3-2.
+- maintenance: added new debuglevel DEBUGBINGO to LOG4J 
+
 ## 7 - 2021-09-26
 ### v0.5.1
 - bugfix: there are some false positive at scan rule judgement
