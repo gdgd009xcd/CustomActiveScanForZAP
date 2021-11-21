@@ -39,7 +39,7 @@ LCS remove the different token values ​​from the two responses as follows:
 
 ##  SQL injection test some results.
 <table>
- <TR><TH ROWSPAN="2">SQL injection Detection rate<BR>(Detected/Total)</TH><TH>CustomActiveScan<BR>ForZAP <BR>0.5.1</TH><TH>Active Scanner Rules(alpha)<BR>32.0.0</TH><TH>Active Scanner Rules(beta)<BR>37.0.0</TH><TH>Active Scanner Rules<BR>41.0.0</TH><TH>Advanced SQLInjection Scanner<BR>15.0.0</TH></TR>
+ <TR><TH ROWSPAN="2">SQL injection Detection rate<BR>(Detected/Total)</TH><TH>CustomActiveScan<BR>ForZAP <BR>0.5.2</TH><TH>Active Scanner Rules(alpha)<BR>32.0.0</TH><TH>Active Scanner Rules(beta)<BR>37.0.0</TH><TH>Active Scanner Rules<BR>41.0.0</TH><TH>Advanced SQLInjection Scanner<BR>15.0.0</TH></TR>
  <TR><TH>100%<BR>(12/12)</TH><TH>0%<BR>(0/12)</TH><TH>0%<BR>(0/12)</TH><TH>17%<BR>(2/12)</TH><TH>50%<BR>(6/12)</TH></TR>
  </table>
   
