@@ -2,6 +2,9 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 9 - 2021-12-01
+### v0.5.3
+- maintenance: removed some redundant codes
 
 ## 8 - 2021-11-21
 ### v0.5.2

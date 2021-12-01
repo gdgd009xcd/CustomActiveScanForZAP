@@ -1,7 +1,6 @@
 package org.zaproxy.zap.extension.customactivescan;
 
 import org.apache.logging.log4j.Level;
-import org.omg.CORBA.ValueMember;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.scanner.AbstractAppParamPlugin;
 import org.parosproxy.paros.core.scanner.Alert;

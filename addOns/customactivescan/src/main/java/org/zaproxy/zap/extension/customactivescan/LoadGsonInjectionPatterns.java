@@ -3,6 +3,7 @@ package org.zaproxy.zap.extension.customactivescan;
 import com.google.gson.Gson;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
@@ -46,13 +47,22 @@ public class LoadGsonInjectionPatterns {
             ;
     public LoadGsonInjectionPatterns(String gsonfile) {
         Gson gson = new Gson();
+        Reader gsonreader = null;
         try {
-            Reader gsonreader = new FileReader(gsonfile);
+            gsonreader = new FileReader(gsonfile);
             this.patterns = gson.fromJson(gsonreader, InjectionPatterns.class);
             LOGGER4J.info("SQLInjectionPatternFile Loaded[" + gsonfile + "]");
         }catch (Exception e){
             this.patterns = gson.fromJson(defaultpattern, InjectionPatterns.class);
             LOGGER4J.info("SQLInjectionPatternFile FAILED to load. Default pattern will be applied.[" + gsonfile + "]");
+        } finally {
+            if (gsonreader != null) {
+                try {
+                    gsonreader.close();
+                } catch (IOException ioex) {
+                    LOGGER4J.error("close failed. ex:" + ioex.getMessage());
+                }
+            }
         }
     }
 

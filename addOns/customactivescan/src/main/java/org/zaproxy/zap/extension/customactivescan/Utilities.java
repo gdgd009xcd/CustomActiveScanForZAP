@@ -392,8 +392,8 @@ public class Utilities {
      */
     private static String getAsteriskMaskedValue(String value) {
         String maskedValue = "";
-        int len = value != null ? value.length() : 0;
-        for(int i = 0; i < value.length(); i++) {
+        int valueLength = value != null ? value.length() : 0;
+        for(int i = 0; i < valueLength; i++) {
             maskedValue += "*";
         }
         return maskedValue;
@@ -473,7 +473,7 @@ public class Utilities {
 
         if (results == null) return value;
         boolean hasSlash = false;
-        if (results != null  &&results.contains(TokenType.HASSLASH)) {
+        if (results.contains(TokenType.HASSLASH)) {
             hasSlash = true;
         }
 

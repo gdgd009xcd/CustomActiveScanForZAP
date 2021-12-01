@@ -163,7 +163,10 @@ public class LcsStringListComparator extends LcsOnp<String>{
 
 		List<String> blist = lsfctB.getLFSplittedStringList(null);
 
-		log.debug("rowsize=" + lsfctA.getRowSize() + " alist.size=" + alist.size());
+		if (log!=null) {
+			log.debug("rowsize=" + lsfctA.getRowSize() + " alist.size=" + alist.size());
+		}
+
 		int lpercent =  calcPercent(alist, blist, result);
 		if(log!=null) {
 			log.debug("listpercent:" + lpercent);

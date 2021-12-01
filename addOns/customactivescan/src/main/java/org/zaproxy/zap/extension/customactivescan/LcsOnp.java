@@ -320,7 +320,7 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			int snakecnt = cv.snakecnt;
 			//System.out.println("x,y=" + (xi) + "," + (yi) + " oper:" + oper + " V" + p + "(" + (k - offset) + ") snake=" + snakecnt);
 			
-			for(int scnt = snakecnt; scnt>0; scnt--) {
+			for (int scnt = snakecnt; scnt>0; scnt--) {
 				
 				/*{
 					int oldx = xi;
@@ -329,22 +329,22 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				}*/
 				
 				xi--;yi--;
-				if(xi>=0&&xi<M) {
-					if(lcsBuilder!=null) {
+				if (xi>=0) {
+					if (lcsBuilder!=null) {
 						//lcsBuilder.add(0, listX.get(xsn));//disasterous performance problem O(n)
 						lcsBuilder.append(listX.get(xi));// value stored reverse order
 					}
 					lcscnt++;
 				}
 			}
-			if(oper==1) {
+			if (oper==1) {
 				/*{
 					int oldx = xi;
 					int oldy = yi;
 					System.out.println(oldx + "," + oldy + "->" + (xi-1) + "," + yi);
 				}*/
 				xi--;
-				if(xi>=0&&xi<M&&lcsBuilder!=null) {
+				if (xi>=0 && lcsBuilder!=null) {
 					lcsBuilder.appenddiffA(listX.get(xi));
 				}
 			}else if(oper==-1) {
@@ -354,7 +354,7 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 					System.out.println(oldx + "," + oldy + "->" + xi + "," + (yi-1));
 				}*/
 				yi--;
-				if(yi>=0&&yi<N&&lcsBuilder!=null) {
+				if (yi>=0 && lcsBuilder!=null) {
 					lcsBuilder.appenddiffB(listY.get(yi));
 				}
 			}
@@ -377,7 +377,7 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 						System.out.println(oldx + "," + oldy + "->" + (xi-1) + "," + (yi-1));
 					}*/
 					xi--;yi--;
-					if(xi>=0&&xi<M) {
+					if (xi>=0) {
 						if(lcsBuilder!=null) {
 							//lcsBuilder.add(0,listX.get(xsn));//disasterous performance problem O(n)
 							lcsBuilder.append(listX.get(xi));// value stored reverse order
@@ -385,14 +385,14 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 						lcscnt++;
 					}
 				}
-				if(oper==1) {
+				if (oper==1) {
 					/*{
 						int oldx = xi;
 						int oldy = yi;
 						System.out.println(oldx + "," + oldy + "->" + (xi-1) + "," + yi);
 					}*/
 					xi--;
-					if(xi>=0&&xi<M&&lcsBuilder!=null) {
+					if (xi>=0 && lcsBuilder!=null) {
 						lcsBuilder.appenddiffA(listX.get(xi));
 					}
 				}else if(oper==-1) {
@@ -402,14 +402,14 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 						System.out.println(oldx + "," + oldy + "->" + xi + "," + (yi-1));
 					}*/
 					yi--;
-					if(yi>=0&&yi<N&&lcsBuilder!=null) {
+					if (yi>=0 && lcsBuilder!=null) {
 						lcsBuilder.appenddiffB(listY.get(yi));
 					}
 				}
 				
-				if(xi==0){
+				if (xi==0) {
 					//System.out.println("xi,yi:" + xi + "," + yi);
-					if(lcsBuilder!=null) {
+					if (lcsBuilder!=null) {
 						while(yi-->0) {
 							lcsBuilder.appenddiffB(listY.get(yi));
 							
