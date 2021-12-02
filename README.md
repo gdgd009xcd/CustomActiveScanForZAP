@@ -1,4 +1,5 @@
 ## CustomActiveScanForZAP
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/gdgd009xcd/CustomActiveScanForZAP.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/gdgd009xcd/CustomActiveScanForZAP/context:java)  
 
 [***Questionnaire](https://docs.google.com/forms/d/e/1FAIpQLScwRM5w5wXzkgEbOlItzKPCu3ZJjxTac7dGo2lOtEWLCsPlhw/viewform?hl=en): Please answer the questionnaire if you like.
 

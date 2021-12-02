@@ -81,7 +81,9 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 	@Override
 	public void setdiffB(List<Character> lb) {
 		// TODO Auto-generated method stub
-		diff[1].append(lb.toArray(new Character[lb.size()]));
+		for (Character ch: lb) {
+			diff[1].append(ch);
+		}
 	}
 	
 	public String getDiffAString() {

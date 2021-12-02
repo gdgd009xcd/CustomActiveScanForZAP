@@ -2,6 +2,11 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 10 - 2021-12-02
+### v0.5.4
+- improve: Stop [Stop Active Scan] button is now supported
+- maintenance: This repository is now checked at lgtm.com
+
 ## 9 - 2021-12-01
 ### v0.5.3
 - maintenance: removed some redundant codes

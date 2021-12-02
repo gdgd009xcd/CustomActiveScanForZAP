@@ -325,6 +325,14 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.falseHasSQLError.evidence");
                     raiseAlertErrorBased(Alert.RISK_MEDIUM, Alert.CONFIDENCE_MEDIUM, i > 0 ? true : false, truemessage,origParamName, null, null, falseParamName, falseValue, null, null, evidence, ext1FoundErrorMsg);
                 }
+                if (isStop()) {
+                    LOGGER4J.info("scan stopped by user request");
+                    return;
+                }
+            }
+            if (isStop()) {
+                LOGGER4J.info("scan stopped by user request");
+                return;
             }
         }
     }
