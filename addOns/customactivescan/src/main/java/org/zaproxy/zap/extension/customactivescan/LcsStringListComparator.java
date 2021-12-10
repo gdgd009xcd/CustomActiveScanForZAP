@@ -10,7 +10,6 @@ public class LcsStringListComparator extends LcsOnp<String>{
 	int MINROWLENGTH = 500; // if contents line count < MINROWLENGTH, then split contents by whitespace.
 	int EXTRACTLCS_UNIT = 500000; // extractLCS row unit.
 	int MINWORDCNT = 50; // if word count of splitted response fewer than this value, then split again with WHITESPCPLUS delimiter.
-	public static int MINCHARSIZE = 0; // if response string size is less than MINCHARSIZE, then  calculate LCS  in character units
 
 	// default split delimiter.
 	String WHITESPC = "[ \r\t\n]+";
@@ -37,17 +36,6 @@ public class LcsStringListComparator extends LcsOnp<String>{
 		
 		if(b==null) {
 			b = "";
-		}
-
-		// currently, below CharacterList base difference calculating code is NO used because detection may be fail.
-		// response string size is less than MINCHARSIZE, then  calculate LCS  in character units
-		if (a.length() < MINCHARSIZE && b.length() < MINCHARSIZE) {
-			CharacterList ca = new CharacterList(a);
-			CharacterList cb = new CharacterList(b);
-			LcsCharacterList clcs = new LcsCharacterList();
-			int cpercent = calcPercentChar(ca, cb,  clcs) ;
-			LCSresult.initLcsCharacterList(clcs);
-			return cpercent;
 		}
 
 		ListStringFactory w_lsfctA = new ListStringFactory(WHITESPC, EXTRACTLCS_UNIT);
@@ -116,16 +104,6 @@ public class LcsStringListComparator extends LcsOnp<String>{
 			b = "";
 		}
 
-		// response string size is less than MINCHARSIZE, then  calculate LCS  in character units
-		if (a.length() < MINCHARSIZE && b.length() < MINCHARSIZE) {
-			CharacterList ca = new CharacterList(a);
-			CharacterList cb = new CharacterList(b);
-			LcsCharacterList clcs = new LcsCharacterList();
-			int cpercent = calcPercentChar(ca, cb,  clcs) ;
-			result.initLcsCharacterList(clcs);
-			return cpercent;
-		}
-
 		ListStringFactory lsfctA = new ListStringFactory("[\n]+", -1);
 		ListStringFactory lsfctB = new ListStringFactory("[\n]+", -1);
 
@@ -178,5 +156,33 @@ public class LcsStringListComparator extends LcsOnp<String>{
 		return lpercent;
 	}
 
+	/**
+	 * compare Strings character by character
+	 *
+	 * @param a
+	 * @param b
+	 * @param result - Longest Common Subsequence
+	 * @return match rate 0-1000 (100.0 % * 10)
+	 */
+	int compareStringByChar(String a, String b, LcsStringList result) {
 
+		if (result == null) {
+			result = new LcsStringList();
+		}
+
+		if (a == null) {
+			a = "";
+		}
+
+		if (b == null) {
+			b = "";
+		}
+
+		CharacterList ca = new CharacterList(a);
+		CharacterList cb = new CharacterList(b);
+		LcsCharacterList clcs = new LcsCharacterList();
+		int cpercent = calcPercentChar(ca, cb, clcs);
+		result.initLcsCharacterList(clcs);
+		return cpercent;
+	}
 }

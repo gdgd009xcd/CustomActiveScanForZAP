@@ -2,6 +2,11 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 11 - 2021-12-11
+### v0.5.5
+- bugfix: There were false positive in the judgement code in 3-1,3-2
+- maintenance: Updated log4j to the latest version
+
 ## 10 - 2021-12-02
 ### v0.5.4
 - improve: Stop [Stop Active Scan] button is now supported

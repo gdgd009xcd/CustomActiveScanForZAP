@@ -542,4 +542,8 @@ public class Utilities {
         value = value.replaceAll("&([a-z]+|#[0-9]+|#x[0-9a-fA-F]+);", "&");
         return value;
     }
+
+    public static String replaceCtrlCodesToStringRep(String value) {
+        return value.replaceAll("\n", "<LF>").replaceAll("\r", "<CR>");
+    }
 }
