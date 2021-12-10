@@ -731,8 +731,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         String maskedbody = resBodyString;
         if (responseTotalSize < MAXMASKBODYSIZE) {
             Matcher valueMatcher;
-            if (responseHeader.hasContentType("json")
-                    || responseTotalSize >= 0) {
+            if (responseHeader.hasContentType("json")) {
                 valueMatcher = quotedValuePattern.matcher(resBodyString);
             } else {
                 valueMatcher = inputTagQuotedValuePattern.matcher(resBodyString);
