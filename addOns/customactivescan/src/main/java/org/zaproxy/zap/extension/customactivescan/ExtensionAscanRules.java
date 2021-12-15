@@ -19,7 +19,7 @@
 package org.zaproxy.zap.extension.customactivescan;
 
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
+// import org.apache.logging.log4j.core.LoggerContext;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control.Mode;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
@@ -75,6 +75,7 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	@Override
 	public void hook(ExtensionHook hook) {
 		super.hook(hook);
+		/**
 		File log4jdir =
 				new File(ZAPHOME_DIR); // $HOME/.ZAP or $HOME/.ZAP_D
 		String fileName = "log4j2.xml";
@@ -91,5 +92,6 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 		} else {
 			System.out.println("log4j file not found.:" + logFile.getPath());
 		}
+		 **/
 	}
 }

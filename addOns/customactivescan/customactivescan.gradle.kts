@@ -1,6 +1,6 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.5.5"
+version = "0.5.6"
 description = "a Active Scanner with custmizable rules"
 
 val jar by tasks.getting(Jar::class) {
@@ -12,7 +12,7 @@ val jar by tasks.getting(Jar::class) {
 zapAddOn {
     addOnName.set("CustomActiveScanForZAP")
     addOnStatus.set(AddOnStatus.ALPHA)
-    zapVersion.set("2.8.0")
+    zapVersion.set("2.11.0")
 
     manifest {
         author.set("gdgd009xcd")
@@ -26,8 +26,6 @@ zapAddOn {
 
 dependencies {
     implementation("com.google.code.gson:gson:2.8.6")
-    implementation("org.apache.logging.log4j:log4j-core:2.15.0")
-
     testImplementation("org.apache.commons:commons-lang3:3.9")
 }
 

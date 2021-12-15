@@ -608,10 +608,17 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
         //raise the alert, and save the attack string for the "Authentication Bypass" alert, if necessary
         String sqlInjectionAttack = "true[" + extraTrueValue +"]false[" + extraFalseValue + "]" + (errorValue == null ? "" : "error[" + errorValue + "]");
-        bingo(risk, confidence, getName(), getDescription(),
-                null, //url
-                origParamName, sqlInjectionAttack,
-                extraInfo, getSolution(), evidence, message);
+
+        newAlert()
+                .setRisk(risk)
+                .setConfidence(confidence)
+                .setParam(origParamName)
+                .setAttack(sqlInjectionAttack)
+                .setOtherInfo(extraInfo)
+                .setEvidence(evidence)
+                .setMessage(message)
+                .raise();
+
     }
 
     /**
@@ -658,10 +665,16 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         String sqlInjectionAttack = (extraTrueValue == null ? "" : "true[" + extraTrueValue + "] ")
                 + (extraFalseValue == null ? "" : "false[" + extraFalseValue + "] ")
                 + (extraErrorValue == null ? "" : "error[" + extraErrorValue + "]");
-        bingo(risk, confidence, getName(), getDescription(),
-                null, //url
-                origParamName, sqlInjectionAttack,
-                extraInfo, getSolution(), evidence, message);
+
+        newAlert()
+                .setRisk(risk)
+                .setConfidence(confidence)
+                .setParam(origParamName)
+                .setAttack(sqlInjectionAttack)
+                .setOtherInfo(extraInfo)
+                .setEvidence(evidence)
+                .setMessage(message)
+                .raise();
     }
 
     /**

@@ -47,6 +47,9 @@ LCS remove the different token values ​​from the two responses as follows:
   
 [See Details](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/99.1.-SQL-injection-detection-test-results-with-ActiveScan)
 
+## Prerequisite
+
+* OWASP ZAP ver 2.11.0 or later
 
 ## Download & Building
 
