@@ -2,6 +2,11 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 13 - 2022-06-20
+### v0.5.7
+- maintenance: setting limit on debug print string value and convert control codes to printable string(represented as a URLencoded string) 
+- maintenance: updated gson library to the latest version
+
 ## 12 - 2021-12-15
 ### v0.5.6
 - maintenance: removed the log4j2 library that this add-on contains

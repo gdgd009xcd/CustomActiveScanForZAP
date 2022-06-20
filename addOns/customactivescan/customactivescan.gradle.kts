@@ -1,6 +1,6 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.5.6"
+version = "0.5.7"
 description = "a Active Scanner with custmizable rules"
 
 val jar by tasks.getting(Jar::class) {
@@ -25,7 +25,7 @@ zapAddOn {
 }
 
 dependencies {
-    implementation("com.google.code.gson:gson:2.8.6")
+    implementation("com.google.code.gson:gson:2.9.0")
     testImplementation("org.apache.commons:commons-lang3:3.9")
 }
 
