@@ -26,6 +26,7 @@ import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.extension.SessionChangedListener;
 import org.parosproxy.paros.model.Session;
+import org.zaproxy.zap.extension.customactivescan.view.MainWorkPanelTab;
 
 import java.io.File;
 import java.net.URI;
@@ -39,6 +40,12 @@ import java.net.URI;
 public class ExtensionAscanRules extends ExtensionAdaptor {
 
 	public static final String ZAPHOME_DIR = Constant.getZapHome();
+	private static final String ZAP_RESOURCES_ROOT =
+			"org/zaproxy/zap/extension/customactivescan/resources";// RESOURCE root is relative path from addOns/customactivescan/src/main/resources
+
+	private static final String ZAP_RESOURCES_ROOT_ABSPATH = "/" + ZAP_RESOURCES_ROOT;
+	public static final String ZAP_ICONS = ZAP_RESOURCES_ROOT_ABSPATH + "/icons";// you can access any files under ZAP_ICONS
+																				 // by code like yourClassName.class.getResource(ZAP_ICONS + "/pause.png")
 
 	@Override
 	public String getAuthor() {
@@ -75,23 +82,8 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	@Override
 	public void hook(ExtensionHook hook) {
 		super.hook(hook);
-		/**
-		File log4jdir =
-				new File(ZAPHOME_DIR); // $HOME/.ZAP or $HOME/.ZAP_D
-		String fileName = "log4j2.xml";
-		File logFile = new File(log4jdir, fileName);
-		if (logFile.exists()) {
-			LoggerContext context = (LoggerContext) LogManager.getContext(false);
-			URI logURI = context.getConfigLocation();
-			if (logURI == null) {
-				context.setConfigLocation(logFile.toURI());
-				System.out.println("log4j: set:" + logFile.getPath());
-			} else {
-				System.out.println("log4j: get URI:" + logURI.toString());
-			}
-		} else {
-			System.out.println("log4j file not found.:" + logFile.getPath());
-		}
-		 **/
+		hook
+				.getHookView()
+				.addWorkPanel(new MainWorkPanelTab(hook));
 	}
 }
