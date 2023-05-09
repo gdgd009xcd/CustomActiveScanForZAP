@@ -125,7 +125,7 @@ public class RegexTestDialog extends GridBagJDialog {
     }
 
     @Override
-    protected Component createMainPanelContent() {
+    protected Component createMainPanelContent(Component mainPanel) {
         return createRegexTestDialogContent();
     }
 

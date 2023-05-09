@@ -42,7 +42,12 @@ public abstract class GridBagJDialog extends JDialog {
      */
     public GridBagJDialog(Window owner, String title, ModalityType modalityType, int fill) {
         super(owner, title, modalityType);
-        init(fill, -1, createMainPanelContent());
+        init(fill, -1, createMainPanelContent(null));
+    }
+
+    public GridBagJDialog(Component mainPanel, String title, ModalityType modalityType, int fill) {
+        super(SwingUtilities.windowForComponent(mainPanel), title, modalityType);
+        init(fill, -1, createMainPanelContent(mainPanel));
     }
 
     /**
@@ -73,7 +78,7 @@ public abstract class GridBagJDialog extends JDialog {
      */
     public GridBagJDialog(Window owner, String title, ModalityType modalityType, int fill, int anchor) {
         super(owner, title, modalityType);
-        init(fill, anchor, createMainPanelContent());
+        init(fill, anchor, createMainPanelContent(null));
     }
 
     /**
@@ -82,18 +87,20 @@ public abstract class GridBagJDialog extends JDialog {
      * Caution: you MUST NOT initialize member parameter that are set in createMainPanelContent method.
      * because createMainPanelContent is called before member parameter initialization process.
      *
-     * class yourDialog extends GridBagDialog {
+     * class yourDialog extends GridBagJDialog {
      *     private JTextPane regexTextPane;// Ok. this parameter value is set in createMainPanelContent method.
      *     private JTextPane regexTextPane = null;// AAUGH. NG. this value will be null after createMainPanelContent is called
+     *     private JPanel mainPanel;
      *
-     *     public yourDialog(Window owner, String title, ModalityType modalityType) {
-     *         super(owner, title, modalityType, GridBagConstraints.BOTH);
+     *     public yourDialog(Component mainPanelComponent, String title, ModalityType modalityType) {
+     *         super(mainPanelComponent, title, modalityType, GridBagConstraints.BOTH);
      *     }
      *
      *     @Override
-     *     protected Component createMainPanelContent() {
+     *     protected Component createMainPanelContent(Component mainPanelComponent) {
+     *         this.mainPanel = (JPanel) mainPanelComponent;
      *         ...
-     *         this.regexTextPane = new JTextPane();// regexTextPane is set BEFORE initialization in parameter definition.
+     *         this.regexTextPane = new JTextPane();// regexTextPane is set BEFORE initialization in class parameter definition.
      *         ...
      *     }
      * }
@@ -184,9 +191,11 @@ public abstract class GridBagJDialog extends JDialog {
     /**
      * implement mainPanelContent component<br>
      *
-     * @return Component
+     * @param mainPanel - specify mainPanel component from which this dialog opens
+     * @return
      */
-    protected abstract Component createMainPanelContent();
+
+    protected abstract Component createMainPanelContent(Component mainPanel);
 
     /**
      * OK button Action<br>

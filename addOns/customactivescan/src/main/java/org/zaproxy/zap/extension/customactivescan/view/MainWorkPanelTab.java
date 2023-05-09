@@ -2,6 +2,7 @@ package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.ExtensionHook;
+import org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules;
 import org.zaproxy.zap.extension.tab.Tab;
 
 import javax.swing.*;
@@ -11,10 +12,11 @@ import java.awt.*;
 
 @SuppressWarnings("serial")
 public class MainWorkPanelTab extends AbstractPanel implements Tab {
-    public MainWorkPanelTab(ExtensionHook exhook) {
+    public MainWorkPanelTab(ExtensionHook exhook, ExtensionAscanRules extensionAscan) {
         setLayout(new CardLayout());
         this.setName("CustomActiveScan");
         CustomScanMainPanel mainPanel = new CustomScanMainPanel();
+        extensionAscan.setCustomScanMainPanel(mainPanel);
         Border mainBorder = new LineBorder(Color.RED, 1);
         mainPanel.setBorder(mainBorder);
         // set scrolledwindow. if you do not specify scrolledwindow, then mainPanel window size is shrinked(packed) with WorkPanelSize.

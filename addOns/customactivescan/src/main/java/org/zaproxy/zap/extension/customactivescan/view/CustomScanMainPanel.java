@@ -1,6 +1,7 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanDataModel;
+import org.zaproxy.zap.extension.customactivescan.model.CustomScanJSONData;
 import org.zaproxy.zap.extension.customactivescan.model.InjectionPatterns;
 
 import javax.swing.*;
@@ -18,6 +19,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -29,24 +31,31 @@ public class CustomScanMainPanel extends JPanel {
             org.apache.logging.log4j.LogManager.getLogger();
     private JLabel ruleTypeLabel = null;
     private JScrollPane rulePatternScroller = null;
-    private int selectedScanRuleIndex = 0;
+    private int selectedScanRuleIndex = -1;
     private CustomScanDataModel scanDataModel;
     private boolean showSaveFileDialog = false;
     private JCheckBox scanLogCheckBox = null;
+    private boolean ruleComboBoxActionIsNoNeedSave;
     JPopupMenu flagPatternPopupMenu = null;
     JMenuItem flagPatternMod;
     JList<String> flagPatternList;
     DefaultListModel<String> flagPatternListModel;
+    JComboBox<String> ruleComboBox;
 
     public CustomScanMainPanel() {
         super(new GridBagLayout());
 
-        showSaveFileDialog = false;
+        this.showSaveFileDialog = false;
+        this.ruleComboBoxActionIsNoNeedSave = false;
+
         // load scan configration data.
         scanDataModel = new CustomScanDataModel();
-        scanDataModel.createSampleData();
 
-        CustomScanDataModel.ScanRule selectedScanRule = getSelectedScanRule();
+        int ruleCount = scanDataModel.getScanRuleCount();
+        if (ruleCount > 0) {
+            selectedScanRuleIndex = 0;
+        }
+        CustomScanJSONData.ScanRule selectedScanRule = getSelectedScanRule();
 
         // create GUI
         GridBagLayout gridBagLayout = (GridBagLayout) getLayout();
@@ -64,8 +73,22 @@ public class CustomScanMainPanel extends JPanel {
         addRuleMenuItem.addActionListener(e ->{
             addRuleActionPerformed(e);
         });
+        JMenuItem addRuleCopyFromMenuItem = new JMenuItem("Copy Rule");
+        scanRuleMenuTitle.add(addRuleCopyFromMenuItem);
+        addRuleCopyFromMenuItem.addActionListener(e -> {
+            copyRuleActionPerformed(e);
+        });
+        JMenuItem delRuleMenuItem = new JMenuItem("Del Rule");
+        scanRuleMenuTitle.add(delRuleMenuItem);
+        delRuleMenuItem.addActionListener(e ->{
+            delRuleActionPerformed(e);
+        });
 
-        ruleTypeLabel = new JLabel(selectedScanRule.getRuleTypeName());
+        if (selectedScanRule != null) {
+            ruleTypeLabel = new JLabel(selectedScanRule.getRuleTypeName());
+        } else {
+            ruleTypeLabel = new JLabel("");
+        }
         LineBorder ruleTypeLabelBorderLine = new LineBorder(Color.BLACK, 1, true);
         ruleTypeLabel.setBorder(ruleTypeLabelBorderLine);
         JLabel spaceLabel = new JLabel(" ");
@@ -75,8 +98,8 @@ public class CustomScanMainPanel extends JPanel {
         scanRuleMenuBarPanel.add(scanRuleMenuBar, BorderLayout.LINE_START);
 
         // scanRule Combobox
-        JComboBox<String> ruleComboBox = new JComboBox<>();
-        for(CustomScanDataModel.ScanRule rule: scanDataModel.scanRuleList) {
+        ruleComboBox = new JComboBox<>();
+        for(CustomScanJSONData.ScanRule rule: scanDataModel.getScanRuleList()) {
             ruleComboBox.addItem(rule.patterns.name);
         }
 
@@ -148,18 +171,33 @@ public class CustomScanMainPanel extends JPanel {
         scanLogPanel.setBorder(scanLogPanelTitledBorder);
 
         scanLogCheckBox = new JCheckBox("Response results output to \"ScanLog\" window");
-        scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
-        scanLogCheckBox.addItemListener(e -> {
-            CustomScanDataModel.ScanRule currentScanRule = getSelectedScanRule();
-            currentScanRule.doScanLogOutput = e.getStateChange() == ItemEvent.SELECTED ? true : false;
+        if (selectedScanRule != null) {
+            scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
+        } else {
+            scanLogCheckBox.setSelected(false);
+        }
+
+        // you should use addActionListner method if you want to popup dialog in listener method.
+        // DO NOT USE addItemListener. it will occur complicated problem with using dialog.
+        scanLogCheckBox.addActionListener(e -> {
+            CustomScanJSONData.ScanRule currentScanRule = getSelectedScanRule();
+            if (currentScanRule != null && !this.ruleComboBoxActionIsNoNeedSave) {
+                LOGGER4J.debug("START scanLogCheckBox addActionListener called.");
+                currentScanRule.doScanLogOutput = this.scanLogCheckBox.isSelected();
+                if(!this.saveToNewFileIfNoSaved()) {// The scanLog CheckBox is focusout when the save dialog appears
+                    this.scanDataModel.saveModel();
+                }
+                LOGGER4J.debug("END scanLogCheckBox addActionListener called.");
+            }
         });
         scanLogPanel.add(scanLogCheckBox, BorderLayout.PAGE_START);
 
         // Regexes for detecting keyword in Http response.
-        String[] initflagData = {"ORA-", "Syntax", "Error"};
         this.flagPatternListModel = new DefaultListModel<>();
-        for(String data: initflagData) {
-            this.flagPatternListModel.addElement(data);
+        if (selectedScanRule != null) {
+            for (String data : selectedScanRule.flagResultItems) {
+                this.flagPatternListModel.addElement(data);
+            }
         }
         this.flagPatternList = new JList<>(this.flagPatternListModel);
         this.flagPatternPopupMenu = new JPopupMenu();
@@ -178,6 +216,7 @@ public class CustomScanMainPanel extends JPanel {
             int selectedIndex = this.flagPatternList.getSelectedIndex();
             if (selectedIndex != -1) {
                 this.flagPatternListModel.remove(selectedIndex);
+                this.updateFlagResultItemsWithFlagPatternListModel();
             }
         });
         this.flagPatternPopupMenu.add(flagPatternDel);
@@ -292,41 +331,46 @@ public class CustomScanMainPanel extends JPanel {
 
     }
 
-    private void createRuleTable(CustomScanDataModel.ScanRule selectedScanRule) {
+    private void createRuleTable(CustomScanJSONData.ScanRule selectedScanRule) {
         if (this.rulePatternScroller != null) {
-            ruleTypeLabel.setText(selectedScanRule.getRuleTypeName());
             DefaultTableModel defaultTableModel = new DefaultTableModel();
-            List<String[]> tableDataList = new ArrayList<>();
+            if (selectedScanRule != null) {
+                ruleTypeLabel.setText(selectedScanRule.getRuleTypeName());
+                List<String[]> tableDataList = new ArrayList<>();
 
-            if (scanLogCheckBox != null) {
-                scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
-            }
-
-            if ( selectedScanRule.ruleType == CustomScanDataModel.RuleType.SQL) {
-
-                String[] columnNames = {"TrueValue", "FalseValue", "ErrorValue", "TrueName", "FalseName", "ErrorName"};
-                for(InjectionPatterns.TrueFalsePattern patternRow: selectedScanRule.patterns.patterns) {
-                    String[] rowData = {patternRow.trueValuePattern,
-                            patternRow.falseValuePattern,
-                            patternRow.errorValuePattern,
-                            patternRow.trueNamePattern,
-                            patternRow.falseNamePattern,
-                            patternRow.errorNamePattern
-                    };
-                    tableDataList.add(rowData);
+                if (scanLogCheckBox != null) {
+                    LOGGER4J.debug("scanLogCheckBox setSelected in createRuleTable");
+                    scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
                 }
-                String[][] tableDataArray = tableDataList.toArray(new String[0][0]);// specified zero size array means that  new array will be allocated
-                defaultTableModel.setDataVector(tableDataArray, columnNames);
-            } else { // RuleType.PenTest
-                String[] columnNames = {"trueValue"};
-                for(InjectionPatterns.TrueFalsePattern patternRow: selectedScanRule.patterns.patterns) {
-                    String[] rowData = {
-                            patternRow.trueValuePattern
-                    };
-                    tableDataList.add(rowData);
+
+                if (selectedScanRule.ruleType == CustomScanJSONData.RuleType.SQL) {
+
+                    String[] columnNames = {"TrueValue", "FalseValue", "ErrorValue", "TrueName", "FalseName", "ErrorName"};
+                    for (InjectionPatterns.TrueFalsePattern patternRow : selectedScanRule.patterns.patterns) {
+                        String[] rowData = {patternRow.trueValuePattern,
+                                patternRow.falseValuePattern,
+                                patternRow.errorValuePattern,
+                                patternRow.trueNamePattern,
+                                patternRow.falseNamePattern,
+                                patternRow.errorNamePattern
+                        };
+                        tableDataList.add(rowData);
+                    }
+                    String[][] tableDataArray = tableDataList.toArray(new String[0][0]);// specified zero size array means that  new array will be allocated
+                    defaultTableModel.setDataVector(tableDataArray, columnNames);
+                } else { // RuleType.PenTest
+                    String[] columnNames = {"trueValue"};
+                    for (InjectionPatterns.TrueFalsePattern patternRow : selectedScanRule.patterns.patterns) {
+                        String[] rowData = {
+                                patternRow.trueValuePattern
+                        };
+                        tableDataList.add(rowData);
+                    }
+                    String[][] tableDataArray = tableDataList.toArray(new String[0][0]);// specified zero size array means that  new array will be allocated
+                    defaultTableModel.setDataVector(tableDataArray, columnNames);
                 }
-                String[][] tableDataArray = tableDataList.toArray(new String[0][0]);// specified zero size array means that  new array will be allocated
-                defaultTableModel.setDataVector(tableDataArray, columnNames);
+            } else {
+                ruleTypeLabel.setText("");
             }
             JTable rulePatternTable = new CustomJTable(this, this.rulePatternScroller, defaultTableModel);
             // disable column move(reordering)
@@ -363,11 +407,44 @@ public class CustomScanMainPanel extends JPanel {
 
     public void addRuleActionPerformed(ActionEvent e) {
         LOGGER4J.debug("addRuleActionPerformed");
-        new AddRuleDialog(SwingUtilities.windowForComponent(this), "AddRule", Dialog.ModalityType.DOCUMENT_MODAL).setVisible(true);
+        new AddRuleDialog(this, "AddRule", Dialog.ModalityType.DOCUMENT_MODAL).setVisible(true);
+    }
+
+    public void copyRuleActionPerformed(ActionEvent e) {
+        LOGGER4J.debug("copyRuleActionPerformed");
+        new AddRuleDialogByCopy(this, "CopyRule", Dialog.ModalityType.DOCUMENT_MODAL).setVisible(true);
+    }
+
+    public void delRuleActionPerformed(ActionEvent e) {
+        String selectedItem = (String)this.ruleComboBox.getSelectedItem();
+        int optionNo = JOptionPane.showConfirmDialog(this, "Delete Rule[" + selectedItem + "] anyway?", "Delete Rule", JOptionPane.YES_NO_OPTION);
+        switch(optionNo) {
+            case JOptionPane.YES_OPTION:
+                int selectedRuleIndex = this.ruleComboBox.getSelectedIndex();
+                int itemCount = this.ruleComboBox.getItemCount();
+                LOGGER4J.debug("itemCount:" + itemCount + " delIndex:" + selectedRuleIndex);
+                this.ruleComboBox.removeItemAt(selectedRuleIndex);// must be used method removeItemAt but not remove.
+                this.scanDataModel.removeScanRule(selectedRuleIndex);
+                int previousRuleIndex = (selectedRuleIndex - 1) < 0 ? 0 : (selectedRuleIndex - 1);
+                int ruleCount = ruleComboBox.getItemCount();
+                if (ruleCount > 0) {
+                    this.ruleComboBox.setSelectedIndex(previousRuleIndex);
+                } else {
+                    this.selectedScanRuleIndex = -1;
+                    createRuleTable(null);
+                }
+                if(!this.saveToNewFileIfNoSaved()) {
+                    scanDataModel.saveModel();
+                }
+                break;
+            case JOptionPane.NO_OPTION:
+            default:
+                break;
+        }
     }
 
     public void addFlagPatternActionPerformed(ActionEvent e, boolean isAddAction) {
-        AddFlagRegex addFlagRegexDialog = new AddFlagRegex(SwingUtilities.windowForComponent(this), "Add/Mod flag result item regex", Dialog.ModalityType.DOCUMENT_MODAL);
+        AddFlagRegex addFlagRegexDialog = new AddFlagRegex(this, "Add/Mod flag result item regex", Dialog.ModalityType.DOCUMENT_MODAL);
         addFlagRegexDialog.setFlagPatternList(this.flagPatternList, isAddAction);
         addFlagRegexDialog.setVisible(true);
     }
@@ -377,12 +454,21 @@ public class CustomScanMainPanel extends JPanel {
         JComboBox<String> cb = (JComboBox<String>)e.getSource();
         String actionCommandString = e.getActionCommand();
 
-        LOGGER4J.debug("ruleComboBoxAction[" + e.getActionCommand() + "] item:" + cb.getSelectedItem() + " item index:" + cb.getSelectedIndex());
+        LOGGER4J.debug("ruleComboBoxAction[" + e.getActionCommand() + "] item:"
+                + cb.getSelectedItem() + " item index:" + cb.getSelectedIndex() + "selectedRuleIndex:" + selectedScanRuleIndex);
 
         if (selectedScanRuleIndex != cb.getSelectedIndex()) {
+            this.ruleComboBoxActionIsNoNeedSave = true;
             selectedScanRuleIndex = cb.getSelectedIndex();
-            CustomScanDataModel.ScanRule selectedScanRule = scanDataModel.getScanRule(selectedScanRuleIndex);
+            CustomScanJSONData.ScanRule selectedScanRule = scanDataModel.getScanRule(selectedScanRuleIndex);
             createRuleTable(selectedScanRule);
+            LOGGER4J.debug("scanLogCheckBox setSelected in ruleComboBoxActionPerformed");
+            this.scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
+            this.flagPatternListModel.clear();
+            for (String data : selectedScanRule.flagResultItems) {
+                this.flagPatternListModel.addElement(data);
+            }
+            this.ruleComboBoxActionIsNoNeedSave = false;
         }
     }
 
@@ -406,11 +492,24 @@ public class CustomScanMainPanel extends JPanel {
         LOGGER4J.debug("ruleTableChanged: type:" + eType + " col:" + e.getColumn() + " Row From:" + e.getFirstRow() + " Row To:" + e.getLastRow());
     }
 
-    public void rulePatternTableFocusLost(boolean isEditing) {
-        if (isEditing && !scanDataModel.isSaved()) {
+    public boolean saveToNewFileIfNoSaved() {
+        boolean isSavedToNewFile = false;
+        if (!scanDataModel.isSaved()) {
             showSaveFileDialog = true;
             LOGGER4J.debug("showSaveDialog=true");
-            Path relativePath = Paths.get("");// current directory relative path
+            File cfile = new File(scanDataModel.getSaveFileName());
+            String dirname = cfile.getParent();
+            if (dirname == null) {
+                cfile = null;
+                dirname = "";
+            }
+
+            Path relativePath = Paths.get(dirname);// specified directory relative path
+            if (!Files.exists(relativePath)) {
+                dirname = "";// current directory.
+                cfile = null;
+                relativePath = Paths.get(dirname);
+            }
             Path absolutePath = relativePath.toAbsolutePath();
             String absolutePathString = absolutePath.toString();
             JFileChooser jfc = new JFileChooser(absolutePathString) {
@@ -433,19 +532,34 @@ public class CustomScanMainPanel extends JPanel {
             };
             FileFilterForJSON pFilter = new FileFilterForJSON();
             jfc.setFileFilter(pFilter);
+            jfc.setDialogTitle("CustomActiveScan Save");
+            if (cfile != null) {
+                jfc.setSelectedFile(cfile);
+            }
 
             LOGGER4J.debug("start Popup Save Dialog");
-            if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {// OK button
                 File file = jfc.getSelectedFile();
                 String name = file.getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
-                if(!pFilter.accept(file)){
+                if (!pFilter.accept(file)) {
                     name += ".json";
                 }
-                scanDataModel.saveToFile(name);
+                scanDataModel.saveModelToNewFile(name);
+                isSavedToNewFile = scanDataModel.isSaved();
+            } else { // cancel button
+                isSavedToNewFile = true;
             }
 
             showSaveFileDialog = false;
             LOGGER4J.debug("showSaveDialog=false");
+        }
+
+        return isSavedToNewFile;
+    }
+
+    public void rulePatternTableFocusLost(boolean isEditing) {
+        if (isEditing) {
+            saveToNewFileIfNoSaved();
         }
     }
 
@@ -461,9 +575,9 @@ public class CustomScanMainPanel extends JPanel {
      */
     public void updateModelWithJTableModel(TableModel jTableModel) {
         int rowCount = jTableModel.getRowCount();
-        CustomScanDataModel.ScanRule selectedScanRule = scanDataModel.getScanRule(selectedScanRuleIndex);
+        CustomScanJSONData.ScanRule selectedScanRule = scanDataModel.getScanRule(selectedScanRuleIndex);
         selectedScanRule.patterns.clearPatterns();
-        if ( selectedScanRule.ruleType == CustomScanDataModel.RuleType.SQL) {
+        if ( selectedScanRule.ruleType == CustomScanJSONData.RuleType.SQL) {
             for(int i = 0; i < rowCount; i++) {
                 selectedScanRule.patterns.addPattern(
                         (String)jTableModel.getValueAt(i, 0),
@@ -486,10 +600,28 @@ public class CustomScanMainPanel extends JPanel {
                 );
             }
         }
+        if(!this.saveToNewFileIfNoSaved()) {
+            scanDataModel.saveModel();
+        }
 
     }
 
-    public CustomScanDataModel.ScanRule getSelectedScanRule() {
+    public void updateFlagResultItemsWithFlagPatternListModel(){
+        CustomScanJSONData.ScanRule selectedScanRule = getSelectedScanRule();
+        if (selectedScanRule != null) {
+            int size = this.flagPatternListModel.size();
+            selectedScanRule.flagResultItems.clear();
+            for(int i = 0; i < size; i++){
+                String flagPatternString = this.flagPatternListModel.get(i);
+                selectedScanRule.flagResultItems.add(flagPatternString);
+            }
+            if(!this.saveToNewFileIfNoSaved()) {
+                scanDataModel.saveModel();
+            }
+        }
+    }
+
+    public CustomScanJSONData.ScanRule getSelectedScanRule() {
         return scanDataModel.getScanRule(selectedScanRuleIndex);
     }
 
@@ -503,4 +635,60 @@ public class CustomScanMainPanel extends JPanel {
             this.flagPatternPopupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         }
     }
+
+    public boolean ruleNameIsExistInModel(String ruleName, boolean exceptSample) {
+        return this.scanDataModel.ruleNameIsExistInModel(ruleName, exceptSample);
+    }
+
+    public void addNewScanRule(String ruleName, CustomScanJSONData.RuleType ruleType, boolean scanLogIsSelected) {
+        CustomScanJSONData.ScanRule scanRule = new CustomScanJSONData.ScanRule();
+        scanRule.ruleType = ruleType;
+        scanRule.doScanLogOutput = scanLogIsSelected;
+        scanRule.patterns.name = ruleName;
+        scanRule.patterns.addPattern("", "", "", "", "", "");
+        this.scanDataModel.addNewScanRule(scanRule);
+        if(!this.saveToNewFileIfNoSaved()) {
+            scanDataModel.saveModel();
+        }
+        this.ruleComboBox.addItem(ruleName);// must do this after addNewScanRule method is called. because addItem method invoke ruleComboBoxActionPerformed method.
+        // must do following codes. because when ruleComboBox itemCount is larger than 1, then addItem method does not invoke ruleComboBoxActionPerformed.
+        int addedRuleIndex = this.ruleComboBox.getItemCount() - 1;
+        this.ruleComboBox.setSelectedIndex(addedRuleIndex);
+    }
+
+    public boolean addNewScanRuleByCopyFrom(String ruleName, int CopyFromIndexOfScanRule) {
+        CustomScanJSONData.ScanRule rule = null;
+        if (CopyFromIndexOfScanRule < scanDataModel.getScanRuleCount()) {
+            rule = scanDataModel.getScanRule(CopyFromIndexOfScanRule);
+        } else if (CopyFromIndexOfScanRule < scanDataModel.getScanRuleCount() + 2) {
+            int sampleIndex = CopyFromIndexOfScanRule - scanDataModel.getScanRuleCount();
+            rule = scanDataModel.getSampleScanRuleList().get(sampleIndex);
+        }
+
+        if (rule != null) {
+            CustomScanJSONData.ScanRule newRule = rule.clone();
+            newRule.setName(ruleName);
+            this.scanDataModel.addNewScanRule(newRule);
+            if(!this.saveToNewFileIfNoSaved()) {
+                scanDataModel.saveModel();
+            }
+            this.ruleComboBox.addItem(ruleName);// must do this after addNewScanRule method is called. because addItem method invoke ruleComboBoxActionPerformed method.
+            // must do following codes. because when ruleComboBox itemCount is larger than 1, then addItem method does not invoke ruleComboBoxActionPerformed.
+            int addedRuleIndex = this.ruleComboBox.getItemCount() - 1;
+            this.ruleComboBox.setSelectedIndex(addedRuleIndex);
+            return true;
+        }
+
+        return false;
+    }
+
+    public List<CustomScanJSONData.ScanRule> getScanRuleList() {
+        return this.scanDataModel.getScanRuleList();
+    }
+
+    public List<CustomScanJSONData.ScanRule> getSampleScanRuleList() {
+        return this.scanDataModel.getSampleScanRuleList();
+    }
+
+
 }

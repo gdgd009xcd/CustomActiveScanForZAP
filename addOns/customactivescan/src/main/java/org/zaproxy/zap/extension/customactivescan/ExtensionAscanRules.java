@@ -18,18 +18,17 @@
 
 package org.zaproxy.zap.extension.customactivescan;
 
-import org.apache.logging.log4j.LogManager;
-// import org.apache.logging.log4j.core.LoggerContext;
 import org.parosproxy.paros.Constant;
-import org.parosproxy.paros.control.Control.Mode;
+import org.parosproxy.paros.core.scanner.HostProcess;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
-import org.parosproxy.paros.extension.SessionChangedListener;
-import org.parosproxy.paros.model.Session;
+import org.zaproxy.zap.extension.customactivescan.view.CustomScanMainPanel;
 import org.zaproxy.zap.extension.customactivescan.view.MainWorkPanelTab;
+import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
+import org.zaproxy.zap.extension.customactivescan.view.ScanLogPanelFrame;
 
-import java.io.File;
-import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A new Extension AscanRules
@@ -39,6 +38,9 @@ import java.net.URI;
  */
 public class ExtensionAscanRules extends ExtensionAdaptor {
 
+	private final static org.apache.logging.log4j.Logger LOGGER4J =
+			org.apache.logging.log4j.LogManager.getLogger();
+
 	public static final String ZAPHOME_DIR = Constant.getZapHome();
 	private static final String ZAP_RESOURCES_ROOT =
 			"org/zaproxy/zap/extension/customactivescan/resources";// RESOURCE root is relative path from addOns/customactivescan/src/main/resources
@@ -46,6 +48,21 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	private static final String ZAP_RESOURCES_ROOT_ABSPATH = "/" + ZAP_RESOURCES_ROOT;
 	public static final String ZAP_ICONS = ZAP_RESOURCES_ROOT_ABSPATH + "/icons";// you can access any files under ZAP_ICONS
 																				 // by code like yourClassName.class.getResource(ZAP_ICONS + "/pause.png")
+
+	public static CustomScanMainPanel customScanMainPanel = null;
+	private static boolean unLoadCalled = false;
+
+	public static Map<HostProcess, Integer> hostProcessScannerIdMap = null;
+
+	public static Map<Integer, ScanLogPanelFrame> scannerIdScanLogFrameMap = null;
+
+	public static Map<Integer, Thread> scannerIdThreadMap = null;
+
+	public static Map<Integer, PauseActionObject> scannerIdPauseActionMap = null;
+
+	public void setCustomScanMainPanel(CustomScanMainPanel mainPanel) {
+		ExtensionAscanRules.customScanMainPanel = mainPanel;
+	}
 
 	@Override
 	public String getAuthor() {
@@ -77,13 +94,44 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 		// are automatically removed by the base unload() method.
 		// If you use/add other components through other methods you might need to free/remove them
 		// here (if the extension declares that can be unloaded, see above method).
+		LOGGER4J.debug("Custom ExtensionAscanRule unload called.");
+		if (ExtensionAscanRules.customScanMainPanel != null) {
+			ExtensionAscanRules.customScanMainPanel.saveToNewFileIfNoSaved();
+		}
+		unLoadCalled = true;
 	}
 
 	@Override
 	public void hook(ExtensionHook hook) {
 		super.hook(hook);
+
+		if (hostProcessScannerIdMap == null) {
+			hostProcessScannerIdMap = new ConcurrentHashMap<>();
+		}
+
+		if (scannerIdScanLogFrameMap == null) {
+			scannerIdScanLogFrameMap = new ConcurrentHashMap<>();
+		}
+
+		if (scannerIdThreadMap == null) {
+			scannerIdThreadMap = new ConcurrentHashMap<>();
+		}
+
+		if (scannerIdPauseActionMap == null) {
+			scannerIdPauseActionMap = new ConcurrentHashMap<>();
+		}
+
 		hook
 				.getHookView()
-				.addWorkPanel(new MainWorkPanelTab(hook));
+				.addWorkPanel(new MainWorkPanelTab(hook, this));
+	}
+
+	@Override
+	public void destroy() {
+		super.destroy();
+		LOGGER4J.debug("Destory called.");
+		if (ExtensionAscanRules.customScanMainPanel != null && !unLoadCalled) {
+			ExtensionAscanRules.customScanMainPanel.saveToNewFileIfNoSaved();
+		}
 	}
 }

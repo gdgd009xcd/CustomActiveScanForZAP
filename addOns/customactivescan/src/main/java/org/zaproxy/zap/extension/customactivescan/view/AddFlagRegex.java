@@ -10,13 +10,15 @@ public class AddFlagRegex extends GridBagJDialog{
     private JTextField regexPatternField;
     private JList<String> flagPatternList;
     private int selectedIndex = -1;
+    private CustomScanMainPanel mainPanel;
 
-    AddFlagRegex(Window parent, String title, ModalityType modarityType) {
-        super(parent, title, modarityType, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
+    AddFlagRegex(CustomScanMainPanel mainPanel, String title, ModalityType modarityType) {
+        super(SwingUtilities.windowForComponent(mainPanel), title, modarityType, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
+        this.mainPanel = mainPanel;
     }
 
     @Override
-    protected Component createMainPanelContent() {
+    protected Component createMainPanelContent(Component mainPanel) {
         JPanel panel = new JPanel();
         GridBagLayout gridBagLayout = new GridBagLayout();
         panel.setLayout(gridBagLayout);
@@ -74,6 +76,7 @@ public class AddFlagRegex extends GridBagJDialog{
             } else {// add value to JList
                 model.addElement(regexText);
             }
+            this.mainPanel.updateFlagResultItemsWithFlagPatternListModel();
         }
         dispose();
     }

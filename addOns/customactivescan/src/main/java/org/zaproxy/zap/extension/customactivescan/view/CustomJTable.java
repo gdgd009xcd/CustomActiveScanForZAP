@@ -49,7 +49,6 @@ public class CustomJTable extends JTable implements CellEditorListener {
             int selectedRow = this.getSelectedRow();
             if (selectedRow != -1) {
                 this.tableModel.removeRow(selectedRow);
-                this.mainPanel.rulePatternTableFocusLost(true);// popup save file dialog if needed
                 this.mainPanel.updateModelWithJTableModel(this.tableModel);// update CustomScanDataModel with JTable's Data
             }
         });
@@ -57,13 +56,23 @@ public class CustomJTable extends JTable implements CellEditorListener {
 
         JMenuItem upTableRow = new JMenuItem("▲Up");
         upTableRow.addActionListener(l ->{
-
+            int selectedRow = this.getSelectedRow();
+            if (selectedRow > 0) {
+                this.tableModel.moveRow(selectedRow, selectedRow, selectedRow - 1);
+                this.mainPanel.updateModelWithJTableModel(this.tableModel);// update CustomScanDataModel with JTable's Data
+            }
         });
         this.popupTableMenu.add(upTableRow);
 
         JMenuItem downTableRow = new JMenuItem("▼Down");
         downTableRow.addActionListener(l ->{
-
+            int selectedRow = this.getSelectedRow();
+            int lastRow = this.tableModel.getRowCount() - 1;
+            LOGGER4J.debug("Down: selectedRow:" + selectedRow + " lastRow:" + lastRow);
+            if (selectedRow >= 0 && selectedRow < lastRow) {
+                this.tableModel.moveRow(selectedRow, selectedRow, selectedRow + 1);
+                this.mainPanel.updateModelWithJTableModel(this.tableModel);// update CustomScanDataModel with JTable's Data
+            }
         });
         this.popupTableMenu.add(downTableRow);
 
