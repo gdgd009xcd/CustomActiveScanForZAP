@@ -17,6 +17,7 @@ import org.zaproxy.zap.extension.ascan.ExtensionActiveScan;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanJSONData;
 import org.zaproxy.zap.extension.customactivescan.model.InjectionPatterns;
 import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
+import org.zaproxy.zap.extension.customactivescan.model.WaitTimerObject;
 import org.zaproxy.zap.extension.customactivescan.view.ScanLogPanel;
 import org.zaproxy.zap.extension.customactivescan.view.ScanLogPanelFrame;
 import org.zaproxy.zap.model.Tech;
@@ -124,6 +125,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (hPro == hProcess) {
                     scannerId = ascan.getId();
                     ExtensionAscanRules.hostProcessScannerIdMap.put(hProcess, scannerId);
+                    WaitTimerObject waitTimerObject = new WaitTimerObject();
+                    ExtensionAscanRules.scannerIdWaitTimerMap.put(scannerId, waitTimerObject);
                     if (selectedScanRule.doScanLogOutput) {
                         final int finalScannerId = scannerId;
                         try {
@@ -189,20 +192,21 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         CustomScanJSONData.ScanRule selectedScanRule = ExtensionAscanRules.customScanMainPanel.getSelectedScanRule();
         int scannerId = ExtensionAscanRules.hostProcessScannerIdMap.get(getParent());
         PauseActionObject pauseActionObject = ExtensionAscanRules.scannerIdPauseActionMap.get(scannerId);
+        WaitTimerObject waitTimerObject = ExtensionAscanRules.scannerIdWaitTimerMap.get(scannerId);
         LOGGER4J.debug("scan start scannerId:" + scannerId);
         switch(selectedScanRule.ruleType) {
             case SQL:
-                scanBySQLRule(msg, origParamName, origParamValue, scannerId, selectedScanRule, pauseActionObject);
+                scanBySQLRule(msg, origParamName, origParamValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
                 break;
             case PenTest:
-                scanByPenTestRule(msg, origParamName, origParamValue, scannerId, selectedScanRule, pauseActionObject);
+                scanByPenTestRule(msg, origParamName, origParamValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
                 break;
             default:
                 break;
         }
     }
 
-    private void scanBySQLRule(HttpMessage msg, String origParamName, String origParamValue, int scannerId, CustomScanJSONData.ScanRule selectedScanRule, PauseActionObject pauseActionObject) {
+    private void scanBySQLRule(HttpMessage msg, String origParamName, String origParamValue, int scannerId, CustomScanJSONData.ScanRule selectedScanRule, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject) {
         List<InjectionPatterns.TrueFalsePattern> patterns = selectedScanRule.patterns.patterns;
         boolean sqlInjectionFoundForUrl = false;
 
@@ -459,7 +463,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         }
     }
 
-    private void scanByPenTestRule(HttpMessage msg, String origParamName, String origParamValue, int scannerId, CustomScanJSONData.ScanRule selectedScanRule, PauseActionObject pauseActionObject) {
+    private void scanByPenTestRule(HttpMessage msg, String origParamName, String origParamValue, int scannerId, CustomScanJSONData.ScanRule selectedScanRule, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject) {
         LOGGER4J.debug("start scanByPenTestRule");
 
         List<InjectionPatterns.TrueFalsePattern> patterns = selectedScanRule.patterns.patterns;
@@ -467,7 +471,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         for(Iterator<InjectionPatterns.TrueFalsePattern> it = patterns.iterator(); it.hasNext();) {
             InjectionPatterns.TrueFalsePattern tfrpattern = it.next();
             String injectedParamValue = origParamValue + tfrpattern.trueValuePattern;
-            HttpMessage resultMessage = sendOneMessage(origParamName, injectedParamValue, scannerId, pauseActionObject, selectedScanRule);
+            HttpMessage resultMessage = sendOneMessage(origParamName, injectedParamValue, scannerId, pauseActionObject, waitTimerObject, selectedScanRule);
 
             // search regex pattern in response result message
             if (resultMessage != null && scanLogPanelFrame != null) {
@@ -480,7 +484,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
                     try {
                         Date responseDate = simpleDateFormat.parse(dateString);
-                        SimpleDateFormat defaultDateFormat = new SimpleDateFormat();
+                        SimpleDateFormat defaultDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                         timeString = defaultDateFormat.format(responseDate);
                     } catch (ParseException ex) {
                         LOGGER4J.error(ex.getMessage(), ex);
@@ -971,10 +975,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         return null;
     }
 
-    HttpMessage sendOneMessage(String origParamName, String paramValue, int scannerId, PauseActionObject pauseActionObject, CustomScanJSONData.ScanRule selectedScanRule) {
+    HttpMessage sendOneMessage(String origParamName, String paramValue, int scannerId, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject, CustomScanJSONData.ScanRule selectedScanRule) {
 
         // wait until specified MSec passed
-        pauseActionObject.waitUntilSpecifiedTimePassed(selectedScanRule);
+        waitTimerObject.waitUntilSpecifiedTimePassed(selectedScanRule);
         // take pause Action before sending message.
         pauseAction(scannerId, pauseActionObject);
 

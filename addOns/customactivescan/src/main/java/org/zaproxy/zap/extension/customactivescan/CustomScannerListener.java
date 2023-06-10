@@ -18,6 +18,7 @@ public class CustomScannerListener implements org.parosproxy.paros.core.scanner.
         LOGGER4J.debug("scanner Completed scannerId[" + id + "]");
         ScanLogPanelFrame scanLogPanelFrame = ExtensionAscanRules.scannerIdScanLogFrameMap.remove(id);
         PauseActionObject pauseActionObject = ExtensionAscanRules.scannerIdPauseActionMap.get(id);
+
         if (pauseActionObject != null) {
             synchronized(pauseActionObject) {// monitor pauseActionObject in this Thread.
                 pauseActionObject.terminate();
@@ -38,6 +39,7 @@ public class CustomScannerListener implements org.parosproxy.paros.core.scanner.
         }
 
         ExtensionAscanRules.scannerIdPauseActionMap.remove(id);
+        ExtensionAscanRules.scannerIdWaitTimerMap.remove(id);
         LOGGER4J.debug("scanner Completed scannerId[" + id + "] running scanlog count after this completion:" + ExtensionAscanRules.scannerIdScanLogFrameMap.size());
     }
 

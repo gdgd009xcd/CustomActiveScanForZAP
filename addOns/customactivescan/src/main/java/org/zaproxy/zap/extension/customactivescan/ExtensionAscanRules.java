@@ -22,6 +22,7 @@ import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.scanner.HostProcess;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
+import org.zaproxy.zap.extension.customactivescan.model.WaitTimerObject;
 import org.zaproxy.zap.extension.customactivescan.view.CustomScanMainPanel;
 import org.zaproxy.zap.extension.customactivescan.view.MainWorkPanelTab;
 import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
@@ -59,6 +60,8 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	public static Map<Integer, Thread> scannerIdThreadMap = null;
 
 	public static Map<Integer, PauseActionObject> scannerIdPauseActionMap = null;
+
+	public static Map<Integer, WaitTimerObject> scannerIdWaitTimerMap = null;
 
 	public void setCustomScanMainPanel(CustomScanMainPanel mainPanel) {
 		ExtensionAscanRules.customScanMainPanel = mainPanel;
@@ -119,6 +122,10 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 
 		if (scannerIdPauseActionMap == null) {
 			scannerIdPauseActionMap = new ConcurrentHashMap<>();
+		}
+
+		if (scannerIdWaitTimerMap == null) {
+			scannerIdWaitTimerMap = new ConcurrentHashMap<>();
 		}
 
 		hook
