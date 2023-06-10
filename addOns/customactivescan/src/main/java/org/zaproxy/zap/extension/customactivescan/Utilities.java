@@ -546,4 +546,14 @@ public class Utilities {
     public static String replaceCtrlCodesToStringRep(String value) {
         return value.replaceAll("\n", "<LF>").replaceAll("\r", "<CR>");
     }
+
+    /**
+     * escape regex special characters below:
+     *  ., +, *, ?, ^, $, (, ), [, ], {, }, |, \
+     * @param originalRegex
+     * @return
+     */
+    public static String escapeRegexChars(String originalRegex) {
+        return originalRegex.replaceAll("([\\\\|+{}\\[\\]()*.<>?^$])", "\\\\$1");
+    }
 }

@@ -111,11 +111,12 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
         CustomScanJSONData.ScanRule selectedScanRule = ExtensionAscanRules.customScanMainPanel.getSelectedScanRule();
         List<InjectionPatterns.TrueFalsePattern> listTrueFalsePatterns = selectedScanRule.patterns.patterns;
-        List<String> flagColumnNames = new ArrayList<>();
-        for(InjectionPatterns.TrueFalsePattern trueFalsePattern: listTrueFalsePatterns) {
-            flagColumnNames.add(trueFalsePattern.trueValuePattern);
+        List<String> flagResultItems = new ArrayList<>();
+        for(String item: selectedScanRule.flagResultItems) {
+            flagResultItems.add(item);
         }
-        String[] flagColumnArray = flagColumnNames.toArray(new String[0]);// convert list to new Array of String
+
+        String[] flagResultItemArray = flagResultItems.toArray(new String[0]);// convert list to new Array of String
         int scannerId = -1;
         for(ActiveScan ascan: ascanList) {
             List<HostProcess> hostProcessList = ascan.getHostProcesses();
@@ -129,7 +130,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             SwingUtilities.invokeAndWait(new Runnable() {
                                 @Override
                                 public void run() {
-                                    scanLogPanelFrame = new ScanLogPanelFrame(flagColumnArray, finalScannerId);
+                                    scanLogPanelFrame = new ScanLogPanelFrame(flagResultItemArray, finalScannerId);
                                     ExtensionAscanRules.scannerIdScanLogFrameMap.put(finalScannerId, scanLogPanelFrame);
                                     ascan.addScannerListener(new CustomScannerListener());
                                     scanLogPanelFrame.updateRequestCounter(0);
@@ -466,7 +467,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         for(Iterator<InjectionPatterns.TrueFalsePattern> it = patterns.iterator(); it.hasNext();) {
             InjectionPatterns.TrueFalsePattern tfrpattern = it.next();
             String injectedParamValue = origParamValue + tfrpattern.trueValuePattern;
-            HttpMessage resultMessage = sendOneMessage(origParamName, injectedParamValue, scannerId, pauseActionObject);
+            HttpMessage resultMessage = sendOneMessage(origParamName, injectedParamValue, scannerId, pauseActionObject, selectedScanRule);
 
             // search regex pattern in response result message
             if (resultMessage != null && scanLogPanelFrame != null) {
@@ -531,7 +532,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 String[] resultRecordArray = resultRecord.toArray(new String[0]);
                 ScanLogPanel scanLogPanel = scanLogPanelFrame.getScanLogPanel();
                 if (scanLogPanel != null) {
-                    scanLogPanel.addRowToScanLogTableModel(resultRecordArray);
+                    scanLogPanel.addRowToScanLogTableModel(resultRecordArray, resultMessage);
                 }
             }
         }
@@ -970,8 +971,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         return null;
     }
 
-    HttpMessage sendOneMessage(String origParamName, String paramValue, int scannerId, PauseActionObject pauseActionObject) {
+    HttpMessage sendOneMessage(String origParamName, String paramValue, int scannerId, PauseActionObject pauseActionObject, CustomScanJSONData.ScanRule selectedScanRule) {
 
+        // wait until specified MSec passed
+        pauseActionObject.waitUntilSpecifiedTimePassed(selectedScanRule);
         // take pause Action before sending message.
         pauseAction(scannerId, pauseActionObject);
 

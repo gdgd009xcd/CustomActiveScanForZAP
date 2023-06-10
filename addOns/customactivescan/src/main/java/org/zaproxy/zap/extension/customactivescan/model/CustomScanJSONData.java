@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 // JSON data format for saving/loading CustomScanDataModel to/from file.
 
@@ -22,14 +23,7 @@ public class CustomScanJSONData {
     // Gson members
     @Expose
     public String Version = VERSION_CONSTANT;
-    @Expose
-    public int minIdleTime = 0;
-    @Expose
-    public int maxIdleTime = 0;
-    @Expose
-    public int requestCount = 0;
-    @Expose
-    public boolean randomieIdleTime = false;
+
     @Expose
     List<ScanRule> scanRuleList;
     // exclude the following field when serializing/deserializing
@@ -129,11 +123,20 @@ public class CustomScanJSONData {
         @Expose
         public RuleType ruleType;
         @Expose
+        public int minIdleTime = 0;
+        @Expose
+        public int maxIdleTime = 0;
+        @Expose
+        public int requestCount = 0;
+        @Expose
+        public boolean randomIdleTime = false;
+        @Expose
         public boolean doScanLogOutput;
         @Expose
         public InjectionPatterns patterns;
         @Expose
         public List<String> flagResultItems;
+
 
         public String getRuleTypeName() {
             return ruleType.name();
@@ -193,6 +196,51 @@ public class CustomScanJSONData {
                 this.flagResultItems.add(flag);
             }
         }
+
+        public int getRequestCount() {
+            return requestCount;
+        }
+
+        public void setRequestCount(int requestCount) {
+            this.requestCount = requestCount;
+        }
+
+        public int getMinIdleTime() {
+            return minIdleTime;
+        }
+
+        public void setMinIdleTime(int minIdleTime) {
+            this.minIdleTime = minIdleTime;
+        }
+
+        public int getMaxIdleTime() {
+            return maxIdleTime;
+        }
+
+        public void setMaxIdleTime(int maxIdleTime) {
+            this.maxIdleTime = maxIdleTime;
+        }
+
+        public boolean isRandomIdleTime() {
+            return this.randomIdleTime;
+        }
+
+        public void setRandomIdleTime(boolean randomIdleTime) {
+            this.randomIdleTime = randomIdleTime;
+        }
+
+        public long getIdleTime(Random random) {
+            long rangeTime = this.maxIdleTime - this.minIdleTime;
+            if (rangeTime > 0) {
+                if (this.randomIdleTime) {
+                    long randomRangeTime = random.nextInt((int)rangeTime);
+                    return randomRangeTime + this.minIdleTime;
+                } else {
+                    return this.maxIdleTime;
+                }
+            }
+            return this.minIdleTime;
+        }
     }
 
     public void addSampleDataToScanRuleList() {
@@ -200,4 +248,5 @@ public class CustomScanJSONData {
             scanRuleList.add(scanRule);
         }
     }
+
 }

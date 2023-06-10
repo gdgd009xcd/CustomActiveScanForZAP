@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 @SuppressWarnings("serial")
-public abstract class GridBagJDialog extends JDialog {
+public abstract class GridBagJDialog<T> extends JDialog {
 
     /**
      * create basic dialog<br>
@@ -32,6 +32,8 @@ public abstract class GridBagJDialog extends JDialog {
      *                       ModalityType.TOOLKIT_MODAL : This is the same as APPLICATION_MODAL. because almost all applications do not share toolkits between applications
      *                      </UL><P></P><P></P>
      *
+     * @param optionalObject spefify optional Object to pass createMainPanelContent argument
+     *
      * @param fill specifies whether resize mainPanelContent vertically/horizontally or both<P></P>
      *             <UL>
      *              GridBagConstraints.HORIZONTAL: mainPanelContent size is expanded horizontally.<P></P>
@@ -40,14 +42,14 @@ public abstract class GridBagJDialog extends JDialog {
      *             </UL><P></P>
      *
      */
-    public GridBagJDialog(Window owner, String title, ModalityType modalityType, int fill) {
+    public GridBagJDialog(Window owner, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(owner, title, modalityType);
-        init(fill, -1, createMainPanelContent(null));
+        init(fill, -1, createMainPanelContent(null, optionalObject));
     }
 
-    public GridBagJDialog(Component mainPanel, String title, ModalityType modalityType, int fill) {
+    public GridBagJDialog(Component mainPanel, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(SwingUtilities.windowForComponent(mainPanel), title, modalityType);
-        init(fill, -1, createMainPanelContent(mainPanel));
+        init(fill, -1, createMainPanelContent(mainPanel, optionalObject));
     }
 
     /**
@@ -61,6 +63,8 @@ public abstract class GridBagJDialog extends JDialog {
      *                        ModalityType.MODELESS: MODELESS dialog doesn't block any top-level windows.<P></P>
      *                        ModalityType.TOOLKIT_MODAL : This is the same as APPLICATION_MODAL. because almost all applications do not share toolkits between applications
      *                      </UL><P></P><P></P>
+     *
+     * @param optionalObject spefify optional Object to pass createMainPanelContent argument
      *
      * @param fill specifies whether resize mainPanelContent vertically/horizontally or both<P></P>
      *             <UL>
@@ -76,9 +80,9 @@ public abstract class GridBagJDialog extends JDialog {
      *                GridBagConstraints.SOUTHEAST/SOUTHWEST
      *               </UL>
      */
-    public GridBagJDialog(Window owner, String title, ModalityType modalityType, int fill, int anchor) {
+    public GridBagJDialog(Window owner, String title, ModalityType modalityType, T optionalObject, int fill, int anchor) {
         super(owner, title, modalityType);
-        init(fill, anchor, createMainPanelContent(null));
+        init(fill, anchor, createMainPanelContent(null, optionalObject));
     }
 
     /**
@@ -92,12 +96,12 @@ public abstract class GridBagJDialog extends JDialog {
      *     private JTextPane regexTextPane = null;// AAUGH. NG. this value will be null after createMainPanelContent is called
      *     private JPanel mainPanel;
      *
-     *     public yourDialog(Component mainPanelComponent, String title, ModalityType modalityType) {
-     *         super(mainPanelComponent, title, modalityType, GridBagConstraints.BOTH);
+     *     public yourDialog(Component mainPanelComponent, String title, null, ModalityType modalityType) {
+     *         super(mainPanelComponent, title, modalityType, null, GridBagConstraints.BOTH);
      *     }
      *
      *     @Override
-     *     protected Component createMainPanelContent(Component mainPanelComponent) {
+     *     protected Component createMainPanelContent(Component mainPanelComponent, null) {
      *         this.mainPanel = (JPanel) mainPanelComponent;
      *         ...
      *         this.regexTextPane = new JTextPane();// regexTextPane is set BEFORE initialization in class parameter definition.
@@ -192,10 +196,13 @@ public abstract class GridBagJDialog extends JDialog {
      * implement mainPanelContent component<br>
      *
      * @param mainPanel - specify mainPanel component from which this dialog opens
+     * @param optionalObject spefify optional Object for creating optional components<br>
+     *                      in createMainPanelContent
+     *
      * @return
      */
 
-    protected abstract Component createMainPanelContent(Component mainPanel);
+    protected abstract Component createMainPanelContent(Component mainPanel, T optionalObject);
 
     /**
      * OK button Action<br>

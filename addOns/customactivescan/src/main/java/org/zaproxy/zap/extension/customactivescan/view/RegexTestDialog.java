@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("serial")
-public class RegexTestDialog extends GridBagJDialog {
+public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -26,20 +26,61 @@ public class RegexTestDialog extends GridBagJDialog {
     // because createMainPanelContent method is called before parameter initialization process
     // regex text
     private JTextPane regexTextPane;
-    // search text
-    private JTextPane searchTextPane;
 
-    // attribute List for searched texts
-    private List<RegexSelectedTextPos> foundTextAttrPos = null;
-    // caretPosition for searchd text at first
-    private ArrayList<Integer> findplist;
-    private JTextField targetTextField;
+    private JTabbedPane tabbedPane;
 
-    public RegexTestDialog(Window owner, String title, ModalityType modalityType) {
-        super(owner, title, modalityType, GridBagConstraints.BOTH);
+    private List<SearchTextPane> searchTextPaneList;
+
+    static class SearchTextPane {
+        // search text
+        JTextPane searchTextPane;
+        // attribute List for searched texts
+        List<RegexSelectedTextPos> foundTextAttrPos;
+        // caretPosition for searchd text at first
+        ArrayList<Integer> findplist;
+
+        SearchTextPane() {
+            searchTextPane = null;
+            foundTextAttrPos = new ArrayList<>();
+            findplist = new ArrayList<>();
+        }
     }
 
-    private JPanel createRegexTestDialogContent() {
+    static class PaneTitleAndContent {
+        String title;
+        String content;
+        PaneTitleAndContent(){
+            title = "";
+            content = "";
+        }
+        PaneTitleAndContent(String title, String content) {
+            this.title = title;
+            this.content = content;
+        }
+    }
+
+    static class PaneContents {
+        public List<PaneTitleAndContent> paneTitleAndContentList;
+        public String regexText;
+        PaneContents(String regexText) {
+            this.regexText = regexText;
+            paneTitleAndContentList = new ArrayList<>();
+        }
+
+        public void addTitleAndContent(String title, String content) {
+            PaneTitleAndContent paneTitleAndContent = new PaneTitleAndContent(title, content);
+            paneTitleAndContentList.add(paneTitleAndContent);
+        }
+    }
+
+    private JTextField targetTextField;
+
+    public RegexTestDialog(Window owner, String title, ModalityType modalityType, PaneContents paneContents) {
+        super(owner, title, modalityType, paneContents, GridBagConstraints.BOTH);
+    }
+
+    private JPanel createRegexTestDialogContent(PaneContents paneContents) {
+        searchTextPaneList = new ArrayList<>();
         JPanel panel = new JPanel();
         GridBagLayout gridBagLayout = new GridBagLayout();
         panel.setLayout(gridBagLayout);
@@ -84,6 +125,7 @@ public class RegexTestDialog extends GridBagJDialog {
         regexTextScroller.setMinimumSize(new Dimension(400, 100));
         regexTextScroller.setAutoscrolls(true);
         this.regexTextPane = new JTextPane();
+        this.regexTextPane.setText(paneContents.regexText);
         regexTextScroller.setViewportView(regexTextPane);
 
         gbc.gridx = 0;
@@ -97,18 +139,27 @@ public class RegexTestDialog extends GridBagJDialog {
         gridBagLayout.setConstraints(regexTextScroller, gbc);
         panel.add(regexTextScroller);
 
-        // Regex text pane
+        // search text pane
         LineBorder searchTextBorderLine = new LineBorder(Color.BLUE, 1, true);
         TitledBorder searchTextTitledBorder = new TitledBorder(searchTextBorderLine,
-                "Search Text",
+                "Search Panes",
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
-        JScrollPane searchTextScroller = new JScrollPane();
-        searchTextScroller.setBorder(searchTextTitledBorder);
-        searchTextScroller.setPreferredSize(new Dimension(400,500));
-        searchTextScroller.setAutoscrolls(true);
-        searchTextPane = new JTextPane();
-        searchTextScroller.setViewportView(searchTextPane);
+
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setBorder(searchTextTitledBorder);
+        for(PaneTitleAndContent titleAndContent: paneContents.paneTitleAndContentList) {
+            SearchTextPane searchTextPane = new SearchTextPane();
+            JScrollPane searchTextScroller = new JScrollPane();
+            searchTextScroller.setPreferredSize(new Dimension(400, 500));
+            searchTextScroller.setAutoscrolls(true);
+            searchTextPane.searchTextPane = new JTextPane();
+            searchTextPane.searchTextPane.setText(titleAndContent.content);
+            searchTextScroller.setViewportView(searchTextPane.searchTextPane);
+            tabbedPane.add(titleAndContent.title, searchTextScroller);
+            searchTextPaneList.add(searchTextPane);
+        }
+
 
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -118,15 +169,16 @@ public class RegexTestDialog extends GridBagJDialog {
         gbc.weightx = 1d;
         gbc.weighty = 1d;// 0 means do not resize height mainpanel
         gbc.insets = new Insets(5, 5, 5, 5);
-        gridBagLayout.setConstraints(searchTextScroller, gbc);
-        panel.add(searchTextScroller);
+        gridBagLayout.setConstraints(tabbedPane, gbc);
+        panel.add(tabbedPane);
 
         return panel;
     }
 
+
     @Override
-    protected Component createMainPanelContent(Component mainPanel) {
-        return createRegexTestDialogContent();
+    protected Component createMainPanelContent(Component mainPanel, PaneContents paneContents) {
+        return createRegexTestDialogContent(paneContents);
     }
 
     @Override
@@ -162,143 +214,150 @@ public class RegexTestDialog extends GridBagJDialog {
     }
 
     private void clearTestActionPerformed(ActionEvent e) {
-        SimpleAttributeSet attr = new SimpleAttributeSet();
+        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        if (selectedTabbedPaneIndex > -1) {
+            SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
+            SimpleAttributeSet attr = new SimpleAttributeSet();
 
-        if (foundTextAttrPos == null) {
-            foundTextAttrPos = new ArrayList<>();
-        }
+            if (searchTextPane.foundTextAttrPos == null) {
+                searchTextPane.foundTextAttrPos = new ArrayList<>();
+            }
 
-        String regex = this.regexTextPane.getText();
+            String regex = this.regexTextPane.getText();
 
-        StyledDocument doc = this.searchTextPane.getStyledDocument();
+            StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+            doc.getEndPosition();
 
-        if (foundTextAttrPos.size() > 0) {
-            StyleConstants.setForeground(attr, Color.BLACK);
-            StyleConstants.setBackground(attr, Color.WHITE);
+            if (searchTextPane.foundTextAttrPos.size() > 0) {
+                StyleConstants.setForeground(attr, Color.BLACK);
+                StyleConstants.setBackground(attr, Color.WHITE);
 
-            foundTextAttrPos.forEach(rpos -> {
-                doc.setCharacterAttributes(rpos.getStartPos(), rpos.getEndPos() - rpos.getStartPos(), attr, false);
-            });
+                doc.setCharacterAttributes(0, doc.getLength(), attr, false);
 
-            foundTextAttrPos.clear();
+                searchTextPane.foundTextAttrPos.clear();
+            }
         }
     }
 
-    private void regexSearchActionPerformed(ActionEvent e) {
+    public void regexSearchActionPerformed(ActionEvent e) {
         // clear attrubutes in searchTextPane
         clearTestActionPerformed(null);
 
-        SimpleAttributeSet attr = new SimpleAttributeSet();
+        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        if (selectedTabbedPaneIndex > -1) {
+            SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
+            SimpleAttributeSet attr = new SimpleAttributeSet();
 
-        String regex = regexTextPane.getText();
+            String regex = regexTextPane.getText();
 
-        StyledDocument doc = searchTextPane.getStyledDocument();
+            StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
 
-        if (regex == null || regex.isEmpty()) { // if you do it, Too many patterns matched.
-            return;
-        }
+            if (regex == null || regex.isEmpty()) { // if you do it, Too many patterns matched.
+                return;
+            }
 
-        String original = null;
-        try {
-            original = doc.getText(0, doc.getLength());
-        } catch (BadLocationException ex) {
-            Logger.getLogger(RegexTestDialog.class.getName()).log(Level.SEVERE, null, ex);
-        }
+            String original = null;
+            try {
+                original = doc.getText(0, doc.getLength());
+            } catch (BadLocationException ex) {
+                Logger.getLogger(RegexTestDialog.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
-        findplist = new ArrayList<>();
+            searchTextPane.findplist = new ArrayList<>();
 
-        //parse Regex
-        Pattern compiledregex = null;
-        Matcher m = null;
-        try{
+            //parse Regex
+            Pattern compiledregex = null;
+            Matcher m = null;
+            try {
 
-            compiledregex = Pattern.compile(regex, Pattern.MULTILINE);
+                compiledregex = Pattern.compile(regex, Pattern.MULTILINE);
 
-            m = compiledregex.matcher(original);
-        }catch(Exception ex){
-            LOGGER4J.error("Exception:" + ex.getMessage(), ex);
-            return;
-        }
+                m = compiledregex.matcher(original);
+            } catch (Exception ex) {
+                LOGGER4J.error("Exception:" + ex.getMessage(), ex);
+                return;
+            }
 
 
+            int cpt = 0;
 
-        int cpt = 0;
+            int fcount = 0;
+            while (m.find()) {
+                fcount++;
+                int spt0 = -1;
+                int ept0 = -1;
+                int spt = -1;
+                int ept = -1;
+                int gcnt = m.groupCount();
+                String matchval = null;
+                if (gcnt > 0) {
+                    spt0 = m.start();
+                    ept0 = m.end();
+                    for (int n = 0; n < gcnt; n++) {
+                        spt = m.start(n + 1);
+                        ept = m.end(n + 1);
+                        matchval = m.group(n + 1);
 
-        int fcount=0;
-        while (m.find()) {
-            fcount++;
-            int spt0 = -1;
-            int ept0 = -1;
-            int spt = -1;
-            int ept = -1;
-            int gcnt = m.groupCount();
-            String matchval = null;
-            if ( gcnt > 0){
-                spt0 = m.start();
-                ept0 = m.end();
-                for(int n = 0; n < gcnt ; n++){
-                    spt = m.start(n+1);
-                    ept = m.end(n+1);
-                    matchval = m.group(n+1);
-
-                }
-                if ( matchval == null){
+                    }
+                    if (matchval == null) {
+                        matchval = m.group();
+                    }
+                    if (spt0 > spt) {
+                        spt0 = spt;
+                    }
+                    if (ept0 < ept) {
+                        ept0 = ept;
+                    }
+                    // spt0--->spt<matchval>ept-->ept0
+                } else {//Nothing Groups...
+                    spt0 = m.start();
+                    ept0 = m.end();
                     matchval = m.group();
                 }
-                if ( spt0 > spt){
-                    spt0 = spt;
-                }
-                if(ept0 < ept){
-                    ept0 = ept;
-                }
-                // spt0--->spt<matchval>ept-->ept0
-            }else{//Nothing Groups...
-                spt0 = m.start();
-                ept0 = m.end();
-                matchval = m.group();
-            }
-            if ( spt0 >=0 && ept0 >= 0 ){
+                if (spt0 >= 0 && ept0 >= 0) {
 
-                try {
+                    try {
 
-                    // spt0--->spt<matchval>ept-->ept0
+                        // spt0--->spt<matchval>ept-->ept0
 
-                    if (ept0 > spt0) {
-                        StyleConstants.setForeground(attr, Color.BLUE);
-                        StyleConstants.setBackground(attr, Color.RED);
-                        doc.setCharacterAttributes(spt0, ept0-spt0, attr, false);
-                        RegexSelectedTextPos rpos = new RegexSelectedTextPos(spt0, ept0);
-                        foundTextAttrPos.add(rpos);
+                        if (ept0 > spt0) {
+                            StyleConstants.setForeground(attr, Color.BLUE);
+                            StyleConstants.setBackground(attr, Color.RED);
+                            doc.setCharacterAttributes(spt0, ept0 - spt0, attr, false);
+                            RegexSelectedTextPos rpos = new RegexSelectedTextPos(spt0, ept0);
+                            searchTextPane.foundTextAttrPos.add(rpos);
+                        }
+
+                        if (ept > spt) {
+                            StyleConstants.setForeground(attr, Color.WHITE);
+                            StyleConstants.setBackground(attr, Color.RED);
+                            doc.setCharacterAttributes(spt, ept - spt, attr, false);
+                            RegexSelectedTextPos rpos = new RegexSelectedTextPos(spt, ept);
+                            searchTextPane.foundTextAttrPos.add(rpos);
+                        }
+
+                        //int pos = OriginalText.getCaretPosition();
+                        int pos = doc.getLength();
+                        searchTextPane.findplist.add(ept0);
+                    } catch (Exception ex) {
+                        LOGGER4J.error("Exception:" + ex.getMessage(), ex);
                     }
-
-                    if (ept > spt) {
-                        StyleConstants.setForeground(attr, Color.WHITE);
-                        StyleConstants.setBackground(attr, Color.RED);
-                        doc.setCharacterAttributes(spt, ept-spt, attr, false);
-                        RegexSelectedTextPos rpos = new RegexSelectedTextPos(spt, ept);
-                        foundTextAttrPos.add(rpos);
-                    }
-
-                    //int pos = OriginalText.getCaretPosition();
-                    int pos = doc.getLength();
-                    findplist.add(ept0);
-                } catch (Exception ex) {
-                    LOGGER4J.error("Exception:" + ex.getMessage(), ex);
                 }
             }
-        }
 
-        if ( findplist.size() > 0){
-            searchTextPane.setCaretPosition(findplist.get(0));
-            int foundCount = findplist.size();
-            JOptionPane.showMessageDialog(this, Integer.toString(foundCount)+"箇所一致しました", "検索結果", JOptionPane.INFORMATION_MESSAGE);
-        }else{
-            Toolkit.getDefaultToolkit().beep();
-            JOptionPane.showMessageDialog(this, "正規表現が一致しませんでした", "検索結果", JOptionPane.QUESTION_MESSAGE);
+            if (searchTextPane.findplist.size() > 0) {
+                searchTextPane.searchTextPane.setCaretPosition(searchTextPane.findplist.get(0));
+                int foundCount = searchTextPane.findplist.size();
+                JOptionPane.showMessageDialog(this, Integer.toString(foundCount) + "箇所一致しました", "検索結果", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                Toolkit.getDefaultToolkit().beep();
+                JOptionPane.showMessageDialog(this, "正規表現が一致しませんでした", "検索結果", JOptionPane.QUESTION_MESSAGE);
+            }
         }
     }
 
     public void setRegexTextField(JTextField targetTextField) {
+        this.targetTextField = null;
         if (this.regexTextPane != null) {
             if(targetTextField != null) {
                 this.targetTextField = targetTextField;
@@ -307,9 +366,9 @@ public class RegexTestDialog extends GridBagJDialog {
         }
     }
 
-    public void setSearchTextPane(String searchText) {
-        if (this.searchTextPane != null) {
-            this.searchTextPane.setText(searchText);
-        }
+    public void selectTabbedPane(int index) {
+        this.tabbedPane.setSelectedIndex(index);
     }
+
+
 }

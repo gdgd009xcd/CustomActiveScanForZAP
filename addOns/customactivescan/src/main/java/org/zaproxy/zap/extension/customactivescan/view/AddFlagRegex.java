@@ -3,22 +3,28 @@ package org.zaproxy.zap.extension.customactivescan.view;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Color;
+import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("serial")
-public class AddFlagRegex extends GridBagJDialog{
+public class AddFlagRegex extends GridBagJDialog<String>{
     private JTextField regexPatternField;
     private JList<String> flagPatternList;
     private int selectedIndex = -1;
     private CustomScanMainPanel mainPanel;
 
     AddFlagRegex(CustomScanMainPanel mainPanel, String title, ModalityType modarityType) {
-        super(SwingUtilities.windowForComponent(mainPanel), title, modarityType, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
+        super(SwingUtilities.windowForComponent(mainPanel), title, modarityType, null, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
         this.mainPanel = mainPanel;
     }
 
     @Override
-    protected Component createMainPanelContent(Component mainPanel) {
+    protected Component createMainPanelContent(Component mainPanel, String optionalObject) {
         JPanel panel = new JPanel();
         GridBagLayout gridBagLayout = new GridBagLayout();
         panel.setLayout(gridBagLayout);
@@ -49,7 +55,10 @@ public class AddFlagRegex extends GridBagJDialog{
         // test regex button
         JButton testButton = new JButton("Test");
         testButton.addActionListener(l ->{
-            RegexTestDialog regexTestDialog = new RegexTestDialog(SwingUtilities.windowForComponent(this),"Regex test", ModalityType.DOCUMENT_MODAL);
+            List<RegexTestDialog.PaneTitleAndContent> paneTitleAndContentList = new ArrayList<>();
+            RegexTestDialog.PaneContents paneContents = new RegexTestDialog.PaneContents(this.regexPatternField.getText());
+            paneContents.addTitleAndContent("Search Text", "");
+            RegexTestDialog regexTestDialog = new RegexTestDialog(SwingUtilities.windowForComponent(this),"Regex test", ModalityType.DOCUMENT_MODAL, paneContents);
             regexTestDialog.setRegexTextField(this.regexPatternField);
             regexTestDialog.setVisible(true);
         });

@@ -1,5 +1,6 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
+import org.parosproxy.paros.Constant;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanDataModel;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanJSONData;
 import org.zaproxy.zap.extension.customactivescan.model.InjectionPatterns;
@@ -29,6 +30,7 @@ import java.util.List;
 public class CustomScanMainPanel extends JPanel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
+    private static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
     private JLabel ruleTypeLabel = null;
     private JScrollPane rulePatternScroller = null;
     private int selectedScanRuleIndex = -1;
@@ -41,6 +43,10 @@ public class CustomScanMainPanel extends JPanel {
     JList<String> flagPatternList;
     DefaultListModel<String> flagPatternListModel;
     JComboBox<String> ruleComboBox;
+    JCheckBox randomizeIdleTimeCheckBox;
+    JTextField minimumIdleTimeTextField;
+    JTextField maximumIdleTimeTextField;
+    JTextField requestCountTextField;
 
     public CustomScanMainPanel() {
         super(new GridBagLayout());
@@ -184,9 +190,7 @@ public class CustomScanMainPanel extends JPanel {
             if (currentScanRule != null && !this.ruleComboBoxActionIsNoNeedSave) {
                 LOGGER4J.debug("START scanLogCheckBox addActionListener called.");
                 currentScanRule.doScanLogOutput = this.scanLogCheckBox.isSelected();
-                if(!this.saveToNewFileIfNoSaved()) {// The scanLog CheckBox is focusout when the save dialog appears
-                    this.scanDataModel.saveModel();
-                }
+                fileSaveAction();// The scanLog CheckBox is focusout when the save dialog appears
                 LOGGER4J.debug("END scanLogCheckBox addActionListener called.");
             }
         });
@@ -284,39 +288,68 @@ public class CustomScanMainPanel extends JPanel {
 
         // Idle time config panel
         JPanel idleTimePanel = new JPanel();
-        GridLayout idleTimeLayout = new GridLayout(3,1);
+        GridLayout idleTimeLayout = new GridLayout(3,3);
         idleTimePanel.setLayout(idleTimeLayout);
         LineBorder idleTimePanelBorderLine = new LineBorder(Color.BLACK, 1, true);
         TitledBorder idleTimePanelTitledBorder = new TitledBorder(idleTimePanelBorderLine,
-                "Idle Time between sending requests configrations",
+                "Configurations: Idle Time | request count until next pausing",
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         idleTimePanel.setBorder(idleTimePanelTitledBorder);
 
         // randomize idle time or not
-        JCheckBox randomizeIdleTimeCheckBox = new JCheckBox("Randomize Idle time");
+        randomizeIdleTimeCheckBox = new JCheckBox(Constant.messages.getString(MESSAGE_PREFIX + "title.randomidletime"));
+        randomizeIdleTimeCheckBox.setSelected(selectedScanRule.isRandomIdleTime());
+        randomizeIdleTimeCheckBox.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.randomidletime"));
+        randomizeIdleTimeCheckBox.addActionListener(actionEvent->{
+            CustomScanJSONData.ScanRule currentScanRule = getSelectedScanRule();
+            if (currentScanRule.isRandomIdleTime() != randomizeIdleTimeCheckBox.isSelected()) {
+                currentScanRule.setRandomIdleTime(randomizeIdleTimeCheckBox.isSelected());
+                fileSaveAction();
+            }
+        });
         idleTimePanel.add(randomizeIdleTimeCheckBox);
+
+        // dummy label
+        JLabel dummyLabel = new JLabel();
+        idleTimePanel.add(dummyLabel);
 
         // Minimum idle time between  sending requests
         LineBorder minimumIdleTimeBorderLine = new LineBorder(Color.BLUE, 1, true);
         TitledBorder minimumIdleTimeTitledBorder = new TitledBorder(minimumIdleTimeBorderLine,
-                "Minimum Idle Time between sending requests(mSec)",
+                Constant.messages.getString(MESSAGE_PREFIX + "title.minidletime"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
-        JTextField minimumIdleTimeTextField = new JTextField("0");
+        minimumIdleTimeTextField = new JTextField(Integer.toString(selectedScanRule.getMinIdleTime()));
+        minimumIdleTimeTextField.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.minidletime"));
         minimumIdleTimeTextField.setBorder(minimumIdleTimeTitledBorder);
+        minimumIdleTimeTextField.setInputVerifier(new MinIdleTimeVerifier(this));
         idleTimePanel.add(minimumIdleTimeTextField);
 
         // Maximum idle time between  sending requests
         LineBorder maximumIdleTimeBorderLine = new LineBorder(Color.BLUE, 1, true);
         TitledBorder maximumIdleTimeTitledBorder = new TitledBorder(maximumIdleTimeBorderLine,
-                "Maximum Idle Time between sending requests(mSec)",
+                Constant.messages.getString(MESSAGE_PREFIX + "title.maxidletime"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
-        JTextField maximumIdleTimeTextField = new JTextField("0");
+        maximumIdleTimeTextField = new JTextField(Integer.toString(selectedScanRule.getMaxIdleTime()));
+        maximumIdleTimeTextField.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.maxidletime"));
         maximumIdleTimeTextField.setBorder(maximumIdleTimeTitledBorder);
+        maximumIdleTimeTextField.setInputVerifier(new MaxIdleTimeVerifier(this));
 
         idleTimePanel.add(maximumIdleTimeTextField);
+
+        LineBorder requestCountBorderLine = new LineBorder(Color.BLUE, 1, true);
+        TitledBorder requestCountTitledBorder = new TitledBorder(requestCountBorderLine,
+                Constant.messages.getString(MESSAGE_PREFIX + "title.sendingrequestcount"),
+                TitledBorder.LEFT,
+                TitledBorder.TOP);
+        requestCountTextField = new JTextField(5);
+        requestCountTextField.setBorder(requestCountTitledBorder);
+        requestCountTextField.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.sendingrequestcount"));
+        requestCountTextField.setText(Integer.toString(selectedScanRule.getRequestCount()));
+        requestCountTextField.setInputVerifier(new RequestCountVerifier(this));
+        idleTimePanel.add(requestCountTextField);
 
         gbc.gridx = 0;
         gbc.gridy = 5;
@@ -433,9 +466,7 @@ public class CustomScanMainPanel extends JPanel {
                     this.selectedScanRuleIndex = -1;
                     createRuleTable(null);
                 }
-                if(!this.saveToNewFileIfNoSaved()) {
-                    scanDataModel.saveModel();
-                }
+                fileSaveAction();
                 break;
             case JOptionPane.NO_OPTION:
             default:
@@ -464,6 +495,10 @@ public class CustomScanMainPanel extends JPanel {
             createRuleTable(selectedScanRule);
             LOGGER4J.debug("scanLogCheckBox setSelected in ruleComboBoxActionPerformed");
             this.scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
+            this.randomizeIdleTimeCheckBox.setSelected(selectedScanRule.isRandomIdleTime());
+            this.requestCountTextField.setText(Integer.toString(selectedScanRule.getRequestCount()));
+            this.minimumIdleTimeTextField.setText(Integer.toString(selectedScanRule.getMinIdleTime()));
+            this.maximumIdleTimeTextField.setText(Integer.toString(selectedScanRule.getMaxIdleTime()));
             this.flagPatternListModel.clear();
             for (String data : selectedScanRule.flagResultItems) {
                 this.flagPatternListModel.addElement(data);
@@ -497,8 +532,15 @@ public class CustomScanMainPanel extends JPanel {
         if (!scanDataModel.isSaved()) {
             showSaveFileDialog = true;
             LOGGER4J.debug("showSaveDialog=true");
-            File cfile = new File(scanDataModel.getSaveFileName());
-            String dirname = cfile.getParent();
+            File cfile = null;
+            String dirname = null;
+            try {
+                cfile = new File(scanDataModel.getSaveFileName());
+                dirname = cfile.getParent();
+            } catch (Exception ex) {
+                dirname = null;
+            }
+
             if (dirname == null) {
                 cfile = null;
                 dirname = "";
@@ -600,10 +642,7 @@ public class CustomScanMainPanel extends JPanel {
                 );
             }
         }
-        if(!this.saveToNewFileIfNoSaved()) {
-            scanDataModel.saveModel();
-        }
-
+        fileSaveAction();
     }
 
     public void updateFlagResultItemsWithFlagPatternListModel(){
@@ -615,9 +654,7 @@ public class CustomScanMainPanel extends JPanel {
                 String flagPatternString = this.flagPatternListModel.get(i);
                 selectedScanRule.flagResultItems.add(flagPatternString);
             }
-            if(!this.saveToNewFileIfNoSaved()) {
-                scanDataModel.saveModel();
-            }
+            fileSaveAction();
         }
     }
 
@@ -647,9 +684,7 @@ public class CustomScanMainPanel extends JPanel {
         scanRule.patterns.name = ruleName;
         scanRule.patterns.addPattern("", "", "", "", "", "");
         this.scanDataModel.addNewScanRule(scanRule);
-        if(!this.saveToNewFileIfNoSaved()) {
-            scanDataModel.saveModel();
-        }
+        fileSaveAction();
         this.ruleComboBox.addItem(ruleName);// must do this after addNewScanRule method is called. because addItem method invoke ruleComboBoxActionPerformed method.
         // must do following codes. because when ruleComboBox itemCount is larger than 1, then addItem method does not invoke ruleComboBoxActionPerformed.
         int addedRuleIndex = this.ruleComboBox.getItemCount() - 1;
@@ -669,9 +704,7 @@ public class CustomScanMainPanel extends JPanel {
             CustomScanJSONData.ScanRule newRule = rule.clone();
             newRule.setName(ruleName);
             this.scanDataModel.addNewScanRule(newRule);
-            if(!this.saveToNewFileIfNoSaved()) {
-                scanDataModel.saveModel();
-            }
+            fileSaveAction();
             this.ruleComboBox.addItem(ruleName);// must do this after addNewScanRule method is called. because addItem method invoke ruleComboBoxActionPerformed method.
             // must do following codes. because when ruleComboBox itemCount is larger than 1, then addItem method does not invoke ruleComboBoxActionPerformed.
             int addedRuleIndex = this.ruleComboBox.getItemCount() - 1;
@@ -690,5 +723,38 @@ public class CustomScanMainPanel extends JPanel {
         return this.scanDataModel.getSampleScanRuleList();
     }
 
+    /**
+     *  save CustomScanDataModel to JSON file.
+     *  if JSON file isn't exist or CustomScanDataModel isn't saved, then save dialog is appeared.
+     */
+    public void fileSaveAction() {
+        if(!this.saveToNewFileIfNoSaved()) {
+            scanDataModel.saveModel();
+        }
+    }
+
+    public String getMinimumIdleTimeTextFieldValue() {
+        return this.minimumIdleTimeTextField.getText();
+    }
+
+    public String getMaximumIdleTimeTextFieldValue() {
+        return this.maximumIdleTimeTextField.getText();
+    }
+
+    public String getRequestCountValue() {
+        return this.requestCountTextField.getText();
+    }
+
+    public boolean isRandomizeIdleTime() {
+        return this.randomizeIdleTimeCheckBox.isSelected();
+    }
+
+    public void reflectScanLogPanelInputToMainPanel() {
+        CustomScanJSONData.ScanRule selectedScanRule = getSelectedScanRule();
+        this.randomizeIdleTimeCheckBox.setSelected(selectedScanRule.isRandomIdleTime());
+        this.requestCountTextField.setText(Integer.toString(selectedScanRule.getRequestCount()));
+        this.minimumIdleTimeTextField.setText(Integer.toString(selectedScanRule.getMinIdleTime()));
+        this.maximumIdleTimeTextField.setText(Integer.toString(selectedScanRule.getMaxIdleTime()));
+    }
 
 }
