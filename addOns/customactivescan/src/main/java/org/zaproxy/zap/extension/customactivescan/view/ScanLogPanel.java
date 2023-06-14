@@ -194,7 +194,7 @@ public class ScanLogPanel extends JPanel {
                 if (!flagColumnRegexString.isEmpty()) {
                     flagColumnRegexString += "|";
                 }
-                flagColumnRegexString += Utilities.escapeRegexChars(flag);
+                flagColumnRegexString += flag;
             }
         }
         scanLogTableModel = new DefaultTableModel(new String[0][0], totalColumnNames);

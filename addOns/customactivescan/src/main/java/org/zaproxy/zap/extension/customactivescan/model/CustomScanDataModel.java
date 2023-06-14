@@ -27,9 +27,13 @@ public class CustomScanDataModel {
         String absFileNamePath;
         @Expose
         boolean isSaved;
+
+        boolean isSampleLoaded;
+
         ConfigFile() {
             absFileNamePath = null;
             isSaved = false;
+            isSampleLoaded = false;
         }
 
     }
@@ -61,6 +65,7 @@ public class CustomScanDataModel {
                 this.configFile = new ConfigFile();
             }
             this.configFile.isSaved = false;
+            this.configFile.isSampleLoaded = true;
             // new & call createSampleRuleList();
             this.customScanData = new CustomScanJSONData();
             // add sampleRuleList to ScanRuleList
@@ -139,6 +144,14 @@ public class CustomScanDataModel {
 
     public boolean isSaved() {
         return this.configFile.isSaved;
+    }
+
+    public boolean isSampleLoaded() {
+        return this.configFile.isSampleLoaded;
+    }
+
+    public void modifiedSample() {
+        this.configFile.isSampleLoaded = false;
     }
 
     public boolean ruleNameIsExistInModel(String ruleName, boolean exceptSample) {

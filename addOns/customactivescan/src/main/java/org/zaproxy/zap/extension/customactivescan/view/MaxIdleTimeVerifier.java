@@ -43,26 +43,29 @@ public class MaxIdleTimeVerifier extends NumberTextVerifier {
     }
 
     private void shouldYieldFocusInternal(boolean parentResult, JComponent input) {
-        if (parentResult) {
-            JTextField jTextField = (JTextField) input;
-            String inputString = jTextField.getText();
-            CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
-            int maxIdleTimeValue = 0;
-            try {
-                maxIdleTimeValue = Integer.parseInt(inputString);
-            } catch (NumberFormatException ex) {
-                maxIdleTimeValue = 0;
+        if (isVerifyCalled()) {
+            if (parentResult) {
+                JTextField jTextField = (JTextField) input;
+                String inputString = jTextField.getText();
+                CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
+                int maxIdleTimeValue = 0;
+                try {
+                    maxIdleTimeValue = Integer.parseInt(inputString);
+                } catch (NumberFormatException ex) {
+                    maxIdleTimeValue = 0;
+                }
+                LOGGER4J.debug("MaxIdleTime value:" + maxIdleTimeValue + " before fileSaveAction");
+                selectedScanRule.setMaxIdleTime(maxIdleTimeValue);// set input to selected ScanRule
+                customScanMainPanel.fileSaveAction();// save to file.
+            } else {
+                Toolkit.getDefaultToolkit().beep();// beep to signal input error
+                CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
+                JTextField jTextField = (JTextField) input;
+                int currentValue = selectedScanRule.getMaxIdleTime();
+                jTextField.setText(Integer.toString(currentValue));// restore input to current value
+                LOGGER4J.debug("MaxIdleTime parentResult false");
             }
-            LOGGER4J.debug("MaxIdleTime value:" + maxIdleTimeValue + " before fileSaveAction");
-            selectedScanRule.setMaxIdleTime(maxIdleTimeValue);// set input to selected ScanRule
-            customScanMainPanel.fileSaveAction();// save to file.
-        } else {
-            Toolkit.getDefaultToolkit().beep();// beep to signal input error
-            CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
-            JTextField jTextField = (JTextField) input;
-            int currentValue = selectedScanRule.getMaxIdleTime();
-            jTextField.setText(Integer.toString(currentValue));// restore input to current value
-            LOGGER4J.debug("MaxIdleTime parentResult false");
         }
+        ClearIsVerifyCalled();
     }
 }

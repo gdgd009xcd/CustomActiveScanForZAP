@@ -41,24 +41,27 @@ public class RequestCountVerifier extends NumberTextVerifier {
     }
 
     private void shouldYieldFocusInternal(boolean parentResult, JComponent input) {
-        if (parentResult) {
-            JTextField jTextField = (JTextField) input;
-            String inputString = jTextField.getText();
-            CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
-            int requestCountValue = 0;
-            try {
-                requestCountValue = Integer.parseInt(inputString);
-            } catch (NumberFormatException ex) {
-                requestCountValue = 0;
+        if (isVerifyCalled()) {
+            if (parentResult) {
+                JTextField jTextField = (JTextField) input;
+                String inputString = jTextField.getText();
+                CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
+                int requestCountValue = 0;
+                try {
+                    requestCountValue = Integer.parseInt(inputString);
+                } catch (NumberFormatException ex) {
+                    requestCountValue = 0;
+                }
+                selectedScanRule.setRequestCount(requestCountValue);// set input to selected ScanRule
+                customScanMainPanel.fileSaveAction();// save to file
+            } else {
+                Toolkit.getDefaultToolkit().beep();// beep to signal input error
+                CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
+                JTextField jTextField = (JTextField) input;
+                int currentValue = selectedScanRule.getRequestCount();
+                jTextField.setText(Integer.toString(currentValue));// restore input to current value
             }
-            selectedScanRule.setRequestCount(requestCountValue);// set input to selected ScanRule
-            customScanMainPanel.fileSaveAction();// save to file
-        } else {
-            Toolkit.getDefaultToolkit().beep();// beep to signal input error
-            CustomScanJSONData.ScanRule selectedScanRule = customScanMainPanel.getSelectedScanRule();
-            JTextField jTextField = (JTextField) input;
-            int currentValue = selectedScanRule.getRequestCount();
-            jTextField.setText(Integer.toString(currentValue));// restore input to current value
         }
+        ClearIsVerifyCalled();
     }
 }

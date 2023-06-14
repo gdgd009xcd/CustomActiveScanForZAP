@@ -417,7 +417,6 @@ public class CustomScanMainPanel extends JPanel {
                 }
                 public void focusLost(FocusEvent e) {
                     LOGGER4J.debug("JTable focusLost :" + (rulePatternTable.isEditing() ? "EDITING": "NONE"));
-                    rulePatternTableFocusLost(rulePatternTable.isEditing());
                 }
             });
             // tracking table cell editor focus
@@ -529,7 +528,7 @@ public class CustomScanMainPanel extends JPanel {
 
     public boolean saveToNewFileIfNoSaved() {
         boolean isSavedToNewFile = false;
-        if (!scanDataModel.isSaved()) {
+        if (!scanDataModel.isSaved() && !scanDataModel.isSampleLoaded()) {
             showSaveFileDialog = true;
             LOGGER4J.debug("showSaveDialog=true");
             File cfile = null;
@@ -597,12 +596,6 @@ public class CustomScanMainPanel extends JPanel {
         }
 
         return isSavedToNewFile;
-    }
-
-    public void rulePatternTableFocusLost(boolean isEditing) {
-        if (isEditing) {
-            saveToNewFileIfNoSaved();
-        }
     }
 
     private void tableCellEditorFocusLost(DefaultCellEditor dce) {
@@ -728,6 +721,7 @@ public class CustomScanMainPanel extends JPanel {
      *  if JSON file isn't exist or CustomScanDataModel isn't saved, then save dialog is appeared.
      */
     public void fileSaveAction() {
+        scanDataModel.modifiedSample();
         if(!this.saveToNewFileIfNoSaved()) {
             scanDataModel.saveModel();
         }

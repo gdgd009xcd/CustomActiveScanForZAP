@@ -10,11 +10,13 @@ public class NumberTextVerifier extends InputVerifier {
     private int len;
     private boolean isPlusNumber;
     private boolean isPrefixFilledWithZero;
+    private boolean isVerifyCalled;
 
     NumberTextVerifier(int len, boolean isPlusNumber, boolean isPrefixFilledWithZero){
         this.len = len;
         this.isPlusNumber = isPlusNumber;
         this.isPrefixFilledWithZero = isPrefixFilledWithZero;
+        this.isVerifyCalled = false;
     }
 
     @Override
@@ -22,6 +24,7 @@ public class NumberTextVerifier extends InputVerifier {
         JTextField jTextField = (JTextField) jComponent;
         String inputString = jTextField.getText();
         LOGGER4J.debug("verify [" + inputString + "]");
+        this.isVerifyCalled = true;
         return isValidNumeric(inputString);
     }
 
@@ -50,5 +53,13 @@ public class NumberTextVerifier extends InputVerifier {
             }
         }
         return inputIsNumeric;
+    }
+
+    public boolean isVerifyCalled() {
+        return this.isVerifyCalled;
+    }
+
+    public void ClearIsVerifyCalled() {
+        this.isVerifyCalled = false;
     }
 }
