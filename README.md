@@ -49,7 +49,8 @@ LCS remove the different token values ​​from the two responses as follows:
 
 ## Prerequisite
 
-* OWASP ZAP ver 2.11.0 or later
+* OWASP ZAP ver 2.12.0 or later
+* java ver 11
 
 ## Download & Building
 
@@ -76,3 +77,6 @@ $
 2）Install add-on customactivescan-alpha-N.N.N.zap file according to the ZAP add-on installation method (example: File menu "Load add-on file").<BR>
 ![AddonInstall](https://raw.githubusercontent.com/gdgd009xcd/RELEASES/master/IMG/ZAP/addoninst.png)<BR>    
 3）restart zap(sorry, currently this addon does not work unless restart zap after install it.)
+
+## how to use
+[Basic Usage](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/1.0.-Basic-Usage)
