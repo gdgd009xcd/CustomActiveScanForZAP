@@ -50,6 +50,8 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	public static final String ZAP_ICONS = ZAP_RESOURCES_ROOT_ABSPATH + "/icons";// you can access any files under ZAP_ICONS
 																				 // by code like yourClassName.class.getResource(ZAP_ICONS + "/pause.png")
 
+	public static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
+
 	public static CustomScanMainPanel customScanMainPanel = null;
 	private static boolean unLoadCalled = false;
 

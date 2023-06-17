@@ -15,14 +15,13 @@ import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.ZAP_ICONS;
 
 @SuppressWarnings("serial")
 public class ScanLogPanel extends JPanel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
-
-    private static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
 
     private JCheckBox pauseCheckBox;
     JTextField requestCountTextField;

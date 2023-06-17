@@ -36,6 +36,8 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
+
 /**
  * this is special custmizable SQL injection logic test.
  *
@@ -57,8 +59,6 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     private int MAXMASKBODYSIZE = 10000; // If response body size is larger than this size, do not apply the asterisk conversion to the body
 
     private int MINWORDLEN = 5; // if extractedOriginalTrueLCS.size < MINWORDLEN then compare extractedOriginalTrueString and extractedFalseString
-
-    private static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
 
     private HttpMessageWithLCSResponse refreshedmessage = null;
     private String mResBodyNormalUnstripped = null;

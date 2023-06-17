@@ -1,5 +1,7 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
+import org.parosproxy.paros.Constant;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
@@ -15,6 +17,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
 
 @SuppressWarnings("serial")
 public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
@@ -348,10 +352,19 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             if (searchTextPane.findplist.size() > 0) {
                 searchTextPane.searchTextPane.setCaretPosition(searchTextPane.findplist.get(0));
                 int foundCount = searchTextPane.findplist.size();
-                JOptionPane.showMessageDialog(this, Integer.toString(foundCount) + "箇所一致しました", "検索結果", JOptionPane.INFORMATION_MESSAGE);
+                String message = String.format(
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatfound"),
+                        foundCount);
+                JOptionPane.showMessageDialog(this,
+                        message,
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
+                        JOptionPane.INFORMATION_MESSAGE);
             } else {
                 Toolkit.getDefaultToolkit().beep();
-                JOptionPane.showMessageDialog(this, "正規表現が一致しませんでした", "検索結果", JOptionPane.QUESTION_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatnotfound"),
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
+                        JOptionPane.QUESTION_MESSAGE);
             }
         }
     }

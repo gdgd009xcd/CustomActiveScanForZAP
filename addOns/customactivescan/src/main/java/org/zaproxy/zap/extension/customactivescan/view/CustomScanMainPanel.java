@@ -26,11 +26,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
+
 @SuppressWarnings("serial")
 public class CustomScanMainPanel extends JPanel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
-    private static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
+
     private JLabel ruleTypeLabel = null;
     private JScrollPane rulePatternScroller = null;
     private int selectedScanRuleIndex = -1;
