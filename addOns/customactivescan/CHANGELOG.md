@@ -2,6 +2,14 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 15 - 2023-06-17
+### v0.6.4
+- maintenance: message support for I18N
+
+## 14 - 2023-06-14
+### v0.6.3
+- new feature: "PenTest" customizable active scan feature.
+
 ## 13 - 2022-06-20
 ### v0.5.7
 - maintenance: setting limit on debug print string value and convert control codes to printable string(represented as a URLencoded string) 

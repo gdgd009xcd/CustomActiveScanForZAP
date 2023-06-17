@@ -1,6 +1,7 @@
 package org.zaproxy.zap.extension.customactivescan;
 
 import com.google.gson.Gson;
+import org.zaproxy.zap.extension.customactivescan.model.InjectionPatterns;
 
 import java.io.FileReader;
 import java.io.Reader;

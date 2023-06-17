@@ -1,22 +1,42 @@
 package org.zaproxy.zap.extension.customactivescan;
 
+import org.apache.commons.httpclient.URIException;
 import org.apache.logging.log4j.Level;
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.core.scanner.AbstractAppParamPlugin;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Category;
+import org.parosproxy.paros.core.scanner.HostProcess;
 import org.parosproxy.paros.network.HttpHeaderField;
 import org.parosproxy.paros.network.HttpMessage;
+import org.parosproxy.paros.network.HttpRequestHeader;
 import org.parosproxy.paros.network.HttpResponseHeader;
+import org.zaproxy.zap.extension.ascan.ActiveScan;
+import org.zaproxy.zap.extension.ascan.ExtensionActiveScan;
+import org.zaproxy.zap.extension.customactivescan.model.CustomScanJSONData;
+import org.zaproxy.zap.extension.customactivescan.model.InjectionPatterns;
+import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
+import org.zaproxy.zap.extension.customactivescan.model.WaitTimerObject;
+import org.zaproxy.zap.extension.customactivescan.view.ScanLogPanel;
+import org.zaproxy.zap.extension.customactivescan.view.ScanLogPanelFrame;
 import org.zaproxy.zap.model.Tech;
 import org.zaproxy.zap.model.TechSet;
 import org.zaproxy.zap.network.HttpResponseBody;
 
+import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
 
 /**
  * this is special custmizable SQL injection logic test.
@@ -40,10 +60,6 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
     private int MINWORDLEN = 5; // if extractedOriginalTrueLCS.size < MINWORDLEN then compare extractedOriginalTrueString and extractedFalseString
 
-    private static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
-
-    private List<InjectionPatterns.TrueFalsePattern> patterns;
-
     private HttpMessageWithLCSResponse refreshedmessage = null;
     private String mResBodyNormalUnstripped = null;
     private String mResBodyNormalStripped = null;
@@ -57,6 +73,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     private Pattern inputTagQuotedValuePattern;
     private Pattern sqlErrorPattern;
     private String sqlErrorMsgRegex;
+
+    private ExtensionActiveScan extensionActiveScan;
+
+    ScanLogPanelFrame scanLogPanelFrame;
 
     String[] SQLERRORMSGS = {
             // Oracle
@@ -81,10 +101,63 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     public void init() {
         super.init();
 
-        printableString = new PrintableString("");
+        scanLogPanelFrame = null;
+        HostProcess hProcess = getParent();
 
-        LoadGsonInjectionPatterns gsonloader = new LoadGsonInjectionPatterns(ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString(MESSAGE_PREFIX + "GsonInjectionPatternFileName"));
-        this.patterns = gsonloader.getPatternList();
+        extensionActiveScan =
+                Control.getSingleton()
+                        .getExtensionLoader()
+                        .getExtension(ExtensionActiveScan.class);
+        List<ActiveScan> ascanList = extensionActiveScan.getActiveScans();
+
+        CustomScanJSONData.ScanRule selectedScanRule = ExtensionAscanRules.customScanMainPanel.getSelectedScanRule();
+        List<InjectionPatterns.TrueFalsePattern> listTrueFalsePatterns = selectedScanRule.patterns.patterns;
+        List<String> flagResultItems = new ArrayList<>();
+        for(String item: selectedScanRule.flagResultItems) {
+            flagResultItems.add(item);
+        }
+
+        String[] flagResultItemArray = flagResultItems.toArray(new String[0]);// convert list to new Array of String
+        int scannerId = -1;
+        for(ActiveScan ascan: ascanList) {
+            List<HostProcess> hostProcessList = ascan.getHostProcesses();
+            for(HostProcess hPro: hostProcessList) {
+                if (hPro == hProcess) {
+                    scannerId = ascan.getId();
+                    ExtensionAscanRules.hostProcessScannerIdMap.put(hProcess, scannerId);
+                    WaitTimerObject waitTimerObject = new WaitTimerObject();
+                    ExtensionAscanRules.scannerIdWaitTimerMap.put(scannerId, waitTimerObject);
+                    if (selectedScanRule.doScanLogOutput) {
+                        final int finalScannerId = scannerId;
+                        try {
+                            SwingUtilities.invokeAndWait(new Runnable() {
+                                @Override
+                                public void run() {
+                                    scanLogPanelFrame = new ScanLogPanelFrame(flagResultItemArray, finalScannerId);
+                                    ExtensionAscanRules.scannerIdScanLogFrameMap.put(finalScannerId, scanLogPanelFrame);
+                                    ascan.addScannerListener(new CustomScannerListener());
+                                    scanLogPanelFrame.updateRequestCounter(0);
+                                }
+                            });
+                        } catch (InterruptedException e) {
+                            LOGGER4J.error(e.getMessage(), e);
+                        } catch (InvocationTargetException e) {
+                            LOGGER4J.error(e.getMessage(), e);
+                        }
+
+                    } else {
+                        ascan.addScannerListener(new CustomScannerListener());
+                    }
+                }
+            }
+        }
+
+        if (scannerId != -1) {
+            LOGGER4J.debug("start SCANNING scannerId[" + scannerId + "]" + " instance:" + this);
+        } else {
+            LOGGER4J.debug("can't get SCANNING scannerId!!!");
+        }
+        printableString = new PrintableString("");
 
         this.NEALYEQUALPERCENT = getNealyEqualPercent();
         this.NEALYDIFFERPERCENT = getNealyDifferPercent();
@@ -111,28 +184,48 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         }
         LOGGER4J.debug("SQL ERROR Message regex:" + sqlErrorMsgRegex);
         sqlErrorPattern = Pattern.compile(sqlErrorMsgRegex, Pattern.MULTILINE|Pattern.CASE_INSENSITIVE);
+
     }
 
     @Override
     public void scan(HttpMessage msg, String origParamName, String origParamValue) {
+        CustomScanJSONData.ScanRule selectedScanRule = ExtensionAscanRules.customScanMainPanel.getSelectedScanRule();
+        int scannerId = ExtensionAscanRules.hostProcessScannerIdMap.get(getParent());
+        PauseActionObject pauseActionObject = ExtensionAscanRules.scannerIdPauseActionMap.get(scannerId);
+        WaitTimerObject waitTimerObject = ExtensionAscanRules.scannerIdWaitTimerMap.get(scannerId);
+        LOGGER4J.debug("scan start scannerId:" + scannerId);
+        switch(selectedScanRule.ruleType) {
+            case SQL:
+                scanBySQLRule(msg, origParamName, origParamValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+                break;
+            case PenTest:
+                scanByPenTestRule(msg, origParamName, origParamValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void scanBySQLRule(HttpMessage msg, String origParamName, String origParamValue, int scannerId, CustomScanJSONData.ScanRule selectedScanRule, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject) {
+        List<InjectionPatterns.TrueFalsePattern> patterns = selectedScanRule.patterns.patterns;
         boolean sqlInjectionFoundForUrl = false;
 
         LOGGER4J.debug("scan HttpMessage RequestBody Charset[" + msg.getRequestBody().getCharset() + "]");
 
         LcsStringListComparator comparator = new LcsStringListComparator();
 
-        refreshedmessage = sendRequestAndCalcLCS(comparator, null, null);
+        refreshedmessage = sendRequestAndCalcLCS(comparator, null, null, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
         if(refreshedmessage==null)return;
 
         String[] normalBodyOutputs = getUnstrippedStrippedResponse(refreshedmessage, origParamValue, null);
 
-        LOOPTRUE: for(Iterator<InjectionPatterns.TrueFalsePattern> it = this.patterns.iterator(); it.hasNext() && !sqlInjectionFoundForUrl;) {
+        LOOPTRUE: for(Iterator<InjectionPatterns.TrueFalsePattern> it = patterns.iterator(); it.hasNext() && !sqlInjectionFoundForUrl;) {
             InjectionPatterns.TrueFalsePattern tfrpattern = it.next();
 
             // 1. Original response matches true condition
             String trueValue = origParamValue + tfrpattern.trueValuePattern;
             String trueParamName = origParamName + (tfrpattern.trueNamePattern != null ? tfrpattern.trueNamePattern : "");
-            HttpMessageWithLCSResponse truemessage = sendRequestAndCalcLCS(comparator, trueParamName, trueValue);
+            HttpMessageWithLCSResponse truemessage = sendRequestAndCalcLCS(comparator, trueParamName, trueValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
             if (truemessage == null) continue;
 
             String[] trueBodyOutputs = getUnstrippedStrippedResponse(truemessage, origParamValue, tfrpattern.trueValuePattern);
@@ -178,7 +271,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     if (falseBodyOutputs == null) {
                         falseValue = origParamValue + tfrpattern.falseValuePattern;
                         falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
-                        HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue);
+                        HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
                         if (falsemessage == null) continue;
                         falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, origParamValue, tfrpattern.falseValuePattern);
                     }
@@ -194,7 +287,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             + "NEALYDIFFERPERCENT["
                             + this.NEALYDIFFERPERCENT
                             + "]"
-                            );
+                    );
                     // 1-2. original body is diffrent from false body.
                     if (falsepercent < this.NEALYDIFFERPERCENT) {
                         // bingo.
@@ -205,7 +298,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                                 + " 1-2.falsepercent["
                                 + falsepercent + "<" + this.NEALYDIFFERPERCENT
                                 + "]"
-                                );
+                        );
                         String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.trueequaloriginal.evidence");
                         raiseAlertBooleanBased(Alert.RISK_HIGH, Alert.CONFIDENCE_MEDIUM, i > 0 ? true : false, truemessage,origParamName, trueParamName, trueValue, falseParamName, falseValue, null, evidence);
                         sqlInjectionFoundForUrl = true;
@@ -216,7 +309,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (falseBodyOutputs == null) {
                     falseValue = origParamValue + tfrpattern.falseValuePattern;
                     falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
-                    HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue);
+                    HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
                     if (falsemessage == null) continue;
                     falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, origParamValue, tfrpattern.falseValuePattern);
 
@@ -247,7 +340,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         + "] extractedOriginalTrueCompPercent["
                         + extractedOriginalTrueCompPercent
                         + "]"
-                        );
+                );
 
                 //3-1. Extracted true response is the same as  extracted original response
                 if (extractedOriginalTrueCompPercent >= this.NEALYEQUALPERCENT && !trueHasSQLError && !extractedOriginalDataString.isEmpty()){
@@ -336,7 +429,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     String errorValue = origParamValue + tfrpattern.errorValuePattern;
                     if (errorBodyOutputs == null) {
 
-                        errormessage = sendRequestAndCalcLCS(comparator, errorParamName, errorValue);
+                        errormessage = sendRequestAndCalcLCS(comparator, errorParamName, errorValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
                         if (errormessage == null) continue;
                         errorBodyOutputs = getUnstrippedStrippedResponse(errormessage, origParamValue, tfrpattern.errorValuePattern);
                     }
@@ -366,6 +459,87 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             if (isStop()) {
                 LOGGER4J.info("scan stopped by user request");
                 return;
+            }
+        }
+    }
+
+    private void scanByPenTestRule(HttpMessage msg, String origParamName, String origParamValue, int scannerId, CustomScanJSONData.ScanRule selectedScanRule, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject) {
+        LOGGER4J.debug("start scanByPenTestRule");
+
+        List<InjectionPatterns.TrueFalsePattern> patterns = selectedScanRule.patterns.patterns;
+
+        for(Iterator<InjectionPatterns.TrueFalsePattern> it = patterns.iterator(); it.hasNext();) {
+            InjectionPatterns.TrueFalsePattern tfrpattern = it.next();
+            String injectedParamValue = origParamValue + tfrpattern.trueValuePattern;
+            HttpMessage resultMessage = sendOneMessage(origParamName, injectedParamValue, scannerId, pauseActionObject, waitTimerObject, selectedScanRule);
+        }
+    }
+
+    private void addSendResultToScanLogPanel(HttpMessage resultMessage, CustomScanJSONData.ScanRule selectedScanRule) {
+        // search regex pattern in response result message
+        if (resultMessage != null && scanLogPanelFrame != null) {
+            // get baseColumn data : "Time", "Method", "URL", "Code", "Reason", "Length"
+            // extract "Time" String from response header
+            String timeString = "";
+            HttpResponseHeader httpResponseHeader = resultMessage.getResponseHeader();
+            String dateString = httpResponseHeader.getHeader("Date");
+            if (dateString != null && !dateString.isEmpty()) {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+                try {
+                    Date responseDate = simpleDateFormat.parse(dateString);
+                    SimpleDateFormat defaultDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    timeString = defaultDateFormat.format(responseDate);
+                } catch (ParseException ex) {
+                    LOGGER4J.error(ex.getMessage(), ex);
+                }
+            }
+            // extract "Method" String from request header
+            HttpRequestHeader httpRequestHeader = resultMessage.getRequestHeader();
+            String methodString = httpRequestHeader.getMethod();
+
+            // extract URL string from request header
+            org.apache.commons.httpclient.URI uri = httpRequestHeader.getURI();
+            String urlString = "";
+            try {
+                urlString = uri.getURI();
+            } catch (URIException e) {
+                LOGGER4J.error(e.getMessage(), e);
+            }
+
+            // get Status 3 digit code
+            int statusCode = httpResponseHeader.getStatusCode();
+            String statusCodeString = Integer.toString(statusCode);
+
+            // get Reason code
+            String reasonCodeString = httpResponseHeader.getReasonPhrase();
+
+            // get length
+            int contentLength = httpResponseHeader.getContentLength();
+            String contentLengthString = Integer.toString(contentLength);
+
+            String entireResponseString = resultMessage.getResponseHeader().toString() + resultMessage.getResponseBody().toString();
+            List<String> resultRecord = new ArrayList<>();
+            resultRecord.add(timeString);
+            resultRecord.add(methodString);
+            resultRecord.add(urlString);
+            resultRecord.add(statusCodeString);
+            resultRecord.add(reasonCodeString);
+            resultRecord.add(contentLengthString);
+
+            for (String flagItem : selectedScanRule.flagResultItems) {
+                Pattern compiledRegex = Pattern.compile(flagItem);
+                Matcher m = compiledRegex.matcher(entireResponseString);
+                int foundCount = 0;
+                while (m.find()) {
+                    foundCount++;
+                }
+                resultRecord.add(Integer.toString(foundCount));
+            }
+
+            String[] resultRecordArray = resultRecord.toArray(new String[0]);
+            ScanLogPanel scanLogPanel = scanLogPanelFrame.getScanLogPanel();
+            if (scanLogPanel != null) {
+                scanLogPanel.addRowToScanLogTableModel(resultRecordArray, resultMessage);
             }
         }
     }
@@ -520,7 +694,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * @param paramValue
      * @return
      */
-    HttpMessageWithLCSResponse sendRequestAndCalcLCS(LcsStringListComparator comparator, String origParamName, String paramValue) {
+    HttpMessageWithLCSResponse sendRequestAndCalcLCS(LcsStringListComparator comparator, String origParamName, String paramValue, int scannerId, CustomScanJSONData.ScanRule selectedScanRule, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject) {
         String[] res = new String[2];
         res[0]=null; res[1] = null;
         HttpMessage msg2 = null;
@@ -533,8 +707,15 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 setParameter(msg2, origParamName, paramValue);
             }
 
+            // wait until specified MSec passed
+            waitTimerObject.waitUntilSpecifiedTimePassed(selectedScanRule);
+            // take pause Action before sending message.
+            pauseAction(scannerId, pauseActionObject);
+
             try {
                 sendAndReceive(msg2, false); //do not follow redirects
+                // add resultMessage to ScanLogPanel
+                addSendResultToScanLogPanel(msg2, selectedScanRule);
             } catch (Exception ex) {
                 LOGGER4J.error("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
                         " when accessing: " + msg2.getRequestHeader().getURI().toString(), ex);
@@ -801,5 +982,81 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             return foundMsg;
         }
         return null;
+    }
+
+    HttpMessage sendOneMessage(String origParamName, String paramValue, int scannerId, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject, CustomScanJSONData.ScanRule selectedScanRule) {
+
+        // wait until specified MSec passed
+        waitTimerObject.waitUntilSpecifiedTimePassed(selectedScanRule);
+        // take pause Action before sending message.
+        pauseAction(scannerId, pauseActionObject);
+
+        HttpMessage msg2 = getNewMsg();
+        if(origParamName!=null&&paramValue!=null) {
+            setParameter(msg2, origParamName, paramValue);
+        }
+
+        try {
+            LOGGER4J.debug("sending message.");
+            sendAndReceive(msg2, false); //do not follow redirects
+            // add resultMessage to ScanLogPanel
+            addSendResultToScanLogPanel(msg2, selectedScanRule);
+        } catch (Exception ex) {
+            LOGGER4J.error("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
+                    " when accessing: " + msg2.getRequestHeader().getURI().toString(), ex);
+            return null;
+        }
+
+        return msg2;
+    }
+
+    void pauseAction(int scannerId, PauseActionObject pauseActionObject) {
+        if (pauseActionObject != null) {
+            if (pauseActionObject.isCounterDecrementable()) {
+                if (pauseActionObject.decrementCounter() <= 0) {
+                    ScanLogPanelFrame scanLogPanelFrame = ExtensionAscanRules.scannerIdScanLogFrameMap.get(scannerId);
+                    if (scanLogPanelFrame != null) {
+                        ScanLogPanel scanLogPanel = scanLogPanelFrame.getScanLogPanel();
+                        if (scanLogPanel != null) {
+                            try {
+                                SwingUtilities.invokeAndWait(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (scanLogPanel.setSelectedPauseAction(scannerId, true)) {
+                                            scanLogPanel.setSelectedPauseCheckBox(true, true);
+                                        }
+                                    }
+                                });
+                            }catch(Exception ex) {
+                                LOGGER4J.error(ex.getMessage(), ex);
+                            }
+                        }
+                    }
+                }
+            }
+            Thread th = null;
+            synchronized (pauseActionObject) {
+                th = ExtensionAscanRules.scannerIdThreadMap.get(scannerId);
+            }
+            if (th != null) {
+                pauseActionObject.terminate();
+                if (th.isAlive() && th.getState() == Thread.State.WAITING) {// join if thread is alive, then join until thread is terminated.
+                    try {
+                        LOGGER4J.debug("Thread id[" + th.getId() + "] join started");
+                        th.join();
+                        ScanLogPanelFrame scanLogPanelFrame = ExtensionAscanRules.scannerIdScanLogFrameMap.get(scannerId);
+                        if (scanLogPanelFrame != null) {
+                            scanLogPanelFrame.updateRequestCounter(-1);
+                        }
+                    } catch (InterruptedException e) {
+                        LOGGER4J.error(e.getMessage(), e);
+                    }
+                    LOGGER4J.debug("Thread id[" + th.getId() + "] join ended.");
+                } else {
+                    pauseActionObject.notifyAll();
+                }
+                ExtensionAscanRules.scannerIdThreadMap.remove(scannerId);// forget everything about thread.
+            }
+        }
     }
 }

@@ -8,7 +8,6 @@ import org.zaproxy.gradle.addon.misc.CreateGitHubRelease
 import org.zaproxy.gradle.addon.misc.ExtractLatestChangesFromChangelog
 
 plugins {
-    jacoco
     id("org.zaproxy.add-on") version "0.3.0" apply false
 }
 
@@ -18,27 +17,19 @@ val parentProjects = listOf(
         ""
 )
 
-val jacocoToolVersion = "0.8.4"
-jacoco {
-    toolVersion = jacocoToolVersion
-}
-
 subprojects {
     if (parentProjects.contains(project.name)) {
         return@subprojects
     }
 
     apply(plugin = "java-library")
-    apply(plugin = "jacoco")
     apply(plugin = "org.zaproxy.add-on")
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    jacoco {
-        toolVersion = jacocoToolVersion
+        //sourceCompatibility = JavaVersion.VERSION_1_8
+        //targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     val apiGenClasspath = configurations.detachedConfiguration(dependencies.create("org.zaproxy:zap:2.9.0"))
@@ -57,73 +48,6 @@ subprojects {
                 from(tasks.named(JavaPlugin.JAR_TASK_NAME))
             }
         }
-    }
-}
-
-/**
-tasks.register("reportMissingHelp") {
-    description = "Reports the add-ons that do not have help pages."
-    doLast {
-        val addOns = mutableListOf<AddOnPluginExtension>()
-        subprojects.forEach {
-            it.plugins.withType(AddOnPlugin::class) {
-                if (!File(it.projectDir, "src/main/javahelp").exists()) {
-                    addOns.add(it.zapAddOn)
-                }
-            }
-        }
-        if (addOns.isEmpty()) {
-            println("All add-ons have help.")
-        } else {
-            println("The following add-ons do not have help:")
-            addOns.forEach { println("${it.addOnId.get()} (${it.addOnStatus.get().toString().toLowerCase(Locale.ROOT)})") }
-        }
-    }
-}
-*/
-
-/**
-tasks.register<TestReport>("testReport") {
-    destinationDir = file("$buildDir/reports/allTests")
-    subprojects.forEach {
-        it.plugins.withType(JavaPlugin::class) {
-            reportOn(it.tasks.withType<Test>())
-        }
-    }
-
-    doLast {
-        val reportUrl = File(destinationDir, "index.html").toURL()
-        logger.lifecycle("Test Report: $reportUrl")
-    }
-}
-*/
-
-val jacocoMerge by tasks.registering(JacocoMerge::class) {
-    destinationFile = file("$buildDir/jacoco/all.exec")
-    subprojects.forEach {
-        it.plugins.withType(JavaPlugin::class) {
-            executionData(it.tasks.withType<Test>())
-        }
-    }
-
-    doFirst {
-        executionData = files(executionData.files.filter { it.exists() })
-    }
-}
-
-val jacocoReport by tasks.registering(JacocoReport::class) {
-    executionData(jacocoMerge)
-    subprojects.forEach {
-        it.plugins.withType(JavaPlugin::class) {
-            val sourceSets = it.extensions.getByName("sourceSets") as SourceSetContainer
-            sourceDirectories.from(files(sourceSets["main"].java.srcDirs))
-            classDirectories.from(files(sourceSets["main"].output.classesDirs))
-        }
-    }
-
-    doLast {
-        val reportUrl = File(reports.html.destination, "index.html").toURL()
-        logger.lifecycle("Coverage Report: $reportUrl")
     }
 }
 
@@ -172,9 +96,6 @@ fun subproject(addOnId: String): Provider<Project> =
 
 fun Project.java(configure: JavaPluginExtension.() -> Unit): Unit =
     (this as ExtensionAware).extensions.configure("java", configure)
-
-fun Project.jacoco(configure: JacocoPluginExtension.() -> Unit): Unit =
-    (this as ExtensionAware).extensions.configure("jacoco", configure)
 
 fun Project.zapAddOn(configure: AddOnPluginExtension.() -> Unit): Unit =
     (this as ExtensionAware).extensions.configure("zapAddOn", configure)
