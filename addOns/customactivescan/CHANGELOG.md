@@ -2,6 +2,11 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 16 - 2023-08-30
+### v0.7.0
+- bugfix: fix problems about "scanLog window"
+- improve: brash up CustomActiveScan logic
+
 ## 15 - 2023-06-17
 ### v0.6.4
 - maintenance: message support for I18N

@@ -48,11 +48,14 @@ public class Utilities {
     static private Pattern pathDivPattern;
     static private String queryParamRegex = "([^&=]+)=([^&=]+)";
     static private Pattern queryParamPattern;
+    static private String alphaNumRegex = "[a-zA-Z0-9]+";
+    static private Pattern alphaNumPattern;
 
     static {
         pathDivPattern = Pattern.compile(pathDivRegex);
         queryParamPattern = Pattern.compile(queryParamRegex);
         queryMarkPattern = Pattern.compile(queryMarkRegex);
+        alphaNumPattern = Pattern.compile(alphaNumRegex);
     }
 
     /**
@@ -555,5 +558,14 @@ public class Utilities {
      */
     public static String escapeRegexChars(String originalRegex) {
         return originalRegex.replaceAll("([\\\\|+{}\\[\\]()*.<>?^$])", "\\\\$1");
+    }
+
+    public static boolean hasAlphaNumberChars(String data) {
+        if (data == null) return false;
+        Matcher m = alphaNumPattern.matcher(data);
+        if (m.find()) {
+            return true;
+        }
+        return false;
     }
 }

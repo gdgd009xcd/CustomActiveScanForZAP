@@ -15,10 +15,16 @@ public abstract class AbstractLcsComparator<T> implements LcsComparator<T>{
 	}
 	
 	@Override
-	public int calcPercent(List<T> a, List<T> b, LcsBuilder<T> result){
-		int asize = a.size();
-		int bsize = b.size();
+	public int calcPercent(ArrayListWrapper<T> a, ArrayListWrapper<T> b, LcsBuilder<T> result){
+
+		int asize = -1;
+		int bsize = -1;
+
+		asize = a.size();
+		bsize = b.size();
+
 		if(asize==0 && bsize == 0){
+
 			if(log!=null){
 				log.debug("calcPercent=" + 100);
 			}

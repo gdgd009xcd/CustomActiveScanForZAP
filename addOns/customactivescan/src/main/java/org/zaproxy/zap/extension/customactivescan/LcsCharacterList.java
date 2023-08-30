@@ -7,7 +7,9 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 	private StringBuilder da;
 	private StringBuilder db;
 	private StringBuilder[] diff = null;
-	private boolean reverse;
+	private boolean lcsReverse;
+	private boolean diffAReverse;
+	private boolean diffBReverse;
 	private boolean ABreverse = false;
 
 	
@@ -16,29 +18,120 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 	}
 	
 	@Override
-	public void setReverseLCS() {
-		reverse = true;
+	public void setReverse() {
+		lcsReverse = true;
+		diffAReverse = true;
+		diffBReverse = true;
 	}
-	
+
+	@Override
+	public boolean isReverseLCS() {
+		return lcsReverse;
+	}
+
+	@Override
+	public boolean isReverseDiffA() {
+		return this.diffAReverse;
+	}
+
+	@Override
+	public boolean isReverseDiffB() {
+		return this.diffBReverse;
+	}
+
 	@Override
 	public void setABreverse(boolean b) {
 		ABreverse = b;
+		if(ABreverse) {
+			diff[0] = db;
+			diff[1] = da;
+		}else {
+			diff[0] = da;
+			diff[1] = db;
+		}
 	}
-	
+
+	@Override
+	public Character getLcsElement(int index) {
+		try {
+			char c = builder.charAt(index);
+			return Character.valueOf(c);
+		} catch (Exception ex) {
+
+		}
+		return null;
+	}
+
+	@Override
+	public Character getDiffAElement(int index) {
+		try {
+			char c = da.charAt(index);
+			return Character.valueOf(c);
+		} catch (Exception ex) {
+
+		}
+		return null;
+	}
+
+	@Override
+	public void setOriginalDiffA(ArrayListWrapper<Character> wrapperDiffA) {
+		if (ABreverse) {
+			this.diffBReverse = wrapperDiffA.isOriginalReverseOrder();
+			this.db.append(wrapperDiffA.getOriginalList());
+		} else {
+			this.diffAReverse = wrapperDiffA.isOriginalReverseOrder();
+			this.da.append(wrapperDiffA.getOriginalList());
+		}
+	}
+
+	@Override
+	public Character getDiffBElement(int index) {
+		try {
+			char c = db.charAt(index);
+			return Character.valueOf(c);
+		} catch (Exception ex) {
+
+		}
+		return null;
+	}
+
+	@Override
+	public void setOriginalDiffB(ArrayListWrapper<Character> wrapperDiffB) {
+		if (ABreverse) {
+			this.diffAReverse = wrapperDiffB.isOriginalReverseOrder();
+			this.da.append(wrapperDiffB.getOriginalList());
+		} else {
+			this.diffBReverse = wrapperDiffB.isOriginalReverseOrder();
+			this.db.append(wrapperDiffB.getOriginalList());
+		}
+	}
+
+	@Override
+	public int getDiffASize() {
+		return da.length();
+	}
+
+	@Override
+	public int getDiffBSize() {
+		return db.length();
+	}
+
+	/**
+	 * add character to builder as LCS.
+	 * add characters in REVERSE ORDER.
+	 * @param c
+	 */
 	@Override
 	public void append(Character c) {
 		builder.append(c);
 	}
-	
-	@Override
-	public void add(int index, Character c) {
-		builder.insert(index, c);
-	}
-	
-	@Override
-	public CharacterList getLCS(){
-		CharacterList clist = new CharacterList(reverse?builder.reverse().toString():builder.toString());//stored reverse order.
-		return clist;
+
+	/**
+	 * get String from LCS in "Original Order".
+	 * @return
+	 */
+	public String getLcsString() {
+		return lcsReverse?builder.reverse().toString():builder.toString();
 	}
 	
 	@Override
@@ -51,7 +144,9 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 		builder = new StringBuilder();
 		da = new StringBuilder();
 		db = new StringBuilder();
-		reverse = false;
+		lcsReverse = false;
+		diffAReverse = false;
+		diffBReverse = false;
 		
 		diff = new StringBuilder[2];
 		if(ABreverse) {
@@ -63,6 +158,11 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 		}
 	}
 
+	/**
+	 * append Character to list diffA.<BR>
+	 * this method add Character to diffA in REVERSE ORDER.
+	 * @param ta
+	 */
 	@Override
 	public void appenddiffA(Character ta) {
 		// TODO Auto-generated method stub
@@ -70,7 +170,12 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 		diff[0].append(ta);
 		
 	}
-	
+
+	/**
+	 * append Character to list diffB.<BR>
+	 * this method add Character to diffB in REVERSE ORDER.
+	 * @param tb
+	 */
 	@Override
 	public void appenddiffB(Character tb) {
 		// TODO Auto-generated method stub
@@ -78,36 +183,24 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 		
 	}
 
-	@Override
-	public void setdiffB(List<Character> lb) {
-		// TODO Auto-generated method stub
-		for (Character ch: lb) {
-			diff[1].append(ch);
-		}
-	}
-	
+
+	/**
+	 * get String from DiffA in "Original Order".
+	 * @return
+	 */
 	public String getDiffAString() {
-		return reverse?da.reverse().toString():da.toString();
-	}
-	
-	public String getDiffBString() {
-		return reverse?db.reverse().toString():db.toString();
-	}
-	
-	@Override
-	public CharacterList getDiffA() {
-		CharacterList clist = new CharacterList(getDiffAString());
-		return clist;
-	}
-	
-	@Override
-	public CharacterList getDiffB() {
-		CharacterList clist = new CharacterList(getDiffBString());
-		return clist;
-	}
-	
-	public void setLCS(String lcs) {
-		builder.append(lcs);
+		return diffAReverse ? da.reverse().toString() : da.toString();
 	}
 
+	/**
+	 * get String from DiffB in "Original Order".
+	 * @return
+	 */
+	public String getDiffBString() {
+		return diffBReverse ? db.reverse().toString() : db.toString();
+	}
+
+	public boolean isABreverse() {
+		return this.ABreverse;
+	}
 }

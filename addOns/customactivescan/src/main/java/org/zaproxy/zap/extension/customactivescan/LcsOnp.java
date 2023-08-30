@@ -17,14 +17,15 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
     int M;
     int N;
 	OnpV onpV[] = null;
-	List<T> listX = null;
-	List<T> listY = null;
+	ArrayListWrapper<T> listX = null;
+	ArrayListWrapper<T> listY = null;
 	int delta=0;
 	int offset=0;
 	int distance = 0;
 	int delta_offset = 0;
 	int P;
-	
+	int totalSnakeCount = 0;
+
 	LcsOnp(Logger _log){
 		super(_log);
 		init();
@@ -40,10 +41,11 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 		distance = 0;
 		delta_offset = 0;
 		P = 0;
+		totalSnakeCount = 0;
 	}
 	
 	@Override
-	public int calcLCS(List<T> a, List<T> b, LcsBuilder<T> result) {//return lcs size
+	public int calcLCS(ArrayListWrapper<T> a, ArrayListWrapper<T> b, LcsBuilder<T> result) {//return lcs size
 		long startTime = 0;
 		if(log.isDebugEnabled()) {
 			startTime = System.currentTimeMillis();
@@ -53,22 +55,23 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			long onpcalctime = System.currentTimeMillis() - startTime;
 			log.debug("onpCalc D:" + D + " lapsetime:" + onpcalctime);
 		}
-		if(result!=null) {
-			result.clear();
-		}
-		
-		return getLCSinternal(result);
+
+		return getLCSinternal(listX, listY, result);
 	}
 	
 	
-	protected int onpCalc(List<T> A, List<T> B, LcsBuilder<T> result) {//return D = delta + 2p
+	protected int onpCalc(ArrayListWrapper<T> A, ArrayListWrapper<T> B, LcsBuilder<T> result) {//return D = delta + 2p
 		init();
 		if(result!=null) {
 			result.setABreverse(false);
 		}
-		
+
 		M = A.size();
 		N = B.size();
+
+		if (log.isDebugEnabled()) {
+			log.debug("M:" + M + " N:" + N);
+		}
 
 		if(M > N) {
 			if(result!=null) {
@@ -76,6 +79,7 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			}
 			return onpCalc(B, A, null);
 		}
+		int x;
 		listX = A;
 		listY = B;
 		int onpvsize = M+N+1;
@@ -95,7 +99,6 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			int kstart = offset;
 			for (k = kstart; k < delta_offset; ++k) {
 
-				int x = 0;
 				//prev = null;
 				//int x = (p == 0) ? (k == 0 ? 0 : onpV[k - 1 + offset].x)
 				//		: (k == -p ? onpV[k + 1 + offset].x + 1 : Math.max(onpV[k + 1 + offset].x + 1, onpV[k - 1 + offset].x));
@@ -106,7 +109,6 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 					//prev = null;
 					x = 0;
 				}else {
-
 					oper = -1;
 					//onpV[k - 1 + offset].x
 					prev = onpV[k-1];
@@ -114,14 +116,13 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 					prev.setRefered();
 				}
 
-
-				onpV[k].setOper(x, p, oper);
+				//onpV[k].setOper(x, p, oper);
+				onpV[k].setOper(x,p,oper);
 				snake(k, x, A, B, onpV[k]);
 
 			}
 
 			k = delta_offset;
-			int x = 0;
 			//int x = (p == 0) ? (k == 0 ? 0 : onpV[k - 1 + offset].x)
 			//		: Math.max(onpV[k + 1 + offset].x + 1, onpV[k - 1 + offset].x);
 
@@ -138,7 +139,8 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				oper = -1;
 			}
 
-			onpV[k].setOper(x, p, oper);
+			//onpV[k].setOper(x, p, oper);
+			onpV[k].setOper(x,p,oper);
 			snake(k, x, A, B, onpV[k]);
 
 			if (onpV[delta_offset].x == M) {
@@ -156,10 +158,9 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			int k;
 			int oper = 0;
 
-			int kstart = offset - p;
-			k = kstart;
+			//int kstart = offset - p;
+			k = offset - p;
 			if (k < delta_offset) {
-				int x = 0;
 				//prev = null;
 				//int x = (p == 0) ? (k == 0 ? 0 : onpV[k - 1 + offset].x)
 				//		: (k == -p ? onpV[k + 1 + offset].x + 1 : Math.max(onpV[k + 1 + offset].x + 1, onpV[k - 1 + offset].x));
@@ -167,7 +168,6 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				prev = onpV[k+1];
 				x = prev.x + 1;
 				prev.setRefered();
-				//x = prev.x + 1;
 				oper = 1;
 				onpV[k].setOper(x, p, oper);
 				snake(k, x, A, B, onpV[k]);
@@ -175,7 +175,6 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			k++;
 			for (; k < delta_offset; ++k) {
 
-				int x = 0;
 				//prev = null;
 				//int x = (p == 0) ? (k == 0 ? 0 : onpV[k - 1 + offset].x)
 				//		: (k == -p ? onpV[k + 1 + offset].x + 1 : Math.max(onpV[k + 1 + offset].x + 1, onpV[k - 1 + offset].x));
@@ -186,12 +185,10 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				int xminus = onpVxminus.x;
 				if(xplus > xminus) {
 					x = xplus;
-					//prev = onpVxplus;
 					oper = 1;
 					onpVxplus.setRefered();
 				}else {
 					x = xminus;
-					//prev = onpVxminus;
 					oper = -1;
 					onpVxminus.setRefered();
 				}
@@ -200,11 +197,11 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				snake(k, x, A, B, onpV[k]);
 
 			}
-			kstart = p+delta_offset;
-			k=kstart;
+			//kstart = p+delta_offset;
+			k=p+delta_offset;
 			{
 				prev = onpV[k - 1];
-				int x = prev.x;
+				x = prev.x;
 				prev.setRefered();
 				oper = -1;
 				onpV[k].setOper(x, p, oper);
@@ -213,7 +210,6 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			k--;
 			for (; k > delta_offset; k--) {
 				//startTime = System.currentTimeMillis();
-				int x = 0;
 				//int x = (k == (delta + p)) ? onpV[k - 1 + offset].x
 				//		: Math.max(onpV[k + 1 + offset].x + 1, onpV[k - 1 + offset].x);
 
@@ -223,12 +219,10 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				int xminus = onpVxminus.x;
 				if(xplus > xminus) {
 					x = xplus;
-					//prev = onpVxplus;
 					onpVxplus.setRefered();
 					oper = 1;
 				}else {
 					x = xminus;
-					//prev = onpVxminus;
 					onpVxminus.setRefered();
 					oper = -1;
 				}
@@ -238,7 +232,6 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				
 			}
 			k = delta_offset;
-			int x = 0;
 			//int x = (p == 0) ? (k == 0 ? 0 : onpV[k - 1 + offset].x)
 			//		: Math.max(onpV[k + 1 + offset].x + 1, onpV[k - 1 + offset].x);
 			{
@@ -248,12 +241,10 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 				int xminus = onpVxminus.x;
 				if(xplus > xminus) {
 					x = xplus;
-					//prev = onpVxplus;
 					onpVxplus.setRefered();
 					oper = 1;
 				}else {
 					x = xminus;
-					//prev = onpVxminus;
 					onpVxminus.setRefered();
 					oper = -1;
 				}
@@ -279,7 +270,7 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 	
 	
 	
-	int snake(int k, int x, List<T> A, List<T> B, OnpV V) {
+	int snake(int k, int x, ArrayListWrapper<T> A, ArrayListWrapper<T> B, OnpV V) {
 		int y = x + k - offset;// k = y-x , x = y - k
 		// A.len <= M B.len <=N
 		//System.out.println("snake start: x, y="  +x + ","+ y);
@@ -288,145 +279,157 @@ public class LcsOnp<T> extends AbstractLcsComparator<T>{
 			x++;y++;
 		}
 		if(x>stx) {
-			V.setSnake(x - stx);
+			int snakeAdvance = x - stx;
+			totalSnakeCount +=  snakeAdvance;
+			V.setSnake(snakeAdvance);
 		}
 		//System.out.println("snake end: x, y="  +x + ","+ y);
 		return x;
 	}
 	
 	
-	
+	/**
 	public List<T> getLCS(LcsBuilder<T> lcsBuilder) {//
 		getLCSinternal(lcsBuilder);
 		return lcsBuilder.getLCS();
 	}
-	
-	protected int getLCSinternal(LcsBuilder<T> lcsBuilder) {//
+	 **/
+
+	protected int getLCSinternal(ArrayListWrapper<T> listX, ArrayListWrapper<T> listY, LcsBuilder<T> lcsBuilder) {//
 		int xi = M;
 		int yi = N;
 		int lcscnt=0;
-		if(lcsBuilder!=null) {
-			lcsBuilder.setReverseLCS();
-		}
+
 		long startTime = 0;
 		if (log.isDebugEnabled()) {
 			startTime = System.currentTimeMillis();
 		}
-		if(onpV!=null) {
-			OnpV cv = onpV[delta_offset];
-			int k = delta_offset;
-			int p = P;
-			int oper = cv.oper;
-			int snakecnt = cv.snakecnt;
-			//System.out.println("x,y=" + (xi) + "," + (yi) + " oper:" + oper + " V" + p + "(" + (k - offset) + ") snake=" + snakecnt);
-			
-			for (int scnt = snakecnt; scnt>0; scnt--) {
+		if (totalSnakeCount == 0) {// no need to trail LCS path.
+			lcsBuilder.setOriginalDiffA(listX);
+			lcsBuilder.setOriginalDiffB(listY);
+		} else {
+			if (lcsBuilder != null) {
+				lcsBuilder.setReverse();
+			}
+			if (onpV != null) {
+				OnpV cv = onpV[delta_offset];
+				int k = delta_offset;
+				int p = P;
+				int oper = cv.oper;
+				int snakecnt = cv.snakecnt;
+				//System.out.println("x,y=" + (xi) + "," + (yi) + " oper:" + oper + " V" + p + "(" + (k - offset) + ") snake=" + snakecnt);
+
+				for (int scnt = snakecnt; scnt > 0; scnt--) {
 				
 				/*{
 					int oldx = xi;
 					int oldy = yi;
 					System.out.println(oldx + "," + oldy + "->" + (xi-1) + "," + (yi-1));
 				}*/
-				
-				xi--;yi--;
-				if (xi>=0) {
-					if (lcsBuilder!=null) {
-						//lcsBuilder.add(0, listX.get(xsn));//disasterous performance problem O(n)
-						lcsBuilder.append(listX.get(xi));// value stored reverse order
+
+					xi--;
+					yi--;
+					if (xi >= 0) {
+						if (lcsBuilder != null) {
+							//lcsBuilder.add(0, listX.get(xsn));//DON'T DO THIS that has disasterous performance problem O(n)
+							lcsBuilder.append(listX.get(xi));// value stored reverse order
+						}
+						lcscnt++;
 					}
-					lcscnt++;
 				}
-			}
-			if (oper==1) {
+				if (oper == 1) {
 				/*{
 					int oldx = xi;
 					int oldy = yi;
 					System.out.println(oldx + "," + oldy + "->" + (xi-1) + "," + yi);
 				}*/
-				xi--;
-				if (xi>=0 && lcsBuilder!=null) {
-					lcsBuilder.appenddiffA(listX.get(xi));
-				}
-			}else if(oper==-1) {
+					xi--;
+					if (xi >= 0 && lcsBuilder != null) {
+						lcsBuilder.appenddiffA(listX.get(xi));
+					}
+				} else if (oper == -1) {
 				/*{
 					int oldx = xi;
 					int oldy = yi;
 					System.out.println(oldx + "," + oldy + "->" + xi + "," + (yi-1));
 				}*/
-				yi--;
-				if (yi>=0 && lcsBuilder!=null) {
-					lcsBuilder.appenddiffB(listY.get(yi));
+					yi--;
+					if (yi >= 0 && lcsBuilder != null) {
+						lcsBuilder.appenddiffB(listY.get(yi));
+					}
 				}
-			}
-			int [] PK = new int[2];//PK[0] P PK[1]K
-			int[] prevPK = getPrevPK(p, k, oper, PK);
-			p = prevPK[0];
-			k = prevPK[1];
-			
-			while(xi>0) {
-				cv = onpV[k];
-				//System.out.println("p:" +p + " k:" + k + " cv is " + (cv==null?"null":"No null") );
-				oper = cv.getOper(p);
-				snakecnt = cv.getSnake(p);
-				//System.out.println("x,y=" + (xi) + "," + (yi) + " oper:" + oper + " V" + p + "(" + (k - offset) + ") snake=" + snakecnt);
-				for(int scnt = snakecnt ; scnt>0; scnt--) {
+				int[] PK = new int[2];//PK[0] P PK[1]K
+				int[] prevPK = getPrevPK(p, k, oper, PK);
+				p = prevPK[0];
+				k = prevPK[1];
+
+				while (xi > 0) {
+					cv = onpV[k];
+					//System.out.println("p:" +p + " k:" + k + " cv is " + (cv==null?"null":"No null") );
+					oper = cv.getOper(p);
+					snakecnt = cv.getSnake(p);
+					//System.out.println("x,y=" + (xi) + "," + (yi) + " oper:" + oper + " V" + p + "(" + (k - offset) + ") snake=" + snakecnt);
+					for (int scnt = snakecnt; scnt > 0; scnt--) {
 					
 					/*{
 						int oldx = xi;
 						int oldy = yi;
 						System.out.println(oldx + "," + oldy + "->" + (xi-1) + "," + (yi-1));
 					}*/
-					xi--;yi--;
-					if (xi>=0) {
-						if(lcsBuilder!=null) {
-							//lcsBuilder.add(0,listX.get(xsn));//disasterous performance problem O(n)
-							lcsBuilder.append(listX.get(xi));// value stored reverse order
+						xi--;
+						yi--;
+						if (xi >= 0) {
+							if (lcsBuilder != null) {
+								//lcsBuilder.add(0,listX.get(xsn));//disasterous performance problem O(n)
+								lcsBuilder.append(listX.get(xi));// value stored reverse order
+							}
+							lcscnt++;
 						}
-						lcscnt++;
 					}
-				}
-				if (oper==1) {
+					if (oper == 1) {
 					/*{
 						int oldx = xi;
 						int oldy = yi;
 						System.out.println(oldx + "," + oldy + "->" + (xi-1) + "," + yi);
 					}*/
-					xi--;
-					if (xi>=0 && lcsBuilder!=null) {
-						lcsBuilder.appenddiffA(listX.get(xi));
-					}
-				}else if(oper==-1) {
+						xi--;
+						if (xi >= 0 && lcsBuilder != null) {
+							lcsBuilder.appenddiffA(listX.get(xi));
+						}
+					} else if (oper == -1) {
 					/*{
 						int oldx = xi;
 						int oldy = yi;
 						System.out.println(oldx + "," + oldy + "->" + xi + "," + (yi-1));
 					}*/
-					yi--;
-					if (yi>=0 && lcsBuilder!=null) {
-						lcsBuilder.appenddiffB(listY.get(yi));
-					}
-				}
-				
-				if (xi==0) {
-					//System.out.println("xi,yi:" + xi + "," + yi);
-					if (lcsBuilder!=null) {
-						while(yi-->0) {
+						yi--;
+						if (yi >= 0 && lcsBuilder != null) {
 							lcsBuilder.appenddiffB(listY.get(yi));
-							
 						}
 					}
-					break;
+
+					if (xi == 0) {
+						//System.out.println("xi,yi:" + xi + "," + yi);
+						if (lcsBuilder != null) {
+							while (yi-- > 0) {
+								lcsBuilder.appenddiffB(listY.get(yi));
+
+							}
+						}
+						break;
+					}
+
+					prevPK = getPrevPK(p, k, oper, PK);
+					p = prevPK[0];
+					k = prevPK[1];
+
 				}
-				
-				prevPK = getPrevPK(p, k, oper, PK);
-				p = prevPK[0];
-				k = prevPK[1];
-				
 			}
 		}
 		if (log.isDebugEnabled()) {
 			long getlcstotaltime = System.currentTimeMillis() - startTime;
 			log.debug("getLCSinternal lapsetime:" + getlcstotaltime);
+			log.debug("totalSnake:" + totalSnakeCount);
 		}
 		return lcscnt;
 		

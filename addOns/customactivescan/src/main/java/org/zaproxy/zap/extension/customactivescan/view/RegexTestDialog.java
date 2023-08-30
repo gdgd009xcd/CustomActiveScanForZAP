@@ -35,6 +35,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     private List<SearchTextPane> searchTextPaneList;
 
+    // no used parameters in createMainPanelContent method
+    private RegexTestOptionPane optionPane = null;
+
     static class SearchTextPane {
         // search text
         JTextPane searchTextPane;
@@ -333,7 +336,11 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                         }
 
                         if (ept > spt) {
-                            StyleConstants.setForeground(attr, Color.WHITE);
+                            if (fcount == 1) {
+                                StyleConstants.setForeground(attr, Color.WHITE);
+                            } else {
+                                StyleConstants.setForeground(attr, Color.BLACK);
+                            }
                             StyleConstants.setBackground(attr, Color.RED);
                             doc.setCharacterAttributes(spt, ept - spt, attr, false);
                             RegexSelectedTextPos rpos = new RegexSelectedTextPos(spt, ept);
@@ -355,10 +362,21 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 String message = String.format(
                         Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatfound"),
                         foundCount);
+                /**
                 JOptionPane.showMessageDialog(this,
                         message,
                         Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
                         JOptionPane.INFORMATION_MESSAGE);
+                 **/
+                RegexTestOptionPane.RegexTestOptions options = new RegexTestOptionPane.RegexTestOptions(message, searchTextPane);
+                if (optionPane != null) {
+                    optionPane.dispose();
+                }
+                optionPane = new RegexTestOptionPane(
+                        this,
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
+                        ModalityType.MODELESS, options, GridBagConstraints.NONE);
+                optionPane.setVisible(true);
             } else {
                 Toolkit.getDefaultToolkit().beep();
                 JOptionPane.showMessageDialog(this,
