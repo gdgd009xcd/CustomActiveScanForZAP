@@ -149,7 +149,7 @@ public abstract class GridBagJDialog<T> extends JDialog {
         layout.setConstraints(separator, gbc);
         panel.add(separator);
 
-        JButton okBtn = new JButton("OK");
+        JButton okBtn = new JButton(okBtnLabelString());
 
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -167,7 +167,7 @@ public abstract class GridBagJDialog<T> extends JDialog {
                     okBtnActionPerformed();
                 });
 
-        JButton cancelBtn = new JButton("CANCEL");
+        JButton cancelBtn = new JButton(cancelBtnLabelString());
 
         gbc.gridx = 3;
         gbc.gridy = 3;
@@ -210,9 +210,17 @@ public abstract class GridBagJDialog<T> extends JDialog {
      */
     protected abstract void okBtnActionPerformed();
 
+    protected String okBtnLabelString() {
+        return "OK";
+    }
+
     /**
      * CANCEL button Action<br>
      * You must specify dispose() method at last line of this method.
      */
     protected abstract void cancelBtnActionPerformed();
+
+    protected String cancelBtnLabelString() {
+        return "CANCEL";
+    }
 }

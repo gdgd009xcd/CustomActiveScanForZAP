@@ -32,7 +32,7 @@ public class ListStringFactory {
 		return n;
 	}
 	
-	public int getOrigRowSize() {
+	public int getOrigSize() {
 		return origrowsiz;
 	}
 	

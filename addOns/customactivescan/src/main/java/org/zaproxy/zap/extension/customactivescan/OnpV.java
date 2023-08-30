@@ -34,7 +34,7 @@ public class OnpV {
 	}
 	
 	public void setOper(int _x, int p, int _oper) {
-		if(p!=P&&P!=-1&&refered==true) {
+		if(p>P && refered) {
 			saveHist();
 		}
 		refered = false;
@@ -43,17 +43,14 @@ public class OnpV {
 		snakecnt = 0;
 		P = p;
 	}
-	
+
 	public void saveHist() {
 
 			if(oper==1) {
 				operhist.add(P);
 			}
 			if(snakecnt>0) {
-				//int hsnk = 0;
-				//if((hsnk = getSnake(P))==0) {
-					snakehist.put(P, snakecnt);
-				//}
+				snakehist.put(P, snakecnt);
 			}
 
 	}

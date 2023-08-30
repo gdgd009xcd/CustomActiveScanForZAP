@@ -4,15 +4,20 @@ import java.util.List;
 
 public interface LcsBuilder<T> {
 	public void append(T t);
-	public void add(int index, T t);
-	public List<T> getLCS();
 	public int size();
 	public void clear();
 	public void appenddiffA(T ta);
 	public void appenddiffB(T tb);
-	public void setdiffB(List<T> lb);
-	public void setReverseLCS();
+	public void setReverse();
+	public boolean isReverseLCS();
+	public boolean isReverseDiffA();
+	public boolean isReverseDiffB();
 	public void setABreverse(boolean b);
-	public List<T> getDiffA();
-	public List<T> getDiffB();
+	public T getLcsElement(int index);
+	public T getDiffAElement(int index);
+	public void setOriginalDiffA(ArrayListWrapper<T> wrapperDiffA);
+	public T getDiffBElement(int index);
+	public void setOriginalDiffB(ArrayListWrapper<T> wrapperDiffB);
+	public int getDiffASize();
+	public int getDiffBSize();
 }
