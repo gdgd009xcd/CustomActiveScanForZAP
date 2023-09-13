@@ -153,21 +153,22 @@ public class LcsStringListComparator extends LcsOnp<String>{
 				w_rowsizb = w_lsfctB.calcRowSize(b);
 			}
 
-			if (log.isDebugEnabled()) {
-				PrintableString printableString = new PrintableString(delimiter);
 
-				log.debug("compare delimiter["
-						+ printableString.convert(50)
-						+ "] origMaxsiz[" + origMaxsiz + "] < "
-						+ (origMaxsiz < MINWORDCNT ? "MINWORDCNT(" + MINWORDCNT + ")" : "MINROWLENGTH(" + MINROWLENGTH + ")")
-				);
-			}
 			lsfctA = w_lsfctA;
 			lsfctB = w_lsfctB;
 			rowsiza = w_rowsiza;
 			rowsizb = w_rowsizb;
 		}
 
+		if (log.isDebugEnabled()) {
+			PrintableString printableString = new PrintableString(delimiter);
+
+			log.debug("compare delimiter["
+					+ printableString.convert(50)
+					+ "] origMaxsiz[" + origMaxsiz + "] < "
+					+ (origMaxsiz < MINWORDCNT ? "MINWORDCNT(" + MINWORDCNT + ")" : "MINROWLENGTH(" + MINROWLENGTH + ")")
+			);
+		}
 		if(rowsiza>rowsizb) {
 			lsfctB.setRowSize(rowsiza);
 			rowSize = rowsiza;
@@ -213,6 +214,19 @@ public class LcsStringListComparator extends LcsOnp<String>{
 			String aString = LcsStringList.getStringFromList("", alist.getOriginalList(), alist.isOriginalReverseOrder());
 			String bString = LcsStringList.getStringFromList("", blist.getOriginalList(), blist.isOriginalReverseOrder());
 			return compare(aString, bString, result);
+		}
+		if (log.isDebugEnabled()) {
+			String delimiter = aDelimiter;
+			PrintableString printableString = new PrintableString(delimiter);
+
+			int origAsiz = alist.size();
+			int origBsiz = blist.size();
+			int origMaxsiz = origAsiz>origBsiz?origAsiz:origBsiz;
+			log.debug("compare delimiter["
+					+ printableString.convert(50)
+					+ "] origMaxsiz[" + origMaxsiz + "] < "
+					+ (origMaxsiz < MINWORDCNT ? "MINWORDCNT(" + MINWORDCNT + ")" : "MINROWLENGTH(" + MINROWLENGTH + ")")
+			);
 		}
 		int lpercent =  calcPercent(
 				alist,
@@ -323,6 +337,15 @@ public class LcsStringListComparator extends LcsOnp<String>{
 		result.setRowSize(rowSize);
 		result.setDelimiter(delimiter);
 
+		if (log.isDebugEnabled()) {
+			PrintableString printableString = new PrintableString(delimiter);
+
+			log.debug("compare delimiter["
+					+ printableString.convert(50)
+					+ "] origMaxsiz[" + origMaxsiz + "] < "
+					+ (origMaxsiz < MINWORDCNT ? "MINWORDCNT(" + MINWORDCNT + ")" : "MINROWLENGTH(" + MINROWLENGTH + ")")
+			);
+		}
 		int lpercent =  calcPercent(
 				listWrapperA,
 				actionFactoryB.createArrayListWrapper(),
