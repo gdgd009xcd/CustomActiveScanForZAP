@@ -238,6 +238,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         LcsStringListComparator comparator = new LcsStringListComparator();
 
         refreshedmessage = sendRequestAndCalcLCS(comparator, null, null, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+        int normalAverageResponseSize = refreshedmessage.getOriginalAverageResponseSize();
         if(refreshedmessage==null)return;
 
         String[] normalBodyOutputs = getUnstrippedStrippedResponse(refreshedmessage, origParamValue, null);
@@ -249,6 +250,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             String trueValue = origParamValue + tfrpattern.trueValuePattern;
             String trueParamName = origParamName + (tfrpattern.trueNamePattern != null ? tfrpattern.trueNamePattern : "");
             HttpMessageWithLCSResponse truemessage = sendRequestAndCalcLCS(comparator, trueParamName, trueValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+            int trueAverageResponseSize = truemessage.getOriginalAverageResponseSize();
             if (truemessage == null) continue;
 
             String[] trueBodyOutputs = getUnstrippedStrippedResponse(truemessage, trueValue, null);
@@ -263,16 +265,18 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             HttpMessageWithLCSResponse errormessage = null;
             boolean bingoError = false;
 
+            int falseAverageResponseSize = -1;
+
             for(int i=0;i<2;i++) {
                 boolean trueHasSQLError = false;
                 boolean falseHasSQLError = false;
                 boolean errorHasSQLError = false;
                 // 1. compare true and original/false
-                int truepercent = comparator.compare(normalBodyOutputs[i] , trueBodyOutputs[i], originalTrueLCSs[i]);
+                int normalTruePercent = comparator.compare(normalBodyOutputs[i] , trueBodyOutputs[i], originalTrueLCSs[i]);
                 if (hasSQLErrors(trueBodyOutputs[i]) != null) {
                     trueHasSQLError = true;
                 }
-                int falsepercent = -1;
+                int normalFalsePercent = -1;
                 // 1-1.true response matched original response
                 if (LOGGER4J.isDebugEnabled()) {
                     String debugmess = "ParamName["
@@ -280,9 +284,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             + "] value["
                             + printableString.convert(trueValue, PRINTVALUEMAXLEN)
                             + "] truepercent["
-                            + truepercent
+                            + normalTruePercent
                             + "]"
-                            + (truepercent >= this.NEALYEQUALPERCENT ? ">=" : "<")
+                            + (normalTruePercent >= this.NEALYEQUALPERCENT ? ">=" : "<")
                             + "NEALYEQUALPERCENT["
                             + this.NEALYEQUALPERCENT
                             + "]";
@@ -290,36 +294,37 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 }
 
                 // 1-1. original(normal body) is equal to true body
-                if (truepercent >= this.NEALYEQUALPERCENT && !trueHasSQLError) {
+                if (normalTruePercent >= this.NEALYEQUALPERCENT && !trueHasSQLError) {
                     if (falseBodyOutputs == null) {
                         falseValue = origParamValue + tfrpattern.falseValuePattern;
                         falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
                         HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+                        falseAverageResponseSize = falsemessage.getOriginalAverageResponseSize();
                         if (falsemessage == null) continue;
                         falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, falseValue, null);
                     }
-                    falsepercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
+                    normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
                     LOGGER4J.debug("ParamName["
                             + falseParamName
                             + "] value["
                             + printableString.convert(falseValue, PRINTVALUEMAXLEN)
                             + "] falsepercent["
-                            + falsepercent
+                            + normalFalsePercent
                             + "]"
-                            + (falsepercent < this.NEALYDIFFERPERCENT ? "<" : ">=")
+                            + (normalFalsePercent < this.NEALYDIFFERPERCENT ? "<" : ">=")
                             + "NEALYDIFFERPERCENT["
                             + this.NEALYDIFFERPERCENT
                             + "]"
                     );
                     // 1-2. original body is diffrent from false body.
-                    if (falsepercent < this.NEALYDIFFERPERCENT) {
+                    if (normalFalsePercent < this.NEALYDIFFERPERCENT) {
                         // bingo.
                         LOGGER4J.debug("bingo 1-1.truepercent["
-                                + truepercent
+                                + normalTruePercent
                                 + "]>="
                                 + this.NEALYEQUALPERCENT
                                 + " 1-2.falsepercent["
-                                + falsepercent + "<" + this.NEALYDIFFERPERCENT
+                                + normalFalsePercent + "<" + this.NEALYDIFFERPERCENT
                                 + "]"
                         );
                         String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.trueequaloriginal.evidence");
@@ -333,13 +338,14 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     falseValue = origParamValue + tfrpattern.falseValuePattern;
                     falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
                     HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+                    falseAverageResponseSize = falsemessage.getOriginalAverageResponseSize();
                     if (falsemessage == null) continue;
                     falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, falseValue, null);
 
                 }
 
-                if (falsepercent == -1) {
-                    falsepercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
+                if (normalFalsePercent == -1) {
+                    normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
                 }
 
 
@@ -435,6 +441,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (!extractedOriginalTrueLcsString.isEmpty()
                         && !trueHasSQLError
                         && extractedTrueFalsePercent < this.ALMOSTDIFFERPERCENT
+                        && Math.abs(trueAverageResponseSize - normalAverageResponseSize) < Math.abs(falseAverageResponseSize - trueAverageResponseSize)
                 ){
                     boolean bingoFailed = false;
                     if (!Utilities.hasAlphaNumberChars(extractedOriginalTrueLcsString)) {
@@ -447,8 +454,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                                 + extractedTrueFalsePercent
                                 + "]<"
                                 + this.ALMOSTDIFFERPERCENT
-                                + " truePercent:" + truepercent
-                                + " falsePercent:" + falsepercent
+                                + " normalTruePercent:" + normalTruePercent
+                                + " normalFalsePercent:" + normalFalsePercent
+                                + " trueFalsePercent:" + trueFalsePercent
                                 + " extractedOriginalTrueLcs length:" + extractedOriginalTrueLcsString.length()
                                 + " extractedTrueAndFalseLcs length:" + extractedTrueAndFalseLcsString.length()
 
@@ -458,6 +466,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             String normalData = normalBodyOutputs[i];
                             String trueData = trueBodyOutputs[i];
                             String falseData = falseBodyOutputs[i];
+                            String lcsDataPath = ExtensionAscanRules.ZAPHOME_DIR + "LCS.txt";
                             String normalDataPath = ExtensionAscanRules.ZAPHOME_DIR + "NORMALDATA.txt";
                             String trueDataPath = ExtensionAscanRules.ZAPHOME_DIR + "TRUEDATA.txt";
                             String falseDataPath = ExtensionAscanRules.ZAPHOME_DIR + "FALSEDATA.txt";
@@ -471,6 +480,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                                 FileWriterPlus falseWriter = new FileWriterPlus(falseDataPath);
                                 falseWriter.print(falseData);
                                 falseWriter.close();
+                                FileWriterPlus lcsWriter = new FileWriterPlus(lcsDataPath);
+                                lcsWriter.print(extractedOriginalTrueLcsString);
+                                lcsWriter.close();
                             } catch (Exception ex) {
                                 LOGGER4J.error(ex.getMessage(), ex);
                             }
@@ -784,7 +796,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             res[cn] =  maskRandomIdsFromResponseString(msg2);
         }
 
+        int originalAverageResponseSize = -1;
         if(res[0]!=null&&res[1]!=null) {
+            originalAverageResponseSize = (res[0].length() + res[1].length())/2;// calcurate average size from 2 responses.
             LcsStringList clcs = new LcsStringList();
             comparator.extractLCS(res[0], res[1], clcs);
             lcsResponse = clcs.getLCSString(null);
@@ -792,7 +806,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         }
 
         if (msg2 != null) {
-            msg2withlcs = new HttpMessageWithLCSResponse(msg2, lcsResponse);
+            msg2withlcs = new HttpMessageWithLCSResponse(msg2, lcsResponse, originalAverageResponseSize);
         }
 
         return msg2withlcs;
