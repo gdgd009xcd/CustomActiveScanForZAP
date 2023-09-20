@@ -3,6 +3,10 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 18 - 2023-09-20
+### v0.7.3
+- improve: refine CustomActiveScan logic(3-2. true response contains part of the original response)
+
 ## 18 - 2023-09-17
 ### v0.7.2
 - improve: refine CustomActiveScan logic(3-2. true response contains part of the original response)

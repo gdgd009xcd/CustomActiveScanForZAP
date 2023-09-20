@@ -441,7 +441,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (!extractedOriginalTrueLcsString.isEmpty()
                         && !trueHasSQLError
                         && extractedTrueFalsePercent < this.ALMOSTDIFFERPERCENT
-                        && Math.abs(trueAverageResponseSize - normalAverageResponseSize) < Math.abs(falseAverageResponseSize - trueAverageResponseSize)
+                        && !almostSameSize(trueAverageResponseSize, falseAverageResponseSize)
                 ){
                     boolean bingoFailed = false;
                     if (!Utilities.hasAlphaNumberChars(extractedOriginalTrueLcsString)) {
@@ -1125,5 +1125,29 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 ExtensionAscanRules.scannerIdThreadMap.remove(scannerId);// forget everything about thread.
             }
         }
+    }
+
+    /**
+     * Returns true if two size is almost same length.
+     * @param aSize
+     * @param bSize
+     * @return
+     */
+    private boolean almostSameSize(int aSize, int bSize) {
+        int denominatorSize = bSize;
+        int numeratorSize = aSize;
+        if (aSize > bSize) {
+            denominatorSize = aSize;
+            numeratorSize = bSize;
+        }
+
+        if (denominatorSize == 0) {
+            if (numeratorSize == 0) return true;
+            return false;
+        }
+        long percent = Math.round((double) numeratorSize / denominatorSize * 1000);
+        if (percent >= this.NEALYDIFFERPERCENT) return true;
+
+        return false;
     }
 }
