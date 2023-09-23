@@ -1146,7 +1146,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             return false;
         }
         long percent = Math.round((double) numeratorSize / denominatorSize * 1000);
-        if (percent >= this.NEALYDIFFERPERCENT) return true;
+        if (percent >= this.NEALYEQUALPERCENT) return true;
 
         return false;
     }
