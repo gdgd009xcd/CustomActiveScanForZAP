@@ -5,10 +5,12 @@ import org.parosproxy.paros.network.HttpMessage;
 public class HttpMessageWithLCSResponse extends HttpMessage {
     String lcsResponse;
     int originalAverageResponseSize;
+    int worstResponseStatus;
 
-    HttpMessageWithLCSResponse(HttpMessage htmsg, String lcsResponse, int originalAverageResponseSize) {
+    HttpMessageWithLCSResponse(HttpMessage htmsg, String lcsResponse, int worstResponseStatus, int originalAverageResponseSize) {
         super(htmsg);
         this.lcsResponse = lcsResponse;
+        this.worstResponseStatus = worstResponseStatus;
         this.originalAverageResponseSize = originalAverageResponseSize;
     }
 
@@ -27,5 +29,11 @@ public class HttpMessageWithLCSResponse extends HttpMessage {
     public int getOriginalAverageResponseSize() {
         return this.originalAverageResponseSize;
     }
+
+    /**
+     * get response's 3digit status using worst(most largest) 3digit status in 2 responses.
+     * @return
+     */
+    public int getWorstResponseStatus() { return this.worstResponseStatus; }
 
 }

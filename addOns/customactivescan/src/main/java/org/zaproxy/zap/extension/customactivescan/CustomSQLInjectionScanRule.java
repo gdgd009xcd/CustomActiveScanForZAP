@@ -251,6 +251,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             String trueParamName = origParamName + (tfrpattern.trueNamePattern != null ? tfrpattern.trueNamePattern : "");
             HttpMessageWithLCSResponse truemessage = sendRequestAndCalcLCS(comparator, trueParamName, trueValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
             int trueAverageResponseSize = truemessage.getOriginalAverageResponseSize();
+            int trueResponseStatus = truemessage.getWorstResponseStatus();
             if (truemessage == null) continue;
 
             String[] trueBodyOutputs = getUnstrippedStrippedResponse(truemessage, trueValue, null);
@@ -441,6 +442,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (!extractedOriginalTrueLcsString.isEmpty()
                         && !trueHasSQLError
                         && extractedTrueFalsePercent < this.ALMOSTDIFFERPERCENT
+                        && trueResponseStatus < 400
                         && !almostSameSize(trueAverageResponseSize, falseAverageResponseSize)
                 ){
                     boolean bingoFailed = false;
@@ -773,6 +775,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         HttpMessageWithLCSResponse msg2withlcs = null;
         String lcsResponse = "";
 
+        int worstResponseStatus = -1;
         for(int cn = 0 ; cn<2; cn++) {
             msg2 = getNewMsg();
             if(origParamName!=null&&paramValue!=null) {
@@ -788,6 +791,11 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 sendAndReceive(msg2, false); //do not follow redirects
                 // add resultMessage to ScanLogPanel
                 addSendResultToScanLogPanel(msg2, selectedScanRule);
+                HttpResponseHeader responseHeader = msg2.getResponseHeader();
+                int digit3 = responseHeader.getStatusCode();
+                if (digit3 > worstResponseStatus) {
+                    worstResponseStatus = digit3;
+                }
             } catch (Exception ex) {
                 LOGGER4J.error("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
                         " when accessing: " + msg2.getRequestHeader().getURI().toString(), ex);
@@ -806,7 +814,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         }
 
         if (msg2 != null) {
-            msg2withlcs = new HttpMessageWithLCSResponse(msg2, lcsResponse, originalAverageResponseSize);
+            msg2withlcs = new HttpMessageWithLCSResponse(msg2, lcsResponse, worstResponseStatus, originalAverageResponseSize);
         }
 
         return msg2withlcs;

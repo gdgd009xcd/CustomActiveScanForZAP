@@ -2,8 +2,9 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-## 20 - 2023-10-02
+## 20 - 2023-10-08
 ### v0.7.4
+- bugfix: fixed falsepositive SQL injection detect. (3-2. true response contains part of the original response)
 - upgrade: dependent "org.zaproxy.add-on" version upgraded to 0.8.0
 - upgrade: gradle version upgraded to 8.2.1
 - upgrade: dependent zap version upgraded to 2.13.0
