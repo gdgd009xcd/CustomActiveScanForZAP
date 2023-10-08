@@ -11,7 +11,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 
 @SuppressWarnings("serial")
-public class MainWorkPanelTab extends AbstractPanel implements Tab {
+public class MainWorkPanelTab extends AbstractPanel {
     public MainWorkPanelTab(ExtensionHook exhook, ExtensionAscanRules extensionAscan) {
         setLayout(new CardLayout());
         this.setName("CustomActiveScan");

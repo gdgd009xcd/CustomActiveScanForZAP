@@ -283,6 +283,7 @@ public class ScanLogPanel extends JPanel {
             RegexTestDialog regexTestDialog = new RegexTestDialog(SwingUtilities.windowForComponent(this),"Result", Dialog.ModalityType.MODELESS, paneContents);
             regexTestDialog.selectTabbedPane(1);
             regexTestDialog.setVisible(true);
+            regexTestDialog.resetScrollBarToLeftTop();
             regexTestDialog.regexSearchActionPerformed(null);
         }
     }

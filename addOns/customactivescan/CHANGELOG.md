@@ -2,10 +2,30 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 20 - 2023-10-08
+### v0.7.4
+- bugfix: fixed falsepositive SQL injection detect. (3-2. true response contains part of the original response)
+- upgrade: dependent "org.zaproxy.add-on" version upgraded to 0.8.0
+- upgrade: gradle version upgraded to 8.2.1
+- upgrade: dependent zap version upgraded to 2.13.0
+- maintenance: Due to side effects of the above upgrade, some code has been changed or removed.
+
+## 19 - 2023-09-20
+### v0.7.3
+- improve: refine CustomActiveScan logic(3-2. true response contains part of the original response)
+
+## 18 - 2023-09-17
+### v0.7.2
+- improve: refine CustomActiveScan logic(3-2. true response contains part of the original response)
+
+## 17 - 2023-09-13
+### v0.7.1
+- improve: refine CustomActiveScan logic(3-2. true response contains part of the original response)
+
 ## 16 - 2023-08-30
 ### v0.7.0
 - bugfix: fix problems about "scanLog window"
-- improve: brash up CustomActiveScan logic
+- improve: refine CustomActiveScan logic
 
 ## 15 - 2023-06-17
 ### v0.6.4

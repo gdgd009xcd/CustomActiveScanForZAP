@@ -55,8 +55,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
     private int NEALYEQUALPERCENT; // If this value or more(value >= NEALYEQUALPECENT), it is considered to match
     private int NEALYDIFFERPERCENT; // If less than this value(value < NEALYDIFFERPECENT), it is considered as a mismatch
+    private int ALMOSTDIFFERPERCENT; // if less than this value, it is considered as almost diffrerent each other.
 
-    private int MAXMASKBODYSIZE = 10000; // If response body size is larger than this size, do not apply the asterisk conversion to the body
+    private int MAXMASKBODYSIZE = 100000000; // If response body size is larger than this size, do not apply the asterisk conversion to the body
+    private boolean isMaskBodyWithAsterisk;
 
     private int MINWORDLEN = 5; // if extractedOriginalTrueLCS.size < MINWORDLEN then compare extractedOriginalTrueString and extractedFalseString
 
@@ -100,6 +102,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     @Override
     public void init() {
         super.init();
+
+        isMaskBodyWithAsterisk = false;
 
         scanLogPanelFrame = null;
         HostProcess hProcess = getParent();
@@ -161,6 +165,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
         this.NEALYEQUALPERCENT = getNealyEqualPercent();
         this.NEALYDIFFERPERCENT = getNealyDifferPercent();
+        this.ALMOSTDIFFERPERCENT = 5;
 
         switch (this.getAttackStrength() ) {
             case  LOW:
@@ -214,11 +219,26 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         List<InjectionPatterns.TrueFalsePattern> patterns = selectedScanRule.patterns.patterns;
         boolean sqlInjectionFoundForUrl = false;
 
+        // calcurate response body responseTotalSize
+        HttpResponseHeader responseHeader = msg.getResponseHeader();
+        HttpResponseBody responseBody = msg.getResponseBody();
+        String resBodyString = responseBody == null ? "" : responseBody.toString();
+        String primeString = responseHeader.getPrimeHeader();
+        String stringsOfHeaders = responseHeader.getHeadersAsString();
+        int responseHeaderSize = primeString.length() + 2; // primeString.length + lineDelimiter.length(2)
+        responseHeaderSize += stringsOfHeaders.length();
+        int responseTotalSize = responseHeaderSize + resBodyString.length();
+
+        if (responseTotalSize < MAXMASKBODYSIZE) {
+            isMaskBodyWithAsterisk = true;
+        }
+
         LOGGER4J.debug("scan HttpMessage RequestBody Charset[" + msg.getRequestBody().getCharset() + "]");
 
         LcsStringListComparator comparator = new LcsStringListComparator();
 
         refreshedmessage = sendRequestAndCalcLCS(comparator, null, null, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+        int normalAverageResponseSize = refreshedmessage.getOriginalAverageResponseSize();
         if(refreshedmessage==null)return;
 
         String[] normalBodyOutputs = getUnstrippedStrippedResponse(refreshedmessage, origParamValue, null);
@@ -230,6 +250,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             String trueValue = origParamValue + tfrpattern.trueValuePattern;
             String trueParamName = origParamName + (tfrpattern.trueNamePattern != null ? tfrpattern.trueNamePattern : "");
             HttpMessageWithLCSResponse truemessage = sendRequestAndCalcLCS(comparator, trueParamName, trueValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+            int trueAverageResponseSize = truemessage.getOriginalAverageResponseSize();
+            int trueResponseStatus = truemessage.getWorstResponseStatus();
             if (truemessage == null) continue;
 
             String[] trueBodyOutputs = getUnstrippedStrippedResponse(truemessage, trueValue, null);
@@ -244,16 +266,18 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             HttpMessageWithLCSResponse errormessage = null;
             boolean bingoError = false;
 
+            int falseAverageResponseSize = -1;
+
             for(int i=0;i<2;i++) {
                 boolean trueHasSQLError = false;
                 boolean falseHasSQLError = false;
                 boolean errorHasSQLError = false;
                 // 1. compare true and original/false
-                int truepercent = comparator.compare(normalBodyOutputs[i] , trueBodyOutputs[i], originalTrueLCSs[i]);
+                int normalTruePercent = comparator.compare(normalBodyOutputs[i] , trueBodyOutputs[i], originalTrueLCSs[i]);
                 if (hasSQLErrors(trueBodyOutputs[i]) != null) {
                     trueHasSQLError = true;
                 }
-                int falsepercent = -1;
+                int normalFalsePercent = -1;
                 // 1-1.true response matched original response
                 if (LOGGER4J.isDebugEnabled()) {
                     String debugmess = "ParamName["
@@ -261,9 +285,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             + "] value["
                             + printableString.convert(trueValue, PRINTVALUEMAXLEN)
                             + "] truepercent["
-                            + truepercent
+                            + normalTruePercent
                             + "]"
-                            + (truepercent >= this.NEALYEQUALPERCENT ? ">=" : "<")
+                            + (normalTruePercent >= this.NEALYEQUALPERCENT ? ">=" : "<")
                             + "NEALYEQUALPERCENT["
                             + this.NEALYEQUALPERCENT
                             + "]";
@@ -271,36 +295,37 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 }
 
                 // 1-1. original(normal body) is equal to true body
-                if (truepercent >= this.NEALYEQUALPERCENT && !trueHasSQLError) {
+                if (normalTruePercent >= this.NEALYEQUALPERCENT && !trueHasSQLError) {
                     if (falseBodyOutputs == null) {
                         falseValue = origParamValue + tfrpattern.falseValuePattern;
                         falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
                         HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+                        falseAverageResponseSize = falsemessage.getOriginalAverageResponseSize();
                         if (falsemessage == null) continue;
                         falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, falseValue, null);
                     }
-                    falsepercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
+                    normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
                     LOGGER4J.debug("ParamName["
                             + falseParamName
                             + "] value["
                             + printableString.convert(falseValue, PRINTVALUEMAXLEN)
                             + "] falsepercent["
-                            + falsepercent
+                            + normalFalsePercent
                             + "]"
-                            + (falsepercent < this.NEALYDIFFERPERCENT ? "<" : ">=")
+                            + (normalFalsePercent < this.NEALYDIFFERPERCENT ? "<" : ">=")
                             + "NEALYDIFFERPERCENT["
                             + this.NEALYDIFFERPERCENT
                             + "]"
                     );
                     // 1-2. original body is diffrent from false body.
-                    if (falsepercent < this.NEALYDIFFERPERCENT) {
+                    if (normalFalsePercent < this.NEALYDIFFERPERCENT) {
                         // bingo.
                         LOGGER4J.debug("bingo 1-1.truepercent["
-                                + truepercent
+                                + normalTruePercent
                                 + "]>="
                                 + this.NEALYEQUALPERCENT
                                 + " 1-2.falsepercent["
-                                + falsepercent + "<" + this.NEALYDIFFERPERCENT
+                                + normalFalsePercent + "<" + this.NEALYDIFFERPERCENT
                                 + "]"
                         );
                         String evidence = Constant.messages.getString(MESSAGE_PREFIX + "alert.booleanbased.trueequaloriginal.evidence");
@@ -314,13 +339,14 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     falseValue = origParamValue + tfrpattern.falseValuePattern;
                     falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
                     HttpMessageWithLCSResponse falsemessage = sendRequestAndCalcLCS(comparator, falseParamName, falseValue, scannerId, selectedScanRule, pauseActionObject, waitTimerObject);
+                    falseAverageResponseSize = falsemessage.getOriginalAverageResponseSize();
                     if (falsemessage == null) continue;
                     falseBodyOutputs = getUnstrippedStrippedResponse(falsemessage, falseValue, null);
 
                 }
 
-                if (falsepercent == -1) {
-                    falsepercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
+                if (normalFalsePercent == -1) {
+                    normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
                 }
 
 
@@ -329,17 +355,37 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 ArrayListWrapper<String> extractedOriginalDataList = normalFalseResultFactory.createArrayListWrapper(ArrayListWrapperFactory.ListType.DIFFA);
                 ArrayListWrapper<String> extractedFalseDataList = normalFalseResultFactory.createArrayListWrapper(ArrayListWrapperFactory.ListType.DIFFB);
 
-                // 3. compare  True data and extracted original data
+                LcsStringList extractedTrueLcs = new LcsStringList();
+                int trueFalsePercent  = comparator.compare(trueBodyOutputs[i], falseBodyOutputs[i], extractedTrueLcs);
+                LOGGER4J.debug("trueFalsePercent:" + trueFalsePercent);
+
+                // 3. compare  extracted True data and extracted original data
+                ArrayListWrapperFactory trueFalseResultFactory = new ArrayListWrapperFactory(extractedTrueLcs);
+                ArrayListWrapper<String> extractedTrueDataList = trueFalseResultFactory.createArrayListWrapper(ArrayListWrapperFactory.ListType.DIFFA);
                 LcsStringList extractedOriginalTrueLCS = new LcsStringList();
-                comparator.compare(extractedOriginalDataList, trueBodyOutputs[i], extractedOriginalTrueLCS);
+                comparator.compare(extractedOriginalDataList, extractedTrueDataList, extractedOriginalTrueLCS);
+                ArrayListWrapperFactory originalTrueFactory = new ArrayListWrapperFactory(extractedOriginalTrueLCS);
+                ArrayListWrapper<String> extractedOriginalTrueLcsDataList = originalTrueFactory.createArrayListWrapper(ArrayListWrapperFactory.ListType.LCS);
 
                 int extractedOriginalSize = extractedOriginalDataList.size();
                 int extractedOriginalTrueLcsSize = extractedOriginalTrueLCS.size();
                 long extractedOriginalTrueCompPercent = 0;
-                if (extractedOriginalSize > 0) {
-                    extractedOriginalTrueCompPercent = Math.round((double)extractedOriginalTrueLcsSize / extractedOriginalSize * 1000);
-                }
                 String extractedOriginalTrueLcsString = extractedOriginalTrueLCS.getLCSString(null);
+                if (extractedOriginalSize > 0) {
+                        if (extractedOriginalTrueLCS.hasSameDelimiter(extractedOriginalDataList)
+                            && extractedOriginalTrueLCS.hasSameRowSize(extractedOriginalDataList)
+                        ) {
+                            extractedOriginalTrueCompPercent = Math.round((double) extractedOriginalTrueLcsSize / extractedOriginalSize * 1000);
+                        } else {
+
+                            LcsStringList originalAndTrueLcs = new LcsStringList();
+                            extractedOriginalTrueCompPercent = comparator.compare(extractedOriginalDataList, extractedOriginalTrueLcsDataList, originalAndTrueLcs);
+                            extractedOriginalTrueLcsString = originalAndTrueLcs.getLCSString(null);
+                            LOGGER4J.debug("originalAndTrueLcs[" + printableString.convert(originalAndTrueLcs.getLCSString(null), PRINTVALUEMAXLEN) + "]");
+                            LOGGER4J.debug("original[" + printableString.convert(originalFalseLCSs[i].getDiffAString(null), PRINTVALUEMAXLEN) + "]");
+                        }
+                }
+
                 LOGGER4J.debug("ParamName["
                         + trueParamName
                         + "] value["
@@ -353,7 +399,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (extractedOriginalTrueCompPercent >= this.NEALYEQUALPERCENT
                         && !trueHasSQLError
                         && extractedOriginalTrueLCS.size()>0
-                        && falsepercent < this.NEALYDIFFERPERCENT){
+                        && trueFalsePercent < this.NEALYDIFFERPERCENT){
                     LOGGER4J.debug("bingo 3-1.extractedOriginalTrueCompPercent["
                             + extractedOriginalTrueCompPercent
                             + "]>="
@@ -387,25 +433,42 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     break LOOPTRUE;
                 }
 
+
+                LcsStringList extractedTrueAndFalseLcs = new LcsStringList();
+                int extractedTrueFalsePercent  = comparator.compare(extractedOriginalTrueLcsDataList, falseBodyOutputs[i], extractedTrueAndFalseLcs);
+                String extractedTrueAndFalseLcsString = extractedTrueAndFalseLcs.getLCSString(null);
+
                 // 3-2. Extracted true response contains part of the extracted original response
                 if (!extractedOriginalTrueLcsString.isEmpty()
-                        && !trueHasSQLError){
+                        && !trueHasSQLError
+                        && extractedTrueFalsePercent < this.ALMOSTDIFFERPERCENT
+                        && trueResponseStatus < 400
+                        && !almostSameSize(trueAverageResponseSize, falseAverageResponseSize)
+                ){
                     boolean bingoFailed = false;
                     if (!Utilities.hasAlphaNumberChars(extractedOriginalTrueLcsString)) {
                         bingoFailed = true;
                     }
 
+
                     if (!bingoFailed) {
-                        LOGGER4J.debug("bingo 3-2.extractedOriginalTrueLCSCompPercent["
-                                + extractedOriginalTrueCompPercent
-                                + "]>="
-                                + this.NEALYEQUALPERCENT
+                        LOGGER4J.debug("bingo 3-2.extractedTrueFalsePercent["
+                                + extractedTrueFalsePercent
+                                + "]<"
+                                + this.ALMOSTDIFFERPERCENT
+                                + " normalTruePercent:" + normalTruePercent
+                                + " normalFalsePercent:" + normalFalsePercent
+                                + " trueFalsePercent:" + trueFalsePercent
+                                + " extractedOriginalTrueLcs length:" + extractedOriginalTrueLcsString.length()
+                                + " extractedTrueAndFalseLcs length:" + extractedTrueAndFalseLcsString.length()
+
                         );
                         if (DEBUGBINGO != null) {
                             LOGGER4J.log(DEBUGBINGO, "extractedOriginalTrueLCSComp[" + printableString.convert(extractedOriginalTrueLcsString, PRINTVALUEMAXLEN) + "]");
                             String normalData = normalBodyOutputs[i];
                             String trueData = trueBodyOutputs[i];
                             String falseData = falseBodyOutputs[i];
+                            String lcsDataPath = ExtensionAscanRules.ZAPHOME_DIR + "LCS.txt";
                             String normalDataPath = ExtensionAscanRules.ZAPHOME_DIR + "NORMALDATA.txt";
                             String trueDataPath = ExtensionAscanRules.ZAPHOME_DIR + "TRUEDATA.txt";
                             String falseDataPath = ExtensionAscanRules.ZAPHOME_DIR + "FALSEDATA.txt";
@@ -419,6 +482,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                                 FileWriterPlus falseWriter = new FileWriterPlus(falseDataPath);
                                 falseWriter.print(falseData);
                                 falseWriter.close();
+                                FileWriterPlus lcsWriter = new FileWriterPlus(lcsDataPath);
+                                lcsWriter.print(extractedOriginalTrueLcsString);
+                                lcsWriter.close();
                             } catch (Exception ex) {
                                 LOGGER4J.error(ex.getMessage(), ex);
                             }
@@ -709,6 +775,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         HttpMessageWithLCSResponse msg2withlcs = null;
         String lcsResponse = "";
 
+        int worstResponseStatus = -1;
         for(int cn = 0 ; cn<2; cn++) {
             msg2 = getNewMsg();
             if(origParamName!=null&&paramValue!=null) {
@@ -724,6 +791,11 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 sendAndReceive(msg2, false); //do not follow redirects
                 // add resultMessage to ScanLogPanel
                 addSendResultToScanLogPanel(msg2, selectedScanRule);
+                HttpResponseHeader responseHeader = msg2.getResponseHeader();
+                int digit3 = responseHeader.getStatusCode();
+                if (digit3 > worstResponseStatus) {
+                    worstResponseStatus = digit3;
+                }
             } catch (Exception ex) {
                 LOGGER4J.error("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
                         " when accessing: " + msg2.getRequestHeader().getURI().toString(), ex);
@@ -732,7 +804,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             res[cn] =  maskRandomIdsFromResponseString(msg2);
         }
 
+        int originalAverageResponseSize = -1;
         if(res[0]!=null&&res[1]!=null) {
+            originalAverageResponseSize = (res[0].length() + res[1].length())/2;// calcurate average size from 2 responses.
             LcsStringList clcs = new LcsStringList();
             comparator.extractLCS(res[0], res[1], clcs);
             lcsResponse = clcs.getLCSString(null);
@@ -740,7 +814,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         }
 
         if (msg2 != null) {
-            msg2withlcs = new HttpMessageWithLCSResponse(msg2, lcsResponse);
+            msg2withlcs = new HttpMessageWithLCSResponse(msg2, lcsResponse, worstResponseStatus, originalAverageResponseSize);
         }
 
         return msg2withlcs;
@@ -886,14 +960,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         List<HttpHeaderField> headerFields = responseHeader.getHeaders();
         List<HttpHeaderField> maskedHeaderFields = new ArrayList<>();
 
-
-        int responseHeaderSize = primeString.length() + 2; // primeString.length + lineDelimiter.length(2)
-
         if (headerFields != null) {
             for (HttpHeaderField headerField : headerFields) {
                 String name = headerField.getName();
                 String value = headerField.getValue();
-                responseHeaderSize += name.length() + 4 + value.length(); // ": ".length + lineDelimiter.length == 4
                 HttpHeaderField headerFieldMasked = null;
                 if (name.equalsIgnoreCase("Set-Cookie")) {
                     Matcher matcher = cookieNameValuePattern.matcher(value);
@@ -933,11 +1003,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             }
         }
 
-        responseHeaderSize += 2;
-        int responseTotalSize = responseHeaderSize + resBodyString.length();
-
         String maskedbody = resBodyString;
-        if (responseTotalSize < MAXMASKBODYSIZE) {
+        if (isMaskBodyWithAsterisk) {
             Matcher valueMatcher;
             if (responseHeader.hasContentType("json")) {
                 valueMatcher = quotedValuePattern.matcher(resBodyString);
@@ -1066,5 +1133,29 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 ExtensionAscanRules.scannerIdThreadMap.remove(scannerId);// forget everything about thread.
             }
         }
+    }
+
+    /**
+     * Returns true if two size is almost same length.
+     * @param aSize
+     * @param bSize
+     * @return
+     */
+    private boolean almostSameSize(int aSize, int bSize) {
+        int denominatorSize = bSize;
+        int numeratorSize = aSize;
+        if (aSize > bSize) {
+            denominatorSize = aSize;
+            numeratorSize = bSize;
+        }
+
+        if (denominatorSize == 0) {
+            if (numeratorSize == 0) return true;
+            return false;
+        }
+        long percent = Math.round((double) numeratorSize / denominatorSize * 1000);
+        if (percent >= this.NEALYEQUALPERCENT) return true;
+
+        return false;
     }
 }

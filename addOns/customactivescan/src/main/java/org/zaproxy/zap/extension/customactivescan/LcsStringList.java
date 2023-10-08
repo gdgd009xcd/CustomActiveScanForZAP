@@ -284,6 +284,16 @@ public class LcsStringList implements LcsBuilder<String>{
 		return false;
 	}
 
+	public boolean hasSameDelimiter(ArrayListWrapper<String> listWrapper) {
+		String otherDelimiter = listWrapper!=null? listWrapper.getDelimiter() : null;
+		if (this.delimiter != null && otherDelimiter != null) {
+			return this.delimiter.equals(otherDelimiter);
+		} else if(this.delimiter == otherDelimiter) {
+			return true;
+		}
+		return false;
+	}
+
 	public void setRowSize(int rowSize) {
 		this.rowSize = rowSize;
 	}
@@ -295,6 +305,14 @@ public class LcsStringList implements LcsBuilder<String>{
 	public boolean hasSameRowSize(LcsStringList otherLcs) {
 		int otherRowSize = otherLcs != null ? otherLcs.getRowSize() : -1;
 		if (this.rowSize == otherRowSize) return true;
+		return false;
+	}
+
+	public boolean hasSameRowSize(ArrayListWrapper<String> listWrapper) {
+		int otherRowSize = listWrapper != null ? listWrapper.getRowSize() : -1 ;
+		if (this.rowSize == otherRowSize) {
+			return true;
+		}
 		return false;
 	}
 

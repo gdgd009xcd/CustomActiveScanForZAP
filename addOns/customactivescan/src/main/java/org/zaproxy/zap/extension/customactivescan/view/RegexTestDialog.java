@@ -162,7 +162,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             searchTextScroller.setAutoscrolls(true);
             searchTextPane.searchTextPane = new JTextPane();
             searchTextPane.searchTextPane.setText(titleAndContent.content);
+            searchTextPane.searchTextPane.setCaretPosition(0);
             searchTextScroller.setViewportView(searchTextPane.searchTextPane);
+
             tabbedPane.add(titleAndContent.title, searchTextScroller);
             searchTextPaneList.add(searchTextPane);
         }
@@ -402,4 +404,17 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     }
 
 
+    /**
+     * move scollbars to left/top on each scrollPane
+     */
+    public void resetScrollBarToLeftTop() {
+        int tabCount = this.tabbedPane.getTabCount();
+        for(int i=0; i < tabCount; i++) {
+            JScrollPane scrollPane = (JScrollPane) this.tabbedPane.getComponentAt(i);
+            JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
+            JScrollBar horizontalBar = scrollPane.getHorizontalScrollBar();
+            verticalBar.setValue(verticalBar.getMinimum());
+            horizontalBar.setValue(horizontalBar.getMinimum());
+        }
+    }
 }
