@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 @SuppressWarnings("serial")
-public abstract class GridBagJDialog<T> extends JDialog {
+public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildInterface {
 
     /**
      * create basic dialog<br>
@@ -47,11 +47,26 @@ public abstract class GridBagJDialog<T> extends JDialog {
         init(fill, -1, createMainPanelContent(null, optionalObject));
     }
 
+    public GridBagJDialog(Dialog dialog, String title, ModalityType modalityType, T optionalObject, int fill) {
+        super(dialog, title, modalityType);
+        init(fill, -1, createMainPanelContent(null, optionalObject));
+    }
+
+    public GridBagJDialog(Frame frame, String title, ModalityType modalityType, T optionalObject, int fill) {
+        super(frame, title, modalityType);
+        init(fill, -1, createMainPanelContent(null, optionalObject));
+    }
+
     public GridBagJDialog(Component mainPanel, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(SwingUtilities.windowForComponent(mainPanel), title, modalityType);
         init(fill, -1, createMainPanelContent(mainPanel, optionalObject));
     }
 
+
+    public GridBagJDialog(Dialog dialog, Component mainPanel, String title, ModalityType modalityType, T optionalObject, int fill) {
+        super(dialog, title, modalityType);
+        init(fill, -1, createMainPanelContent(mainPanel, optionalObject));
+    }
     /**
      *
      * @param owner  You may set owner parameter by<BR> SwingUtilities.windowForComponent(yourComponent)<P></P><P></P>
@@ -84,6 +99,12 @@ public abstract class GridBagJDialog<T> extends JDialog {
         super(owner, title, modalityType);
         init(fill, anchor, createMainPanelContent(null, optionalObject));
     }
+
+    public GridBagJDialog(Dialog dialog, Component component, String title, ModalityType modalityType, T optionalObject, int fill, int anchor) {
+        super(dialog, title, modalityType);
+        init(fill, anchor, createMainPanelContent(null, optionalObject));
+    }
+
 
     /**
      * create this dialog contents<br>

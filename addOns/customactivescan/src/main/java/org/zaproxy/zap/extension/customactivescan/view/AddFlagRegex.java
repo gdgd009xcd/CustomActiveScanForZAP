@@ -3,11 +3,7 @@ package org.zaproxy.zap.extension.customactivescan.view;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Color;
-import java.awt.Insets;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +19,10 @@ public class AddFlagRegex extends GridBagJDialog<String>{
         this.mainPanel = mainPanel;
     }
 
+    AddFlagRegex(Dialog dialog, CustomScanMainPanel mainPanel, String title, ModalityType modarityType) {
+        super(dialog, mainPanel, title, modarityType, null, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
+        this.mainPanel = mainPanel;
+    }
     @Override
     protected Component createMainPanelContent(Component mainPanel, String optionalObject) {
         JPanel panel = new JPanel();
@@ -58,7 +58,7 @@ public class AddFlagRegex extends GridBagJDialog<String>{
             List<RegexTestDialog.PaneTitleAndContent> paneTitleAndContentList = new ArrayList<>();
             RegexTestDialog.PaneContents paneContents = new RegexTestDialog.PaneContents(this.regexPatternField.getText());
             paneContents.addTitleAndContent("Search Text", "");
-            RegexTestDialog regexTestDialog = new RegexTestDialog(SwingUtilities.windowForComponent(this),"Regex test", ModalityType.DOCUMENT_MODAL, paneContents);
+            RegexTestDialog regexTestDialog = new RegexTestDialog(this,"Regex test", ModalityType.DOCUMENT_MODAL, paneContents);
             regexTestDialog.setRegexTextField(this.regexPatternField);
             regexTestDialog.setVisible(true);
         });
@@ -93,6 +93,11 @@ public class AddFlagRegex extends GridBagJDialog<String>{
     @Override
     protected void cancelBtnActionPerformed() {
         dispose();
+    }
+
+    @Override
+    public void disposeChild() {
+
     }
 
     public void setFlagPatternList(JList<String> flagPatternList, boolean isAddAction) {

@@ -9,6 +9,8 @@ import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -19,10 +21,11 @@ import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MES
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.ZAP_ICONS;
 
 @SuppressWarnings("serial")
-public class ScanLogPanel extends JPanel {
+public class ScanLogPanel extends JPanel implements DisposeChildInterface {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
+    JFrame jFrame = null;
     private JCheckBox pauseCheckBox;
     JTextField requestCountTextField;
     JTable scanLogTable;
@@ -34,11 +37,16 @@ public class ScanLogPanel extends JPanel {
     private CustomScanMainPanel customScanMainPanel;
     private List<HttpMessage> resultMessageList;
     private String flagColumnRegexString;
+    RegexTestDialog regexTestDialog;
+    int currentSelectedTableRowIndex = -1;
 
-    public ScanLogPanel(CustomScanMainPanel customScanMainPanel, String[] flagColumns, int scannerId, boolean isPaused) {
+    public ScanLogPanel(JFrame jFrame, CustomScanMainPanel customScanMainPanel, String[] flagColumns, int scannerId, boolean isPaused) {
         super();
+        this.jFrame = jFrame;
+        this.currentSelectedTableRowIndex = -1;
         setLayout(new BorderLayout());
 
+        this.regexTestDialog = null;
         this.resultMessageList = new ArrayList<>();
         this.customScanMainPanel = customScanMainPanel;
         pauseCheckBoxActionMask = false;
@@ -205,12 +213,28 @@ public class ScanLogPanel extends JPanel {
         menuShowSelectedMessage.addActionListener(l ->{
             int selectedRowIndex = scanLogTable.getSelectedRow();
             if (selectedRowIndex != -1) {
+                LOGGER4J.debug("menu show executed:" + selectedRowIndex);
                 showSelectedMessage(selectedRowIndex);
             }
         });
         popupMenu.add(menuShowSelectedMessage);
         scanLogTable.setComponentPopupMenu(popupMenu);
-        scanLogTable.addMouseListener(new JTableRowSelector(scanLogTable));
+        scanLogTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        scanLogTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent listSelectionEvent) {
+                if (listSelectionEvent.getValueIsAdjusting()) {// Without this code, valueChanged method will be called twice
+                    // (valueChanged will be called on every mousePress/mouseRelease)
+                    return;
+                }
+                int selectedRow = scanLogTable.getSelectedRow();
+                if( ScanLogPanel.this.regexTestDialog != null) {// call showSelectedMessage when  already existed regexTestDialog.
+                    LOGGER4J.debug("valueChanged excecuted:" + selectedRow);
+                    ScanLogPanel.this.showSelectedMessage(selectedRow);
+                    ScanLogPanel.this.regexTestDialog.clearAllSearchedInfo();// this method must call after calling showSelectedMessage.
+                }
+            }
+        });
         scanLogScroller.setViewportView(scanLogTable);
         add(scanLogScroller, BorderLayout.CENTER);
     }
@@ -274,17 +298,32 @@ public class ScanLogPanel extends JPanel {
     private void showSelectedMessage(int selectedTableRowIndex) {
         LOGGER4J.debug("selected row:" + selectedTableRowIndex);
         HttpMessage selectedMessage = resultMessageList.get(selectedTableRowIndex);
-        if (selectedMessage != null) {
+        if (selectedMessage != null && this.currentSelectedTableRowIndex != selectedTableRowIndex) {
             String requestString = selectedMessage.getRequestHeader().toString() + selectedMessage.getRequestBody().toString();
             String responseString = selectedMessage.getResponseHeader().toString() + selectedMessage.getResponseBody().toString();
             RegexTestDialog.PaneContents paneContents = new RegexTestDialog.PaneContents(this.flagColumnRegexString);
             paneContents.addTitleAndContent("Request", requestString);
             paneContents.addTitleAndContent("Response", responseString);
-            RegexTestDialog regexTestDialog = new RegexTestDialog(SwingUtilities.windowForComponent(this),"Result", Dialog.ModalityType.MODELESS, paneContents);
-            regexTestDialog.selectTabbedPane(1);
-            regexTestDialog.setVisible(true);
-            regexTestDialog.resetScrollBarToLeftTop();
-            regexTestDialog.regexSearchActionPerformed(null);
+            if (this.regexTestDialog == null) {
+                regexTestDialog = new RegexTestDialog(this.jFrame, this, "Result", Dialog.ModalityType.MODELESS, paneContents);
+                regexTestDialog.selectTabbedPane(1);
+                regexTestDialog.setVisible(true);
+                regexTestDialog.resetScrollBarToLeftTop();
+                regexTestDialog.regexSearchActionPerformed(null);
+            } else {
+                regexTestDialog.updateContentsWithPaneContents(paneContents);
+                regexTestDialog.resetScrollBarToLeftTop();
+            }
+            this.currentSelectedTableRowIndex = selectedTableRowIndex;
         }
+    }
+
+    @Override
+    public void disposeChild() {
+        if (this.regexTestDialog != null) {
+            this.regexTestDialog.dispose();
+            this.regexTestDialog = null;
+        }
+        this.currentSelectedTableRowIndex = -1;
     }
 }

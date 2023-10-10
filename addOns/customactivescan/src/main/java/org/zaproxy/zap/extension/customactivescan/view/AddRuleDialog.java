@@ -131,4 +131,9 @@ public class AddRuleDialog extends GridBagJDialog<String> {
     protected void cancelBtnActionPerformed() {
         dispose();
     }
+
+    @Override
+    public void disposeChild() {
+
+    }
 }

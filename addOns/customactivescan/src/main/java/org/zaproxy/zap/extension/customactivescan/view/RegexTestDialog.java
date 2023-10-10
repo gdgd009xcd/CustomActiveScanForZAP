@@ -1,18 +1,17 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.parosproxy.paros.Constant;
+import org.zaproxy.zap.view.panelsearch.Search;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -21,13 +20,13 @@ import java.util.regex.Pattern;
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
 
 @SuppressWarnings("serial")
-public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
+public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents>{
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
     // these parameters are set value by createMainPanelContent method.
     // these parameters MUST NOT initialize at declaration here.
-    // because createMainPanelContent method is called before parameter initialization process
+    // because createMainPanelContent method is called before parameter initialization process in this class
     // regex text
     private JTextPane regexTextPane;
 
@@ -37,6 +36,14 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     // no used parameters in createMainPanelContent method
     private RegexTestOptionPane optionPane = null;
+
+    private Dialog dialog = null;
+    private Frame frame = null;
+    private DisposeChildInterface parent = null;
+
+    static final String SELECTEDGROUP_STYLENAME = "selectedGroupStyle";
+    static final String CURRENT_SELECTEDGROUP_STYLENAME = "currentSelectedGroupStyle";
+    static final String SELECTED_STYLENAME = "selectedStyle";
 
     static class SearchTextPane {
         // search text
@@ -82,8 +89,16 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     private JTextField targetTextField;
 
-    public RegexTestDialog(Window owner, String title, ModalityType modalityType, PaneContents paneContents) {
-        super(owner, title, modalityType, paneContents, GridBagConstraints.BOTH);
+
+    public RegexTestDialog(Dialog dialog, String title, ModalityType modalityType, PaneContents paneContents) {
+        super(dialog, title, modalityType, paneContents, GridBagConstraints.BOTH);
+        this.dialog = dialog;
+    }
+
+    public RegexTestDialog(Frame frame, DisposeChildInterface parent, String title, ModalityType modalityType, PaneContents paneContents) {
+        super(frame, title, modalityType, paneContents, GridBagConstraints.BOTH);
+        this.frame = frame;
+        this.parent = parent;
     }
 
     private JPanel createRegexTestDialogContent(PaneContents paneContents) {
@@ -161,6 +176,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             searchTextScroller.setPreferredSize(new Dimension(400, 500));
             searchTextScroller.setAutoscrolls(true);
             searchTextPane.searchTextPane = new JTextPane();
+            StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+            createStyles(doc);
+
+
             searchTextPane.searchTextPane.setText(titleAndContent.content);
             searchTextPane.searchTextPane.setCaretPosition(0);
             searchTextScroller.setViewportView(searchTextPane.searchTextPane);
@@ -185,6 +204,34 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     }
 
 
+    private void createStyles(StyledDocument doc) {
+        Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
+        Style selectedGroupStyle = doc.addStyle(SELECTEDGROUP_STYLENAME, defaultStyle);
+        StyleConstants.setForeground(selectedGroupStyle, Color.BLACK);
+        StyleConstants.setBackground(selectedGroupStyle, Color.RED);
+        Style currentSelectedGroupStyle = doc.addStyle(CURRENT_SELECTEDGROUP_STYLENAME, defaultStyle);
+        StyleConstants.setForeground(currentSelectedGroupStyle, Color.WHITE);
+        StyleConstants.setBackground(currentSelectedGroupStyle, Color.RED);
+        Style selectedStyle = doc.addStyle(SELECTED_STYLENAME, defaultStyle);
+        StyleConstants.setForeground(selectedStyle, Color.BLUE);
+        StyleConstants.setBackground(selectedStyle, Color.RED);
+    }
+
+    private void removeStyles(StyledDocument doc) {
+        Style selectedGroupStyle = doc.getStyle(SELECTEDGROUP_STYLENAME);
+        if (selectedGroupStyle != null) {
+            doc.removeStyle(SELECTEDGROUP_STYLENAME);
+        }
+        Style currentSelectedGroupStyle = doc.getStyle(CURRENT_SELECTEDGROUP_STYLENAME);
+        if (currentSelectedGroupStyle != null) {
+            doc.removeStyle(CURRENT_SELECTEDGROUP_STYLENAME);
+        }
+        Style selectedStyle = doc.getStyle(SELECTED_STYLENAME);
+        if (selectedStyle != null) {
+            doc.removeStyle(SELECTED_STYLENAME);
+        }
+    }
+
     @Override
     protected Component createMainPanelContent(Component mainPanel, PaneContents paneContents) {
         return createRegexTestDialogContent(paneContents);
@@ -195,21 +242,31 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         if (this.regexTextPane.getText() != null && this.targetTextField != null) {
             this.targetTextField.setText(this.regexTextPane.getText());
         }
-        dispose();
+        if (this.parent != null) {
+            this.parent.disposeChild();
+        } else {
+            dispose();
+        }
     }
 
     @Override
     protected void cancelBtnActionPerformed() {
-        dispose();
+        if (this.parent != null) {
+            this.parent.disposeChild();
+        } else {
+            dispose();
+        }
     }
 
     public static class RegexSelectedTextPos {
         int st;
         int et;
+        String styleName;
 
-        RegexSelectedTextPos(int st, int et) {
+        RegexSelectedTextPos(String styleName, int st, int et) {
             this.st = st;
             this.et = et;
+            this.styleName = styleName;
         }
 
         int getStartPos() {
@@ -220,31 +277,52 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             return this.et;
         }
 
+        String getStyleName() {
+            return this.styleName;
+        }
+
     }
 
     private void clearTestActionPerformed(ActionEvent e) {
         int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
         if (selectedTabbedPaneIndex > -1) {
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
-            SimpleAttributeSet attr = new SimpleAttributeSet();
+            clearSearchedInfo(searchTextPane);
+        }
+    }
 
-            if (searchTextPane.foundTextAttrPos == null) {
-                searchTextPane.foundTextAttrPos = new ArrayList<>();
-            }
-
-            String regex = this.regexTextPane.getText();
-
+    /**
+     * clear searched text info and remove styles from searched text in StyledDocument.
+     * this method must call after JTextPane.setText was called.
+     * @param searchTextPane
+     */
+    private void clearSearchedInfo(SearchTextPane searchTextPane) {
+        if (searchTextPane != null) {
             StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
-            doc.getEndPosition();
 
-            if (searchTextPane.foundTextAttrPos.size() > 0) {
-                StyleConstants.setForeground(attr, Color.BLACK);
-                StyleConstants.setBackground(attr, Color.WHITE);
-
-                doc.setCharacterAttributes(0, doc.getLength(), attr, false);
-
+            Style defaultStyleForALL = StyleContext.
+                    getDefaultStyleContext().
+                    getStyle(StyleContext.DEFAULT_STYLE);
+            doc.setCharacterAttributes(0, doc.getLength(), defaultStyleForALL, true);
+            removeStyles(doc);
+            createStyles(doc);
+            if (searchTextPane.foundTextAttrPos != null) {
                 searchTextPane.foundTextAttrPos.clear();
             }
+            if (searchTextPane.findplist != null) {
+                searchTextPane.findplist.clear();
+            }
+        }
+    }
+
+    /**
+     * clear All searched text info and remove styles from searched text in StyledDocument.
+     * this method must call after JTextPane.setText was called.
+     */
+    public void clearAllSearchedInfo() {
+        for(SearchTextPane searchTextPane: searchTextPaneList) {
+            LOGGER4J.debug("clearAllSearchedInfo");
+            clearSearchedInfo(searchTextPane);
         }
     }
 
@@ -255,11 +333,11 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
         if (selectedTabbedPaneIndex > -1) {
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
-            SimpleAttributeSet attr = new SimpleAttributeSet();
 
             String regex = regexTextPane.getText();
 
             StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+
 
             if (regex == null || regex.isEmpty()) { // if you do it, Too many patterns matched.
                 return;
@@ -330,22 +408,22 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                         // spt0--->spt<matchval>ept-->ept0
 
                         if (ept0 > spt0) {
-                            StyleConstants.setForeground(attr, Color.BLUE);
-                            StyleConstants.setBackground(attr, Color.RED);
-                            doc.setCharacterAttributes(spt0, ept0 - spt0, attr, false);
-                            RegexSelectedTextPos rpos = new RegexSelectedTextPos(spt0, ept0);
+                            Style style = doc.getStyle(SELECTED_STYLENAME);
+                            doc.setCharacterAttributes(spt0, ept0 - spt0, style, false);
+                            RegexSelectedTextPos rpos = new RegexSelectedTextPos(SELECTED_STYLENAME, spt0, ept0);
                             searchTextPane.foundTextAttrPos.add(rpos);
                         }
 
                         if (ept > spt) {
+                            String styleName = "";
                             if (fcount == 1) {
-                                StyleConstants.setForeground(attr, Color.WHITE);
+                                styleName = CURRENT_SELECTEDGROUP_STYLENAME;
                             } else {
-                                StyleConstants.setForeground(attr, Color.BLACK);
+                                styleName = SELECTEDGROUP_STYLENAME;
                             }
-                            StyleConstants.setBackground(attr, Color.RED);
-                            doc.setCharacterAttributes(spt, ept - spt, attr, false);
-                            RegexSelectedTextPos rpos = new RegexSelectedTextPos(spt, ept);
+                            Style style = doc.getStyle(styleName);
+                            doc.setCharacterAttributes(spt, ept - spt, style, false);
+                            RegexSelectedTextPos rpos = new RegexSelectedTextPos(styleName, spt, ept);
                             searchTextPane.foundTextAttrPos.add(rpos);
                         }
 
@@ -371,13 +449,11 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                         JOptionPane.INFORMATION_MESSAGE);
                  **/
                 RegexTestOptionPane.RegexTestOptions options = new RegexTestOptionPane.RegexTestOptions(message, searchTextPane);
-                if (optionPane != null) {
-                    optionPane.dispose();
-                }
+                disposeChild();
                 optionPane = new RegexTestOptionPane(
                         this,
                         Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
-                        ModalityType.MODELESS, options, GridBagConstraints.NONE);
+                        ModalityType.DOCUMENT_MODAL, options, GridBagConstraints.NONE);
                 optionPane.setVisible(true);
             } else {
                 Toolkit.getDefaultToolkit().beep();
@@ -389,6 +465,12 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         }
     }
 
+    public void disposeChild() {
+        if (this.optionPane != null) {
+            this.optionPane.dispose();
+            this.optionPane = null;
+        }
+    }
     public void setRegexTextField(JTextField targetTextField) {
         this.targetTextField = null;
         if (this.regexTextPane != null) {
@@ -417,4 +499,17 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             horizontalBar.setValue(horizontalBar.getMinimum());
         }
     }
+
+    public void updateContentsWithPaneContents(PaneContents paneContents) {
+        int i = 0;
+        for(PaneTitleAndContent titleAndContent: paneContents.paneTitleAndContentList) {
+            SearchTextPane searchTextPane = searchTextPaneList.get(i++);
+            searchTextPane.searchTextPane.setText(titleAndContent.content);
+            searchTextPane.searchTextPane.setSelectionStart(0);
+            searchTextPane.searchTextPane.setSelectionEnd(0);
+            searchTextPane.searchTextPane.setCaretPosition(0);
+        }
+        resetScrollBarToLeftTop();
+    }
+
 }

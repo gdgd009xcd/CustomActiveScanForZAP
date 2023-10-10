@@ -11,6 +11,7 @@ public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.Rege
 
     private RegexTestDialog.SearchTextPane searchTextPane;
     private int pos;
+    RegexTestDialog dialog;
 
     static class RegexTestOptions {
         String message;
@@ -22,12 +23,13 @@ public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.Rege
         }
     }
 
-    public RegexTestOptionPane(Component mainPanel, String title, ModalityType modalityType,  RegexTestOptions options, int fill) {
-        super(mainPanel, title, modalityType, options, fill);
+    public RegexTestOptionPane(RegexTestDialog dialog, String title, ModalityType modalityType,  RegexTestOptions options, int fill) {
+        super(dialog, dialog, title, modalityType, options, fill);
         this.searchTextPane = options.searchTextPane;
         pos = 0;
+        this.dialog = dialog;
         pack();
-        setLocationRelativeTo(mainPanel);
+        setLocationRelativeTo(dialog);
     }
 
     @Override
@@ -100,11 +102,16 @@ public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.Rege
 
     @Override
     protected void cancelBtnActionPerformed() {
-        dispose();
+        dialog.disposeChild();
     }
 
     @Override
     protected String cancelBtnLabelString() {
         return "CLOSE";
+    }
+
+    @Override
+    public void disposeChild() {
+
     }
 }
