@@ -15,7 +15,7 @@ public class ScanLogPanelFrame extends JFrame {
     private ScanLogPanel scanLogPanel;
 
     public ScanLogPanelFrame(String[] flagColumns, int scannerId) {
-        this.scanLogPanel = new ScanLogPanel(ExtensionAscanRules.customScanMainPanel,flagColumns, scannerId, false);
+        this.scanLogPanel = new ScanLogPanel(this, ExtensionAscanRules.customScanMainPanel,flagColumns, scannerId, false);
         add(this.scanLogPanel);
         pack();// fit frame size with it's contents size.
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);

@@ -2,6 +2,12 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 21 - 2023-10-11
+### v0.7.5
+- improve: added load/save file menu
+- improve: refined scanlog window's table selection mechanism
+- bugfix: fixed regex search modal dialog problem(popup dialog hide below parent window)
+
 ## 20 - 2023-10-08
 ### v0.7.4
 - bugfix: fixed falsepositive SQL injection detect. (3-2. true response contains part of the original response)
