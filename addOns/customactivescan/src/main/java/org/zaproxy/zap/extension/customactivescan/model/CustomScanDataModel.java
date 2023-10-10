@@ -78,6 +78,52 @@ public class CustomScanDataModel {
         }
     }
 
+    private CustomScanJSONData openFileAndLoadCustomScanJSONData(String filename) {
+        Gson gson = new Gson();
+        CustomScanJSONData customScanJSONData = null;
+        // load scanRule Data from file
+        try (Reader dataReader = new FileReader(filename)) {
+            customScanJSONData = gson.fromJson(dataReader, CustomScanJSONData.class);
+            customScanJSONData.createSampleRuleList();
+        } catch(Exception e) {
+            LOGGER4J.error(e.getMessage(), e);
+            customScanJSONData = null;
+        }
+        return customScanJSONData;
+    }
+
+    /**
+     * load JSON from specified file.
+     *
+     * @param filename
+     * @return true:succeeded false:faile
+     */
+    public boolean loadModel(String filename){
+        String previousFileName = this.configFile.absFileNamePath;
+        boolean previousIsSampleLoaded = this.configFile.isSampleLoaded;
+        boolean isLoaded = false;
+        Gson gson = new Gson();
+        CustomScanJSONData customScanJSONData = openFileAndLoadCustomScanJSONData(filename);
+        if (customScanJSONData != null) {
+
+            try {
+                this.configFile.absFileNamePath = filename;
+                this.configFile.isSaved = true;
+                this.configFile.isSampleLoaded = true;
+                saveConfig();
+                this.customScanData = customScanJSONData;
+                isLoaded = true;
+            } catch (Exception ex) {
+                this.configFile.absFileNamePath = previousFileName;
+                this.configFile.isSaved = false;
+                this.configFile.isSampleLoaded = previousIsSampleLoaded;
+                LOGGER4J.error(ex.getMessage(), ex);
+            }
+        }
+
+        return isLoaded;
+    }
+
     public CustomScanJSONData.ScanRule getScanRule(int index) {
         try {
             return this.customScanData.scanRuleList.get(index);

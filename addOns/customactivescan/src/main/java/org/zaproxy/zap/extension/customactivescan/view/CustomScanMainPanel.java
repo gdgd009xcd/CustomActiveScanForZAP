@@ -37,7 +37,7 @@ public class CustomScanMainPanel extends JPanel {
     private JScrollPane rulePatternScroller = null;
     private int selectedScanRuleIndex = -1;
     private CustomScanDataModel scanDataModel;
-    private boolean showSaveFileDialog = false;
+    private boolean showFileDialog = false;
     private JCheckBox scanLogCheckBox = null;
     private boolean ruleComboBoxActionIsNoNeedSave;
     JPopupMenu flagPatternPopupMenu = null;
@@ -53,7 +53,7 @@ public class CustomScanMainPanel extends JPanel {
     public CustomScanMainPanel() {
         super(new GridBagLayout());
 
-        this.showSaveFileDialog = false;
+        this.showFileDialog = false;
         this.ruleComboBoxActionIsNoNeedSave = false;
 
         // load scan configration data.
@@ -90,6 +90,16 @@ public class CustomScanMainPanel extends JPanel {
         scanRuleMenuTitle.add(delRuleMenuItem);
         delRuleMenuItem.addActionListener(e ->{
             delRuleActionPerformed(e);
+        });
+        JMenuItem loadFileMenuItem = new JMenuItem("Load");
+        scanRuleMenuTitle.add(loadFileMenuItem);
+        loadFileMenuItem.addActionListener(e ->{
+            loadFileActionPerformed(e);
+        });
+        JMenuItem saveFileMenuItem = new JMenuItem("Save as");
+        scanRuleMenuTitle.add(saveFileMenuItem);
+        saveFileMenuItem.addActionListener(e ->{
+            saveFileActionPerformed(e);
         });
 
         if (selectedScanRule != null) {
@@ -475,6 +485,21 @@ public class CustomScanMainPanel extends JPanel {
         }
     }
 
+    private void loadFileActionPerformed(ActionEvent e) {
+        if(loadScanDataModel()) {
+            this.selectedScanRuleIndex = -1;
+            ruleComboBox.removeAllItems();
+            for(CustomScanJSONData.ScanRule rule: scanDataModel.getScanRuleList()) {
+                ruleComboBox.addItem(rule.patterns.name);
+            }
+            LOGGER4J.debug("loadFileActionPerformed.");
+        }
+    }
+
+    private void saveFileActionPerformed(ActionEvent e) {
+        saveToNewFile();
+    }
+
     public void addFlagPatternActionPerformed(ActionEvent e, boolean isAddAction) {
         AddFlagRegex addFlagRegexDialog = new AddFlagRegex(this, "Add/Mod flag result item regex", Dialog.ModalityType.DOCUMENT_MODAL);
         addFlagRegexDialog.setFlagPatternList(this.flagPatternList, isAddAction);
@@ -483,15 +508,17 @@ public class CustomScanMainPanel extends JPanel {
 
     @SuppressWarnings("unchecked")
     public void ruleComboBoxActionPerformed(ActionEvent e) {
-        JComboBox<String> cb = (JComboBox<String>)e.getSource();
+        JComboBox<String> cb = (JComboBox<String>) e.getSource();
         String actionCommandString = e.getActionCommand();
 
+        int comboBoxSelectedIndex = cb.getSelectedIndex();
         LOGGER4J.debug("ruleComboBoxAction[" + e.getActionCommand() + "] item:"
-                + cb.getSelectedItem() + " item index:" + cb.getSelectedIndex() + "selectedRuleIndex:" + selectedScanRuleIndex);
+                + cb.getSelectedItem() + " item index:" + comboBoxSelectedIndex + " selectedRuleIndex:" + selectedScanRuleIndex);
 
-        if (selectedScanRuleIndex != cb.getSelectedIndex()) {
+        if (selectedScanRuleIndex != comboBoxSelectedIndex && comboBoxSelectedIndex > -1) {
             this.ruleComboBoxActionIsNoNeedSave = true;
-            selectedScanRuleIndex = cb.getSelectedIndex();
+            selectedScanRuleIndex = comboBoxSelectedIndex;
+            LOGGER4J.debug("selectedScanRuleIndex=" + selectedScanRuleIndex);
             CustomScanJSONData.ScanRule selectedScanRule = scanDataModel.getScanRule(selectedScanRuleIndex);
             createRuleTable(selectedScanRule);
             LOGGER4J.debug("scanLogCheckBox setSelected in ruleComboBoxActionPerformed");
@@ -528,80 +555,150 @@ public class CustomScanMainPanel extends JPanel {
         LOGGER4J.debug("ruleTableChanged: type:" + eType + " col:" + e.getColumn() + " Row From:" + e.getFirstRow() + " Row To:" + e.getLastRow());
     }
 
-    public boolean saveToNewFileIfNoSaved() {
+    private boolean saveToNewFile() {
         boolean isSavedToNewFile = false;
-        if (!scanDataModel.isSaved() && !scanDataModel.isSampleLoaded()) {
-            showSaveFileDialog = true;
-            LOGGER4J.debug("showSaveDialog=true");
-            File cfile = null;
-            String dirname = null;
-            try {
-                cfile = new File(scanDataModel.getSaveFileName());
-                dirname = cfile.getParent();
-            } catch (Exception ex) {
-                dirname = null;
-            }
-
-            if (dirname == null) {
-                cfile = null;
-                dirname = "";
-            }
-
-            Path relativePath = Paths.get(dirname);// specified directory relative path
-            if (!Files.exists(relativePath)) {
-                dirname = "";// current directory.
-                cfile = null;
-                relativePath = Paths.get(dirname);
-            }
-            Path absolutePath = relativePath.toAbsolutePath();
-            String absolutePathString = absolutePath.toString();
-            JFileChooser jfc = new JFileChooser(absolutePathString) {
-
-                @Override
-                public void approveSelection() {
-                    File f = getSelectedFile();
-                    if (f.exists() && getDialogType() == SAVE_DIALOG) {
-                        String m = String.format(
-                                "<html>%s already exists.<br>Do you want to replace it?",
-                                f.getAbsolutePath());
-                        int rv = JOptionPane.showConfirmDialog(
-                                this, m, "Save As", JOptionPane.YES_NO_OPTION);
-                        if (rv != JOptionPane.YES_OPTION) {
-                            return;
-                        }
-                    }
-                    super.approveSelection();
-                }
-            };
-            FileFilterForJSON pFilter = new FileFilterForJSON();
-            jfc.setFileFilter(pFilter);
-            jfc.setDialogTitle("CustomActiveScan Save");
-            if (cfile != null) {
-                jfc.setSelectedFile(cfile);
-            }
-
-            LOGGER4J.debug("start Popup Save Dialog");
-            if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {// OK button
-                File file = jfc.getSelectedFile();
-                String name = file.getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
-                if (!pFilter.accept(file)) {
-                    name += ".json";
-                }
-                scanDataModel.saveModelToNewFile(name);
-                isSavedToNewFile = scanDataModel.isSaved();
-            } else { // cancel button
-                isSavedToNewFile = true;
-            }
-
-            showSaveFileDialog = false;
-            LOGGER4J.debug("showSaveDialog=false");
+        this.showFileDialog = true;
+        LOGGER4J.debug("showFileDialog=true");
+        File cfile = null;
+        String dirname = null;
+        try {
+            cfile = new File(scanDataModel.getSaveFileName());
+            dirname = cfile.getParent();
+        } catch (Exception ex) {
+            dirname = null;
         }
 
+        if (dirname == null) {
+            cfile = null;
+            dirname = "";
+        }
+
+        Path relativePath = Paths.get(dirname);// specified directory relative path
+        if (!Files.exists(relativePath)) {
+            dirname = "";// current directory.
+            cfile = null;
+            relativePath = Paths.get(dirname);
+        }
+        Path absolutePath = relativePath.toAbsolutePath();
+        String absolutePathString = absolutePath.toString();
+        JFileChooser jfc = new JFileChooser(absolutePathString) {
+
+            @Override
+            public void approveSelection() {
+                File f = getSelectedFile();
+                if (f.exists() && getDialogType() == SAVE_DIALOG) {
+                    String m = String.format(
+                            "<html>%s already exists.<br>Do you want to replace it?",
+                            f.getAbsolutePath());
+                    int rv = JOptionPane.showConfirmDialog(
+                            this, m, "Save As", JOptionPane.YES_NO_OPTION);
+                    if (rv != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
+                super.approveSelection();
+            }
+        };
+        FileFilterForJSON pFilter = new FileFilterForJSON();
+        jfc.setFileFilter(pFilter);
+        jfc.setDialogTitle("CustomActiveScan Save");
+        if (cfile != null) {
+            jfc.setSelectedFile(cfile);
+        }
+
+        LOGGER4J.debug("start Popup Save Dialog");
+        if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {// OK button
+            File file = jfc.getSelectedFile();
+            String name = file.getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
+            if (!pFilter.accept(file)) {
+                name += ".json";
+            }
+            scanDataModel.saveModelToNewFile(name);
+            isSavedToNewFile = scanDataModel.isSaved();
+        } else { // cancel button
+            isSavedToNewFile = true;
+        }
+
+        this.showFileDialog = false;
+        LOGGER4J.debug("showFileDialog=false");
         return isSavedToNewFile;
     }
 
+    public boolean saveToNewFileIfNoSaved() {
+        if (!scanDataModel.isSaved() && !scanDataModel.isSampleLoaded()) {
+            return saveToNewFile();
+        }
+        return false;
+    }
+
+    public boolean loadScanDataModel() {
+        this.showFileDialog = true;
+        LOGGER4J.debug("showFileDialog=true");
+        File cfile = null;
+        String dirname = null;
+        try {
+            cfile = new File(scanDataModel.getSaveFileName());
+            dirname = cfile.getParent();
+        } catch (Exception ex) {
+            dirname = null;
+        }
+
+        if (dirname == null) {
+            cfile = null;
+            dirname = "";
+        }
+
+        Path relativePath = Paths.get(dirname);// specified directory relative path
+        if (!Files.exists(relativePath)) {
+            dirname = "";// current directory.
+            cfile = null;
+            relativePath = Paths.get(dirname);
+        }
+        Path absolutePath = relativePath.toAbsolutePath();
+        String absolutePathString = absolutePath.toString();
+        JFileChooser jfc = new JFileChooser(absolutePathString) {
+
+            @Override
+            public void approveSelection() {
+                File f = getSelectedFile();
+                if (!f.exists() && getDialogType() == OPEN_DIALOG) {
+                    String m = String.format(
+                            "File Not Found:%s",
+                            f.getAbsolutePath());
+                    JOptionPane.showMessageDialog(
+                            this, m, "File Not Found", JOptionPane.ERROR_MESSAGE);
+                    return;// failed file open.
+                }
+                super.approveSelection();// succeeded file open.
+            }
+        };
+        FileFilterForJSON pFilter = new FileFilterForJSON();
+        jfc.setFileFilter(pFilter);
+        jfc.setDialogTitle("CustomActiveScan Load");
+        if (cfile != null) {
+            jfc.setSelectedFile(cfile);
+        }
+
+        boolean loadResult = false;
+        LOGGER4J.debug("start Popup Load Dialog");
+        if (jfc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {// file open.
+            File file = jfc.getSelectedFile();
+            String name = file.getAbsolutePath().replaceAll("\\\\", "\\\\\\\\");
+            if (!pFilter.accept(file)) {
+                name += ".json";
+            }
+
+            loadResult =  scanDataModel.loadModel(name);
+
+        }
+
+        this.showFileDialog = false;
+        LOGGER4J.debug("showFileDialog=false");
+        return loadResult;
+    }
+
     private void tableCellEditorFocusLost(DefaultCellEditor dce) {
-        if (!showSaveFileDialog) {// when focus move other components except FileChooser(Save dialog)
+        if (!showFileDialog) {// when focus move other components except FileChooser(Save dialog)
             dce.stopCellEditing();
         }
     }
