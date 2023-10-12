@@ -58,7 +58,7 @@ To download & build this addon, simply run:
 
 $ git clone https://github.com/gdgd009xcd/CustomActiveScanForZAP.git  
 $ cd CustomActiveScanForZAP  
-$ ./gradlew build  
+$ ./gradlew addOns:customactivescan:jarZapAddOn  
 
 The add-on will be placed in the directory `CustomActiveScanForZAP/addOns/customactivescan/build/zapAddOn/bin`
 
