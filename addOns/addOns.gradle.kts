@@ -1,4 +1,3 @@
-import java.nio.charset.StandardCharsets
 import org.zaproxy.gradle.addon.AddOnPlugin
 import org.zaproxy.gradle.addon.AddOnPluginExtension
 import org.zaproxy.gradle.addon.apigen.ApiClientGenExtension
@@ -6,6 +5,7 @@ import org.zaproxy.gradle.addon.manifest.ManifestExtension
 import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 import org.zaproxy.gradle.addon.misc.CreateGitHubRelease
 import org.zaproxy.gradle.addon.misc.ExtractLatestChangesFromChangelog
+import java.nio.charset.StandardCharsets
 
 plugins {
     id("org.zaproxy.add-on") version "0.8.0" apply false
@@ -14,7 +14,7 @@ plugins {
 description = "Common configuration of the add-ons."
 
 val parentProjects = listOf(
-        ""
+    "",
 )
 
 subprojects {
@@ -26,8 +26,8 @@ subprojects {
     apply(plugin = "org.zaproxy.add-on")
 
     java {
-        //sourceCompatibility = JavaVersion.VERSION_1_8
-        //targetCompatibility = JavaVersion.VERSION_1_8
+        // sourceCompatibility = JavaVersion.VERSION_1_8
+        // targetCompatibility = JavaVersion.VERSION_1_8
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }

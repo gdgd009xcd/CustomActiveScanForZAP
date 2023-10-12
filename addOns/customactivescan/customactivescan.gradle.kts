@@ -44,7 +44,7 @@ tasks {
 spotless {
     java {
         clearSteps()
-        // Don't enforce 
+        // Don't enforce
         targetExclude("**/*.java")
     }
 }
