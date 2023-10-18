@@ -8,7 +8,7 @@ include(addOnsProjectName)
 // Keep the add-ons in alphabetic order.
 var addOns = listOf(
 
-"customactivescan"
+    "customactivescan",
 
 )
 

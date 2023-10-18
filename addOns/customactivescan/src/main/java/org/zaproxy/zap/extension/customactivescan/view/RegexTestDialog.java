@@ -1,7 +1,6 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.parosproxy.paros.Constant;
-import org.zaproxy.zap.view.panelsearch.Search;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -11,7 +10,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -175,7 +173,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             JScrollPane searchTextScroller = new JScrollPane();
             searchTextScroller.setPreferredSize(new Dimension(400, 500));
             searchTextScroller.setAutoscrolls(true);
+            searchTextScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             searchTextPane.searchTextPane = new JTextPane();
+            searchTextPane.searchTextPane.setEditorKit(new TextPaneWrapEditorKit());
             StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
             createStyles(doc);
 

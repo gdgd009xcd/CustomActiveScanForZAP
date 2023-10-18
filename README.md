@@ -47,8 +47,8 @@ LCS remove the different token values ​​from the two responses as follows:
 
 ## Prerequisite
 
-* OWASP ZAP ver 2.12.0 or later
-* java ver 11
+* OWASP ZAP ver 2.13.0 or later
+* java ver 11 or later
 
 ## Download & Building
 

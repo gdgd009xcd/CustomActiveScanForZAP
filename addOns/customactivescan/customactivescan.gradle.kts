@@ -1,6 +1,6 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.7.5"
+version = "0.7.6"
 description = "a Active Scanner with custmizable rules"
 
 val jar by tasks.getting(Jar::class) {
@@ -44,7 +44,7 @@ tasks {
 spotless {
     java {
         clearSteps()
-        // Don't enforce 
+        // Don't enforce
         targetExclude("**/*.java")
     }
 }
