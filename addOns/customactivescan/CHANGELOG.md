@@ -2,10 +2,11 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-## 22 - 2023-10-13
+## 22 - 2023-10-18
 ### v0.7.6
 - maintenance: applied ”spotlessApply" to .kts files 
 - maintenance: applied JTextPane to TextPaneWrap classes for wrapping long line text. 
+- new feature: added [Github pages](https://gdgd009xcd.github.io/CustomActiveScanForZAP) 
 
 ## 21 - 2023-10-11
 ### v0.7.5
