@@ -9,6 +9,8 @@ The scanner may fail to detect vulnerabilities if the dynamic content of the web
 Therefore, this CustomActiveScan uses LCS (Longest Common Sequece) algorithm to remove these unnecessarily dynamic content.
 Due to this method, this scanner has a superior vulnerability detection capability.
 
+![mainpanel](https://raw.githubusercontent.com/gdgd009xcd/RELEASES/master/IMG/ZAP/customactivescantabmain.png)
+
 ### how to remove these dynamic contents which is not affected input parameters.
 
 LCS(Longest Common Sequence) algorighm extracts the content that is common to two array elements.
