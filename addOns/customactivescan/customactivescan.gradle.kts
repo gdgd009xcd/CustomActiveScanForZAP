@@ -1,6 +1,6 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.7.6"
+version = "0.7.7"
 description = "a Active Scanner with custmizable rules"
 
 val jar by tasks.getting(Jar::class) {
@@ -16,6 +16,7 @@ zapAddOn {
 
     manifest {
         author.set("gdgd009xcd")
+        url.set("https://gdgd009xcd.github.io/CustomActiveScanForZAP")
         repo.set("https://github.com/gdgd009xcd/CustomActiveScanForZAP")
         helpSet {
             baseName.set("help%LC%.helpset")

@@ -2,6 +2,11 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## 23 - 2023-10-23
+### v0.7.7
+- bugfix: In Regex Test Dialog, Fixed incorrect behavior of the "Next" button that has skipped the next search string
+- improve: added new buttons/checkboxes to Regex Test Dialog. ([▲]Prev/[▼]Next Search button etc...) 
+
 ## 22 - 2023-10-18
 ### v0.7.6
 - maintenance: applied ”spotlessApply" to .kts files 

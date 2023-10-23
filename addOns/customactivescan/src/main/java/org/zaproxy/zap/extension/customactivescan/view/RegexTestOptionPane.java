@@ -1,14 +1,21 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
+import org.parosproxy.paros.Constant;
+
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.Style;
 import java.awt.*;
+
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
+import static org.zaproxy.zap.extension.customactivescan.view.RegexTestDialog.*;
 
 @SuppressWarnings("serial")
 public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.RegexTestOptions> {
 
+    private JLabel messageLabel;
     private RegexTestDialog.SearchTextPane searchTextPane;
     private int pos;
     RegexTestDialog dialog;
@@ -40,7 +47,7 @@ public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.Rege
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        JLabel messageLabel = new JLabel(options.message);
+        messageLabel = new JLabel(options.message);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -57,42 +64,13 @@ public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.Rege
 
     @Override
     protected void okBtnActionPerformed() {
-        StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
-        SimpleAttributeSet attr = new SimpleAttributeSet();
-        // reset coloring attribute current caret position.
-        for(int i=pos * 2; i < pos * 2 + 2; i++) {
-            RegexTestDialog.RegexSelectedTextPos regexSelectedTextPos = searchTextPane.foundTextAttrPos.get(i);
-            int spt = regexSelectedTextPos.getStartPos();
-            int ept = regexSelectedTextPos.getEndPos();
-            if (i==pos * 2) {
-                StyleConstants.setForeground(attr, Color.BLUE);
-            }else {
-                StyleConstants.setForeground(attr, Color.BLACK);
-            }
-            StyleConstants.setBackground(attr, Color.RED);
-            doc.setCharacterAttributes(spt, ept - spt, attr, false);
-        }
-
-        int nextpos = pos + 1;
-        if (nextpos >= this.searchTextPane.findplist.size()) {
-            nextpos = 0;
-        }
-
-        for(int i=nextpos * 2; i < nextpos * 2 + 2; i++) {
-            RegexTestDialog.RegexSelectedTextPos regexSelectedTextPos = searchTextPane.foundTextAttrPos.get(i);
-            int spt = regexSelectedTextPos.getStartPos();
-            int ept = regexSelectedTextPos.getEndPos();
-
-            if (i == nextpos * 2) {
-                StyleConstants.setForeground(attr, Color.BLUE);
-            } else {
-                StyleConstants.setForeground(attr, Color.WHITE);
-            }
-            StyleConstants.setBackground(attr, Color.RED);
-            doc.setCharacterAttributes(spt, ept - spt, attr, false);
-        }
-        searchTextPane.searchTextPane.setCaretPosition(searchTextPane.findplist.get(nextpos));
-        pos = nextpos;
+        this.dialog.nextBtnActionPerformed();
+        int foundCount = searchTextPane.findplist.size();
+        String message = String.format(
+                Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatfound"),
+                searchTextPane.caretIndex + 1,
+                foundCount);
+        messageLabel.setText(message);
     }
 
     @Override

@@ -5,9 +5,12 @@ import org.parosproxy.paros.Constant;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -31,6 +34,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     private JTabbedPane tabbedPane;
 
     private List<SearchTextPane> searchTextPaneList;
+    JCheckBox searchCountCheckBox;
 
     // no used parameters in createMainPanelContent method
     private RegexTestOptionPane optionPane = null;
@@ -42,6 +46,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     static final String SELECTEDGROUP_STYLENAME = "selectedGroupStyle";
     static final String CURRENT_SELECTEDGROUP_STYLENAME = "currentSelectedGroupStyle";
     static final String SELECTED_STYLENAME = "selectedStyle";
+    static final String CURRENT_SELECTED_STYLENAME = "currentSelectedStyle";
+    static final String ADD_UNDERLINE_STYLENAME = "addUnderLineStyle";
+    static final String DEL_UNDERLINE_STYLENAME = "delUnderLineStyle";
 
     static class SearchTextPane {
         // search text
@@ -50,11 +57,16 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         List<RegexSelectedTextPos> foundTextAttrPos;
         // caretPosition for searchd text at first
         ArrayList<Integer> findplist;
+        // current index of caretPosition
+        int caretIndex;
+        boolean hasGroup;
 
         SearchTextPane() {
             searchTextPane = null;
             foundTextAttrPos = new ArrayList<>();
             findplist = new ArrayList<>();
+            caretIndex = 0;
+            hasGroup = false;
         }
     }
 
@@ -115,6 +127,29 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             regexSearchActionPerformed(e);
         });
         buttonPanel.add(regexTestButton);
+        JButton prevSearch = new JButton("▲");
+        prevSearch.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                prevBtnActionPerformed();
+            }
+        });
+        buttonPanel.add(prevSearch);
+        JButton nextSearch = new JButton("▼");
+        nextSearch.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                nextBtnActionPerformed();
+            }
+        });
+        buttonPanel.add(nextSearch);
+        searchCountCheckBox = new JCheckBox("00000000/00000000");
+        searchCountCheckBox.setSelected(false);
+        searchCountCheckBox.setToolTipText("popup SearchResultDialog");
+        buttonPanel.add(searchCountCheckBox);
+        Dimension preferDimension = searchCountCheckBox.getPreferredSize();
+        searchCountCheckBox.setText("0/0");
+        searchCountCheckBox.setPreferredSize(preferDimension);
         // button for clear attributes of found text
         JButton clearTestButton = new JButton("Clear");
         clearTestButton.addActionListener(e ->{
@@ -199,6 +234,27 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         gbc.insets = new Insets(5, 5, 5, 5);
         gridBagLayout.setConstraints(tabbedPane, gbc);
         panel.add(tabbedPane);
+        tabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int selectedTabbedPaneIndex = RegexTestDialog.this.tabbedPane.getSelectedIndex();
+                if (selectedTabbedPaneIndex > -1) {
+                    SearchTextPane searchTextPane = RegexTestDialog.this.searchTextPaneList.get(selectedTabbedPaneIndex);
+                    String counterString = "0/0";
+                    if (searchTextPane.findplist != null) {
+                        int foundCount = searchTextPane.findplist.size();
+                        if (foundCount > 0) {
+                            counterString = String.format(
+                                    Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                                    searchTextPane.caretIndex + 1,
+                                    foundCount);
+                        }
+                    }
+                    RegexTestDialog.this.searchCountCheckBox.setText(counterString);
+                }
+
+            }
+        });
 
         return panel;
     }
@@ -207,14 +263,22 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     private void createStyles(StyledDocument doc) {
         Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
         Style selectedGroupStyle = doc.addStyle(SELECTEDGROUP_STYLENAME, defaultStyle);
-        StyleConstants.setForeground(selectedGroupStyle, Color.BLACK);
-        StyleConstants.setBackground(selectedGroupStyle, Color.RED);
+        StyleConstants.setForeground(selectedGroupStyle, Color.BLUE);
+        StyleConstants.setBackground(selectedGroupStyle, Color.ORANGE);
         Style currentSelectedGroupStyle = doc.addStyle(CURRENT_SELECTEDGROUP_STYLENAME, defaultStyle);
         StyleConstants.setForeground(currentSelectedGroupStyle, Color.WHITE);
-        StyleConstants.setBackground(currentSelectedGroupStyle, Color.RED);
+        StyleConstants.setBackground(currentSelectedGroupStyle, Color.GREEN);
         Style selectedStyle = doc.addStyle(SELECTED_STYLENAME, defaultStyle);
-        StyleConstants.setForeground(selectedStyle, Color.BLUE);
-        StyleConstants.setBackground(selectedStyle, Color.RED);
+        StyleConstants.setForeground(selectedStyle, Color.BLACK);
+        StyleConstants.setBackground(selectedStyle, Color.ORANGE);
+        Style currentSelectedStyle = doc.addStyle(CURRENT_SELECTED_STYLENAME, defaultStyle);
+        StyleConstants.setForeground(currentSelectedStyle, Color.BLACK);
+        StyleConstants.setBackground(currentSelectedStyle, Color.GREEN);
+        Style addUnderLineStyle = doc.addStyle(ADD_UNDERLINE_STYLENAME, defaultStyle);
+        StyleConstants.setUnderline(addUnderLineStyle, true);
+        Style delUnderLineStyle = doc.addStyle(DEL_UNDERLINE_STYLENAME, defaultStyle);
+        StyleConstants.setUnderline(delUnderLineStyle, false);
+
     }
 
     private void removeStyles(StyledDocument doc) {
@@ -229,6 +293,18 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         Style selectedStyle = doc.getStyle(SELECTED_STYLENAME);
         if (selectedStyle != null) {
             doc.removeStyle(SELECTED_STYLENAME);
+        }
+        Style addUnderLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
+        if (addUnderLineStyle != null) {
+            doc.removeStyle(ADD_UNDERLINE_STYLENAME);
+        }
+        Style delUnderLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
+        if (delUnderLineStyle != null) {
+            doc.removeStyle(DEL_UNDERLINE_STYLENAME);
+        }
+        Style currentSelectedStyle = doc.getStyle(CURRENT_SELECTED_STYLENAME);
+        if (currentSelectedStyle != null) {
+            doc.removeStyle(CURRENT_SELECTED_STYLENAME);
         }
     }
 
@@ -269,15 +345,15 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             this.styleName = styleName;
         }
 
-        int getStartPos() {
+        public int getStartPos() {
             return this.st;
         }
 
-        int getEndPos() {
+        public int getEndPos() {
             return this.et;
         }
 
-        String getStyleName() {
+        public String getStyleName() {
             return this.styleName;
         }
 
@@ -289,6 +365,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
             clearSearchedInfo(searchTextPane);
         }
+        searchCountCheckBox.setText("0/0");
     }
 
     /**
@@ -312,6 +389,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             if (searchTextPane.findplist != null) {
                 searchTextPane.findplist.clear();
             }
+            searchTextPane.hasGroup = false;
         }
     }
 
@@ -324,6 +402,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             LOGGER4J.debug("clearAllSearchedInfo");
             clearSearchedInfo(searchTextPane);
         }
+        searchCountCheckBox.setText("0/0");
     }
 
     public void regexSearchActionPerformed(ActionEvent e) {
@@ -395,11 +474,15 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                     if (ept0 < ept) {
                         ept0 = ept;
                     }
+                    searchTextPane.hasGroup = true;
                     // spt0--->spt<matchval>ept-->ept0
+                    LOGGER4J.debug("hasGroup=true gcount=" + gcnt);
                 } else {//Nothing Groups...
                     spt0 = m.start();
                     ept0 = m.end();
                     matchval = m.group();
+                    searchTextPane.hasGroup = false;
+                    LOGGER4J.debug("hasGroup=false");
                 }
                 if (spt0 >= 0 && ept0 >= 0) {
 
@@ -409,12 +492,18 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
                         if (ept0 > spt0) {
                             Style style = doc.getStyle(SELECTED_STYLENAME);
+                            Style underLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
+                            if (fcount == 1) {
+                                underLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
+                                style = doc.getStyle(CURRENT_SELECTED_STYLENAME);
+                            }
                             doc.setCharacterAttributes(spt0, ept0 - spt0, style, false);
+                            doc.setCharacterAttributes(spt0, ept0 - spt0, underLineStyle, false);
                             RegexSelectedTextPos rpos = new RegexSelectedTextPos(SELECTED_STYLENAME, spt0, ept0);
                             searchTextPane.foundTextAttrPos.add(rpos);
                         }
 
-                        if (ept > spt) {
+                        if (ept > spt) {// same as hasGroup == true
                             String styleName = "";
                             if (fcount == 1) {
                                 styleName = CURRENT_SELECTEDGROUP_STYLENAME;
@@ -437,30 +526,164 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             }
 
             if (searchTextPane.findplist.size() > 0) {
-                searchTextPane.searchTextPane.setCaretPosition(searchTextPane.findplist.get(0));
+                searchTextPane.caretIndex = 0;
                 int foundCount = searchTextPane.findplist.size();
-                String message = String.format(
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatfound"),
+                String counterString = String.format(
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                        searchTextPane.caretIndex + 1,
                         foundCount);
-                /**
-                JOptionPane.showMessageDialog(this,
-                        message,
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
-                        JOptionPane.INFORMATION_MESSAGE);
-                 **/
-                RegexTestOptionPane.RegexTestOptions options = new RegexTestOptionPane.RegexTestOptions(message, searchTextPane);
-                disposeChild();
-                optionPane = new RegexTestOptionPane(
-                        this,
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
-                        ModalityType.DOCUMENT_MODAL, options, GridBagConstraints.NONE);
-                optionPane.setVisible(true);
+                this.searchCountCheckBox.setText(counterString);
+                searchTextPane.searchTextPane.setCaretPosition(searchTextPane.findplist.get(0));
+                if (searchCountCheckBox.isSelected()) {
+                    popupRegexTestOptionPane(searchTextPane);
+                }
+
             } else {
                 Toolkit.getDefaultToolkit().beep();
-                JOptionPane.showMessageDialog(this,
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatnotfound"),
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
-                        JOptionPane.QUESTION_MESSAGE);
+                if (searchCountCheckBox.isSelected()) {
+                    JOptionPane.showMessageDialog(this,
+                            Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatnotfound"),
+                            Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
+                            JOptionPane.QUESTION_MESSAGE);
+                }
+            }
+        }
+    }
+
+    private void popupRegexTestOptionPane(SearchTextPane searchTextPane) {
+        int foundCount = searchTextPane.findplist.size();
+        String counterString = String.format(
+                Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatfound"),
+                searchTextPane.caretIndex + 1,
+                foundCount);
+
+        RegexTestOptionPane.RegexTestOptions options = new RegexTestOptionPane.RegexTestOptions(counterString, searchTextPane);
+        disposeChild();
+        optionPane = new RegexTestOptionPane(
+                this,
+                Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
+                ModalityType.DOCUMENT_MODAL, options, GridBagConstraints.NONE);
+        optionPane.setVisible(true);
+    }
+
+    protected void nextBtnActionPerformed() {
+        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        if (selectedTabbedPaneIndex > -1) {
+            SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
+            if (searchTextPane.findplist.size() > 0) {
+                int foundCount = searchTextPane.findplist.size();
+                int caretIndex = searchTextPane.caretIndex;
+                StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+                SimpleAttributeSet attr = new SimpleAttributeSet();
+                // reset coloring attribute current caret position.
+                int offset = searchTextPane.hasGroup ? 2 : 1;
+                for (int i = caretIndex * offset; i < caretIndex * offset + offset; i++) {
+                    RegexTestDialog.RegexSelectedTextPos regexSelectedTextPos = searchTextPane.foundTextAttrPos.get(i);
+                    int spt = regexSelectedTextPos.getStartPos();
+                    int ept = regexSelectedTextPos.getEndPos();
+                    String styleName = regexSelectedTextPos.getStyleName();
+                    if (i == caretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
+                        styleName = SELECTED_STYLENAME;// setting color to outside group
+                        Style delUnderLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
+                        doc.setCharacterAttributes(spt, ept - spt, delUnderLineStyle, false);
+                    } else {
+                        styleName = SELECTEDGROUP_STYLENAME;// setting color to inside group
+                    }
+                    Style style = doc.getStyle(styleName);
+                    doc.setCharacterAttributes(spt, ept - spt, style, false);
+                }
+
+                int nextCaretIndex = caretIndex + 1;
+                if (nextCaretIndex >= searchTextPane.findplist.size()) {
+                    nextCaretIndex = 0;
+                }
+
+                for (int i = nextCaretIndex * offset; i < nextCaretIndex * offset + offset; i++) {
+                    RegexTestDialog.RegexSelectedTextPos regexSelectedTextPos = searchTextPane.foundTextAttrPos.get(i);
+                    int spt = regexSelectedTextPos.getStartPos();
+                    int ept = regexSelectedTextPos.getEndPos();
+                    String styleName = regexSelectedTextPos.getStyleName();
+                    if (i == nextCaretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
+                        styleName = CURRENT_SELECTED_STYLENAME;// setting color to outside group
+                        Style addUnderLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
+                        doc.setCharacterAttributes(spt, ept - spt, addUnderLineStyle, false);
+                    } else {
+                        styleName = CURRENT_SELECTEDGROUP_STYLENAME;// setting color to inside group
+                    }
+                    Style style = doc.getStyle(styleName);
+                    doc.setCharacterAttributes(spt, ept - spt, style, false);
+                }
+                String counterString = String.format(
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                        nextCaretIndex+1,
+                        foundCount);
+                this.searchCountCheckBox.setText(counterString);
+                searchTextPane.searchTextPane.setCaretPosition(searchTextPane.findplist.get(nextCaretIndex));
+                searchTextPane.caretIndex = nextCaretIndex;
+                if(searchCountCheckBox.isSelected() && optionPane == null) {
+                    popupRegexTestOptionPane(searchTextPane);
+                }
+            }
+        }
+    }
+
+    protected void prevBtnActionPerformed() {
+        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        if (selectedTabbedPaneIndex > -1) {
+            SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
+            if (searchTextPane.findplist.size() > 0) {
+                int foundCount = searchTextPane.findplist.size();
+                int caretIndex = searchTextPane.caretIndex;
+                StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+                SimpleAttributeSet attr = new SimpleAttributeSet();
+                // reset coloring attribute current caret position.
+                int offset = searchTextPane.hasGroup ? 2 : 1;
+                for (int i = caretIndex * offset; i < caretIndex * offset + offset; i++) {
+                    RegexTestDialog.RegexSelectedTextPos regexSelectedTextPos = searchTextPane.foundTextAttrPos.get(i);
+                    int spt = regexSelectedTextPos.getStartPos();
+                    int ept = regexSelectedTextPos.getEndPos();
+                    String styleName = regexSelectedTextPos.getStyleName();
+                    if (i == caretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
+                        styleName = SELECTED_STYLENAME;// setting color to outside group
+                        Style delUnderLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
+                        doc.setCharacterAttributes(spt, ept - spt, delUnderLineStyle, false);
+                    } else {
+                        styleName = SELECTEDGROUP_STYLENAME;// setting color to inside group
+                    }
+                    Style style = doc.getStyle(styleName);
+                    doc.setCharacterAttributes(spt, ept - spt, style, false);
+                }
+
+                int nextCaretIndex = caretIndex - 1;
+                if (nextCaretIndex < 0) {
+                    nextCaretIndex = foundCount - 1;
+                }
+
+                for (int i = nextCaretIndex * offset; i < nextCaretIndex * offset + offset; i++) {
+                    RegexTestDialog.RegexSelectedTextPos regexSelectedTextPos = searchTextPane.foundTextAttrPos.get(i);
+                    int spt = regexSelectedTextPos.getStartPos();
+                    int ept = regexSelectedTextPos.getEndPos();
+                    String styleName = regexSelectedTextPos.getStyleName();
+                    if (i == nextCaretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
+                        styleName = CURRENT_SELECTED_STYLENAME;// setting color to outside group
+                        Style addUnderLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
+                        doc.setCharacterAttributes(spt, ept - spt, addUnderLineStyle, false);
+                    } else {
+                        styleName = CURRENT_SELECTEDGROUP_STYLENAME;// setting color to inside group
+                    }
+                    Style style = doc.getStyle(styleName);
+                    doc.setCharacterAttributes(spt, ept - spt, style, false);
+                }
+                String counterString = String.format(
+                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                        nextCaretIndex+1,
+                        foundCount);
+                this.searchCountCheckBox.setText(counterString);
+                searchTextPane.searchTextPane.setCaretPosition(searchTextPane.findplist.get(nextCaretIndex));
+                searchTextPane.caretIndex = nextCaretIndex;
+                if(searchCountCheckBox.isSelected() && optionPane == null) {
+                    popupRegexTestOptionPane(searchTextPane);
+                }
             }
         }
     }
