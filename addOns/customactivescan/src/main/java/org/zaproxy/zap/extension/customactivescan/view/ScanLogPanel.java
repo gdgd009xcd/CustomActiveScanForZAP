@@ -1,9 +1,8 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.parosproxy.paros.Constant;
-import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules;
-import org.zaproxy.zap.extension.customactivescan.Utilities;
+import org.zaproxy.zap.extension.customactivescan.HttpMessageWithLCSResponse;
 import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
 
 import javax.swing.*;
@@ -12,6 +11,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MES
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.ZAP_ICONS;
 
 @SuppressWarnings("serial")
-public class ScanLogPanel extends JPanel implements DisposeChildInterface {
+public class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -31,11 +31,10 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface {
     JTable scanLogTable;
     DefaultTableModel scanLogTableModel;
     private PauseActionObject pauseActionObject;
-    private Thread pauseActionThread;
     private boolean pauseCheckBoxActionMask;
     private String[] totalColumnNames;
     private CustomScanMainPanel customScanMainPanel;
-    private List<HttpMessage> resultMessageList;
+    private List<HttpMessageWithLCSResponse> resultMessageList;
     private String flagColumnRegexString;
     RegexTestDialog regexTestDialog;
     int currentSelectedTableRowIndex = -1;
@@ -66,7 +65,6 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface {
 
         ExtensionAscanRules.scannerIdPauseActionMap.put(scannerId, pauseActionObject);
 
-        pauseActionThread = null;
         pauseCheckBox.setSelectedIcon(runIcon);
         pauseCheckBox.addItemListener(e -> {
             boolean isSelected = e.getStateChange() == ItemEvent.SELECTED ? true : false;
@@ -205,7 +203,26 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface {
             }
         }
         scanLogTableModel = new DefaultTableModel(new String[0][0], totalColumnNames);
-        scanLogTable = new JTable(scanLogTableModel);
+        scanLogTable = new JTable(scanLogTableModel){
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                final InterfaceRenderCondition condition = ScanLogPanel.this;
+                Component compo = super.prepareRenderer(renderer, row, column);
+                if (isRowSelected(row)) {
+                    //compo.setForeground(getSelectionForeground());
+                    //compo.setBackground(getSelectionBackground());
+                } else {
+                    //compo.setForeground(getForeground());
+                    if (condition.isTarget(row, column)) {
+                        compo.setBackground(Color.RED);
+                    } else {
+                        compo.setBackground(getBackground());
+                    }
+                }
+                return compo;
+            }
+        };
+
 
 
         JPopupMenu popupMenu = new JPopupMenu();
@@ -231,7 +248,6 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface {
                 if( ScanLogPanel.this.regexTestDialog != null) {// call showSelectedMessage when  already existed regexTestDialog.
                     LOGGER4J.debug("valueChanged excecuted:" + selectedRow);
                     ScanLogPanel.this.showSelectedMessage(selectedRow);
-                    ScanLogPanel.this.regexTestDialog.clearAllSearchedInfo();// this method must call after calling showSelectedMessage.
                 }
             }
         });
@@ -290,20 +306,29 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface {
         return totalColumnNames.length;
     }
 
-    public void addRowToScanLogTableModel(String[] rowData, HttpMessage resultMessage) {
+    /**
+     * add message to ScanLogPanel's messageList and tableModel
+     * @param rowData
+     * @param resultMessage
+     * @return messageList size
+     */
+    public int addRowToScanLogTableModel(String[] rowData, HttpMessageWithLCSResponse resultMessage) {
         scanLogTableModel.addRow(rowData);
+        resultMessage.setMessageIndexInScanLogPanel(resultMessageList.size());
         resultMessageList.add(resultMessage);
+        return resultMessageList.size();
     }
 
     private void showSelectedMessage(int selectedTableRowIndex) {
         LOGGER4J.debug("selected row:" + selectedTableRowIndex);
-        HttpMessage selectedMessage = resultMessageList.get(selectedTableRowIndex);
+        HttpMessageWithLCSResponse selectedMessage = resultMessageList.get(selectedTableRowIndex);
         if (selectedMessage != null && this.currentSelectedTableRowIndex != selectedTableRowIndex) {
             String requestString = selectedMessage.getRequestHeader().toString() + selectedMessage.getRequestBody().toString();
-            String responseString = selectedMessage.getResponseHeader().toString() + selectedMessage.getResponseBody().toString();
+            // String responseString = selectedMessage.getResponseHeader().toString() + selectedMessage.getResponseBody().toString();
+            String responseString = selectedMessage.getLCSResponse();
             RegexTestDialog.PaneContents paneContents = new RegexTestDialog.PaneContents(this.flagColumnRegexString);
-            paneContents.addTitleAndContent("Request", requestString);
-            paneContents.addTitleAndContent("Response", responseString);
+            paneContents.addTitleAndContent("Request", requestString, null);
+            paneContents.addTitleAndContent("Response", responseString, selectedMessage.getLcsCharacterIndexOfLcsResponse());
             if (this.regexTestDialog == null) {
                 regexTestDialog = new RegexTestDialog(this.jFrame, this, "Result", Dialog.ModalityType.MODELESS, paneContents);
                 regexTestDialog.selectTabbedPane(1);
@@ -313,7 +338,9 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface {
             } else {
                 regexTestDialog.updateContentsWithPaneContents(paneContents);
                 regexTestDialog.resetScrollBarToLeftTop();
+                regexTestDialog.clearAllSearchedInfo();// this method must call
             }
+            regexTestDialog.setImplicitStylesOnSelectedPane();
             this.currentSelectedTableRowIndex = selectedTableRowIndex;
         }
     }
@@ -325,5 +352,14 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface {
             this.regexTestDialog = null;
         }
         this.currentSelectedTableRowIndex = -1;
+    }
+
+    @Override
+    public boolean isTarget(int row, int col) {
+        HttpMessageWithLCSResponse message = resultMessageList.get(row);
+        if (message != null) {
+            return message.hasLCS();
+        }
+        return false;
     }
 }

@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### v0.7.7
 - bugfix: In Regex Test Dialog, Fixed incorrect behavior of the "Next" button that has skipped the next search string
 - improve: added new buttons/checkboxes to Regex Test Dialog. ([▲]Prev/[▼]Next Search button etc...) 
+- new feature: display detected SQL injection on ScanLogPanel(not completed.)
 
 ## 22 - 2023-10-18
 ### v0.7.6
@@ -60,7 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## 12 - 2021-12-15
 ### v0.5.6
 - maintenance: removed the log4j2 library that this add-on contains
-- maintenance: upgraded OWASP ZAP dependency version  to 2.11.0
+- maintenance: upgraded ZAP dependency version  to 2.11.0
 
 ## 11 - 2021-12-11
 ### v0.5.5

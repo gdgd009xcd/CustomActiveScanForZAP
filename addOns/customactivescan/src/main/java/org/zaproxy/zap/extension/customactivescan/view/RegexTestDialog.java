@@ -1,6 +1,7 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.parosproxy.paros.Constant;
+import org.zaproxy.zap.extension.customactivescan.StartEndPosition;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
 
 @SuppressWarnings("serial")
-public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents>{
+public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -49,6 +50,20 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     static final String CURRENT_SELECTED_STYLENAME = "currentSelectedStyle";
     static final String ADD_UNDERLINE_STYLENAME = "addUnderLineStyle";
     static final String DEL_UNDERLINE_STYLENAME = "delUnderLineStyle";
+    static final String MARK_LCS_STYLENAME = "markLcsStyle";
+
+    static final String[] styleNameArray = {
+            SELECTEDGROUP_STYLENAME,
+            CURRENT_SELECTEDGROUP_STYLENAME,
+            SELECTED_STYLENAME,
+            CURRENT_SELECTED_STYLENAME,
+            ADD_UNDERLINE_STYLENAME,
+            DEL_UNDERLINE_STYLENAME,
+            MARK_LCS_STYLENAME
+    };
+
+    static final Color COLOR_PURPLE = new Color(128,0, 128);
+    static final Color COLOR_OLIVE = new Color(128,128,0);
 
     static class SearchTextPane {
         // search text
@@ -56,30 +71,37 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         // attribute List for searched texts
         List<RegexSelectedTextPos> foundTextAttrPos;
         // caretPosition for searchd text at first
-        ArrayList<Integer> findplist;
+        List<Integer> findplist;
         // current index of caretPosition
         int caretIndex;
         boolean hasGroup;
+        List<StartEndPosition> charIndexOfLcs;
 
-        SearchTextPane() {
+        SearchTextPane(List<StartEndPosition> charIndexOfLcs) {
             searchTextPane = null;
             foundTextAttrPos = new ArrayList<>();
             findplist = new ArrayList<>();
             caretIndex = 0;
             hasGroup = false;
+            this.charIndexOfLcs = charIndexOfLcs;
+        }
+        void updateCharIndexOfLcs(List<StartEndPosition> charIndexOfLcs) {
+            this.charIndexOfLcs = charIndexOfLcs;
         }
     }
 
     static class PaneTitleAndContent {
         String title;
         String content;
+        List<StartEndPosition> charIndexesOfContent;
         PaneTitleAndContent(){
             title = "";
             content = "";
         }
-        PaneTitleAndContent(String title, String content) {
+        PaneTitleAndContent(String title, String content, List<StartEndPosition> charIndexesOfContent) {
             this.title = title;
             this.content = content;
+            this.charIndexesOfContent = charIndexesOfContent;
         }
     }
 
@@ -91,8 +113,8 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             paneTitleAndContentList = new ArrayList<>();
         }
 
-        public void addTitleAndContent(String title, String content) {
-            PaneTitleAndContent paneTitleAndContent = new PaneTitleAndContent(title, content);
+        public void addTitleAndContent(String title, String content, List<StartEndPosition> charIndexesOfContent) {
+            PaneTitleAndContent paneTitleAndContent = new PaneTitleAndContent(title, content, charIndexesOfContent);
             paneTitleAndContentList.add(paneTitleAndContent);
         }
     }
@@ -204,7 +226,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         tabbedPane = new JTabbedPane();
         tabbedPane.setBorder(searchTextTitledBorder);
         for(PaneTitleAndContent titleAndContent: paneContents.paneTitleAndContentList) {
-            SearchTextPane searchTextPane = new SearchTextPane();
+            SearchTextPane searchTextPane = new SearchTextPane(titleAndContent.charIndexesOfContent);
             JScrollPane searchTextScroller = new JScrollPane();
             searchTextScroller.setPreferredSize(new Dimension(400, 500));
             searchTextScroller.setAutoscrolls(true);
@@ -251,6 +273,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                         }
                     }
                     RegexTestDialog.this.searchCountCheckBox.setText(counterString);
+                    setImplicitStyles(searchTextPane);
                 }
 
             }
@@ -261,9 +284,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
 
     private void createStyles(StyledDocument doc) {
-        Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
+        //Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
+        Style defaultStyle = null;
         Style selectedGroupStyle = doc.addStyle(SELECTEDGROUP_STYLENAME, defaultStyle);
-        StyleConstants.setForeground(selectedGroupStyle, Color.BLUE);
+        StyleConstants.setForeground(selectedGroupStyle, Color.MAGENTA);
         StyleConstants.setBackground(selectedGroupStyle, Color.ORANGE);
         Style currentSelectedGroupStyle = doc.addStyle(CURRENT_SELECTEDGROUP_STYLENAME, defaultStyle);
         StyleConstants.setForeground(currentSelectedGroupStyle, Color.WHITE);
@@ -278,33 +302,16 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         StyleConstants.setUnderline(addUnderLineStyle, true);
         Style delUnderLineStyle = doc.addStyle(DEL_UNDERLINE_STYLENAME, defaultStyle);
         StyleConstants.setUnderline(delUnderLineStyle, false);
-
+        Style markLcsStyle = doc.addStyle(MARK_LCS_STYLENAME, defaultStyle);
+        StyleConstants.setBackground(markLcsStyle, Color.RED);
     }
 
     private void removeStyles(StyledDocument doc) {
-        Style selectedGroupStyle = doc.getStyle(SELECTEDGROUP_STYLENAME);
-        if (selectedGroupStyle != null) {
-            doc.removeStyle(SELECTEDGROUP_STYLENAME);
-        }
-        Style currentSelectedGroupStyle = doc.getStyle(CURRENT_SELECTEDGROUP_STYLENAME);
-        if (currentSelectedGroupStyle != null) {
-            doc.removeStyle(CURRENT_SELECTEDGROUP_STYLENAME);
-        }
-        Style selectedStyle = doc.getStyle(SELECTED_STYLENAME);
-        if (selectedStyle != null) {
-            doc.removeStyle(SELECTED_STYLENAME);
-        }
-        Style addUnderLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
-        if (addUnderLineStyle != null) {
-            doc.removeStyle(ADD_UNDERLINE_STYLENAME);
-        }
-        Style delUnderLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
-        if (delUnderLineStyle != null) {
-            doc.removeStyle(DEL_UNDERLINE_STYLENAME);
-        }
-        Style currentSelectedStyle = doc.getStyle(CURRENT_SELECTED_STYLENAME);
-        if (currentSelectedStyle != null) {
-            doc.removeStyle(CURRENT_SELECTED_STYLENAME);
+        for(String styleName: styleNameArray) {
+            Style style = doc.getStyle(styleName);
+            if (style != null) {
+                doc.removeStyle(styleName);
+            }
         }
     }
 
@@ -550,6 +557,27 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         }
     }
 
+    public void setImplicitStylesOnSelectedPane() {
+        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        if (selectedTabbedPaneIndex > -1) {
+            SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
+            if (searchTextPane != null) {
+                setImplicitStyles(searchTextPane);
+            }
+        }
+    }
+
+    private void setImplicitStyles(SearchTextPane searchTextPane){
+        StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+        if (searchTextPane.charIndexOfLcs != null && !searchTextPane.charIndexOfLcs.isEmpty()) {
+            Style style = doc.getStyle(MARK_LCS_STYLENAME);
+            if (style != null) {
+                for (StartEndPosition position : searchTextPane.charIndexOfLcs) {
+                    doc.setCharacterAttributes(position.start, position.end - position.start, style, false);
+                }
+            }
+        }
+    }
     private void popupRegexTestOptionPane(SearchTextPane searchTextPane) {
         int foundCount = searchTextPane.findplist.size();
         String counterString = String.format(
@@ -727,6 +755,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         int i = 0;
         for(PaneTitleAndContent titleAndContent: paneContents.paneTitleAndContentList) {
             SearchTextPane searchTextPane = searchTextPaneList.get(i++);
+            searchTextPane.updateCharIndexOfLcs(titleAndContent.charIndexesOfContent);
             searchTextPane.searchTextPane.setText(titleAndContent.content);
             searchTextPane.searchTextPane.setSelectionStart(0);
             searchTextPane.searchTextPane.setSelectionEnd(0);

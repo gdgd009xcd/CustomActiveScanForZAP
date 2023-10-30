@@ -25,7 +25,8 @@ public class ArrayListWrapperFactory {
       LCS,
       DIFFA,
       DIFFB,
-      LIST
+      LIST,
+
     };
 
     public ArrayListWrapper<String> createArrayListWrapper() {

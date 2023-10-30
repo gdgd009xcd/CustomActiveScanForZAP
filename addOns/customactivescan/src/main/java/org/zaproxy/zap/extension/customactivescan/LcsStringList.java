@@ -5,31 +5,56 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
+
 public class LcsStringList implements LcsBuilder<String>{
+
+	private static final IteratorActionFactory<String> iteratorActionStringFactory = new IteratorActionFactory<>();
+	private static final IteratorActionFactory<Integer> iteratorActionIntegerFactory = new IteratorActionFactory<>();
 	List<String> strings;
+
+	List<Integer> listLcsIdx_diffa;
 	List<String> diffa;
+	ArrayListWrapper<String> wrapperSourceA = null;
+
+
+	List<Integer> listLcsIdx_diffb;
 	List<String> diffb;
+	ArrayListWrapper<String> wrapperSourceB = null;
+
 	String lcschars;
-	Object[] diffs = null;
+	GenericArray<List<String>> diffArrayObject;
+	List<String>[] diffArray;
+	GenericArray<List<Integer>> lcsIdxArrayObject;
+	List<Integer>[] lcsIdxArray;
+	int diffArrayIndexA;
+	int diffArrayIndexB;
 	boolean lcsReverse;
 	boolean ABreverse = false;
 	boolean diffAreverse;
 	boolean diffBreverse;
 	String delimiter;
 	int rowSize;
+	boolean isInitializedByLcsCharacterList;
 
 	LcsStringList(){
 		clear();
 	}
 
-	public void initLcsCharacterList(LcsCharacterList cl) {
+	public void initLcsCharacterList(LcsCharacterList cl,
+									 ArrayListWrapper<String> wrapperSourceA,
+									ArrayListWrapper<String> wrapperSourceB) {
+		ABreverse = false;// ignore cl.ABreverse.
+		// thus, diffArrayIndexA = 0 , diffArrayIndexB = 1.
 		clear();
-		strings = new ArrayList<>();
+
+		isInitializedByLcsCharacterList = true;
 		strings.add(cl.getLcsString());
-		diffa = new ArrayList<>();
-		diffb = new ArrayList<>();
-		diffa.add(cl.getDiffAString());
-		diffb.add(cl.getDiffBString());
+		this.diffa.add(cl.getDiffAString());// diffArrayIndexA == 0
+		this.diffb.add(cl.getDiffBString());// diffArrayIndexB == 1
+		this.listLcsIdx_diffa = cl.getLcsIdxOnDiffA();// reverse oder.
+		this.listLcsIdx_diffb = cl.getLcsIdxOnDiffB();// reverse order
+		this.wrapperSourceA = wrapperSourceA;
+		this.wrapperSourceB = wrapperSourceB;
 	}
 
 	@Override
@@ -46,38 +71,7 @@ public class LcsStringList implements LcsBuilder<String>{
 		return getStringFromList(delimiter, strings, lcsReverse);
 	}
 
-	static private IteratorAction<String> getIteratorAction(List<String> stringList, boolean reverse) {
-		if (reverse) {
-			return new IteratorAction<String>() {
-				private ListIterator<String> it = stringList.listIterator(stringList.size());
 
-				@Override
-				public void rewind() {
-					it = stringList.listIterator(stringList.size());
-				}
-
-				@Override
-				public String getNext() {
-					if (it.hasPrevious()) return it.previous();
-					return null;
-				}
-			};
-		}
-		return new IteratorAction<String>() {
-			private ListIterator<String> it = stringList.listIterator();
-
-			@Override
-			public void rewind() {
-				it = stringList.listIterator();
-			}
-
-			@Override
-			public String getNext() {
-				if (it.hasNext()) return it.next();
-				return null;
-			}
-		};
-	}
 
 	@Override
 	public int size() {
@@ -87,26 +81,32 @@ public class LcsStringList implements LcsBuilder<String>{
 	@SuppressWarnings("unchecked")
 	@Override
 	public void clear() {
-		strings = new ArrayList<String>();
-		diffa = new ArrayList<String>();
-		diffb = new ArrayList<String>();
+		strings = new ArrayList<>();
+		diffa = new ArrayList<>();
+		diffb = new ArrayList<>();
 		lcschars = null;
 		lcsReverse = false;
 		diffAreverse = false;
 		diffBreverse = false;
-		diffs = new Object[2];
-		if(ABreverse) {
-			diffs[0] = diffb;
-			diffs[1] = diffa;
-		}else {
-			diffs[0] = diffa;
-			diffs[1] = diffb;
-		}
+		this.wrapperSourceA = null;
+		this.wrapperSourceB = null;
+		isInitializedByLcsCharacterList = false;
+
+		diffArrayObject = new GenericArray<>(strings, 2);
+		diffArray = diffArrayObject.getArray();
+
+		listLcsIdx_diffa = new ArrayList<>();
+		listLcsIdx_diffb = new ArrayList<>();
+		lcsIdxArrayObject = new GenericArray<>(listLcsIdx_diffa, 2);
+		lcsIdxArray = lcsIdxArrayObject.getArray();
+
+		setABreverseInternal();
 		delimiter = null;
 		rowSize = 1;
 
 	}
-	
+
+	@Deprecated
 	@SuppressWarnings("unchecked")
     public ArrayList<String> cast(Object obj) {
         return (ArrayList<String>) obj;
@@ -118,9 +118,10 @@ public class LcsStringList implements LcsBuilder<String>{
 	 * @param ta
 	 */
 	@Override
-	public void appenddiffA(String ta) {
+	public void appendDiffA(String ta) {
 		// TODO Auto-generated method stub
-		cast(diffs[0]).add(ta);
+		//diffArray.get(0).add(ta);
+		diffArray[0].add(ta);
 	}
 
 	/**
@@ -129,9 +130,87 @@ public class LcsStringList implements LcsBuilder<String>{
 	 * @param tb
 	 */
 	@Override
-	public void appenddiffB(String tb) {
+	public void appendDiffB(String tb) {
 		// TODO Auto-generated method stub
-		cast(diffs[1]).add(tb);
+		//diffArray.get(1).add(tb);
+		diffArray[1].add(tb);
+	}
+
+	@Override
+	public void appendLcsIdxOnDiffA(int idx) {
+		//lcsIdxArray.get(0).add(idx);
+		lcsIdxArray[0].add(idx);
+	}
+	@Override
+	public void appendLcsIdxOnDiffB(int idx) {
+		//lcsIdxArray.get(1).add(idx);
+		lcsIdxArray[1].add(idx);
+	}
+
+	@Override
+	public List<Integer> getLcsIdxOnDiffA() {
+		return listLcsIdx_diffa;
+	}
+
+	@Override
+	public List<Integer> getLcsIdxOnDiffB() {
+		return listLcsIdx_diffb;
+	}
+
+	/**
+	 * get LCS character position indexes of wrapperList
+	 * @param wrapperList
+	 * @param listLcsIndex
+	 * @param reverseOrderOfListLcsIndex
+	 * @return character start and end positions of LCS
+	 */
+	private List<StartEndPosition> getCharacterPositionListOfLcsIdxDiff(ArrayListWrapper<String> wrapperList,  List<Integer> listLcsIndex, boolean reverseOrderOfListLcsIndex) {
+		IteratorAction<Integer> action = iteratorActionIntegerFactory.getGenericIteratorAction(listLcsIndex, reverseOrderOfListLcsIndex);
+		Integer startIndex = null;
+		Integer endIndex = null;
+		int prevEndIndex = 0;
+		int startIndexNonLcs = 0;
+		int endIndexNonLcs = 0;
+
+		List<StartEndPosition> listOfCharacterPosition = new ArrayList<>();
+		int characterPosition = 0;
+		for(startIndex = action.getNext(), endIndex = action.getNext();
+			startIndex != null && endIndex !=null;
+			startIndex = action.getNext(), endIndex = action.getNext()) {
+			if (startIndex > prevEndIndex) {
+				startIndexNonLcs = prevEndIndex;
+				endIndexNonLcs = startIndex;
+				int stringLengthNonLcs = getLengthOfConcatStringFromList(null,wrapperList, startIndexNonLcs, endIndexNonLcs);
+				characterPosition += stringLengthNonLcs;
+			}
+			int startPosition = characterPosition;
+			//listOfCharacterPosition.add(characterPosition);
+			int stringLengthLcs = getLengthOfConcatStringFromList(null,wrapperList, startIndex, endIndex);
+			characterPosition += stringLengthLcs;
+			int endPosition = characterPosition;
+			listOfCharacterPosition.add(new StartEndPosition(startPosition, endPosition));
+			//listOfCharacterPosition.add(characterPosition);
+			prevEndIndex = endIndex;
+		}
+
+		return listOfCharacterPosition;
+
+	}
+
+	public List<StartEndPosition> getCharacterPositionListOfLcsIdxDiffA() {
+		boolean reverseOrder = diffAreverse;
+		if (isInitializedByLcsCharacterList) {
+			reverseOrder = true;
+		}
+		return getCharacterPositionListOfLcsIdxDiff(this.wrapperSourceA, listLcsIdx_diffa, reverseOrder);
+	}
+
+	public List<StartEndPosition> getCharacterPositionListOfLcsIdxDiffB() {
+		boolean reverseOrder = diffBreverse;
+		if (isInitializedByLcsCharacterList) {
+			reverseOrder = true;
+		}
+		return getCharacterPositionListOfLcsIdxDiff(this.wrapperSourceB, listLcsIdx_diffb, reverseOrder);
 	}
 
 	/**
@@ -157,17 +236,85 @@ public class LcsStringList implements LcsBuilder<String>{
 		if (delimiter == null) {
 			delimiter = "";
 		}
-		String lcsString = "";
+		StringBuffer lcsString = new StringBuffer();
 		if (list != null) {
-			IteratorAction<String> action = getIteratorAction(list, reverse);
+			//IteratorAction<String> action = getIteratorAction(list, reverse);
+			IteratorAction<String> action = iteratorActionStringFactory.getGenericIteratorAction(list, reverse);
 			for (String data = action.getNext(); data != null; data = action.getNext()) {
-				if (!lcsString.isEmpty()) {
-					lcsString += delimiter;
+				//if (!lcsString.isEmpty()) {
+				if (lcsString.length()>0) {
+					lcsString.append(delimiter);
+					//lcsString += delimiter;
 				}
-				lcsString += data;
+				//lcsString += data;
+				lcsString.append(data);
 			}
 		}
-		return lcsString;
+		return lcsString.toString();
+	}
+
+	/**
+	 * concatenate Strings between startIndex and endIndex in wrapperList
+	 * @param delimiter
+	 * @param wrapperList
+	 * @param startIndex
+	 * @param endIndex
+	 * @return
+	 */
+	 public String concatStringFromList(String delimiter, ArrayListWrapper<String> wrapperList, int startIndex, int endIndex) {
+		if (delimiter == null) {
+			delimiter = "";
+		}
+		StringBuffer lcsString = new StringBuffer();
+		if (wrapperList != null) {
+			int endCount;
+			String data;
+			IteratorAction<String> action = iteratorActionStringFactory.getGenericIteratorAction(wrapperList.getOriginalList(),startIndex, wrapperList.isOriginalReverseOrder());
+			for (data = action.getNext(),endCount = startIndex;
+				 data != null && endCount < endIndex ;
+				 data = action.getNext(), endCount++) {
+				//if (!lcsString.isEmpty()) {
+				if (lcsString.length()>0) {
+					lcsString.append(delimiter);
+					//lcsString += delimiter;
+				}
+				//lcsString += data;
+				lcsString.append(data);
+			}
+		}
+		return lcsString.toString();
+	}
+
+	/**
+	 * get total length of Strings between startIndex and end Index in wrapperList
+	 * @param delimiter
+	 * @param wrapperList
+	 * @param startIndex
+	 * @param endIndex
+	 * @return
+	 */
+	public int getLengthOfConcatStringFromList(String delimiter, ArrayListWrapper<String> wrapperList, int startIndex, int endIndex) {
+		if (delimiter == null) {
+			delimiter = "";
+		}
+		int totalLength = 0;
+		if (wrapperList != null) {
+			int endCount;
+			String data;
+			IteratorAction<String> action = iteratorActionStringFactory.getGenericIteratorAction(wrapperList.getOriginalList(),startIndex, wrapperList.isOriginalReverseOrder());
+			for (data = action.getNext(),endCount = startIndex;
+				 data != null && endCount < endIndex ;
+				 data = action.getNext(), endCount++) {
+				//if (!lcsString.isEmpty()) {
+				if (totalLength > 0) {
+					totalLength += delimiter.length();
+					//lcsString += delimiter;
+				}
+				//lcsString += data;
+				totalLength += data.length();
+			}
+		}
+		return totalLength;
 	}
 
 	@Override
@@ -196,13 +343,25 @@ public class LcsStringList implements LcsBuilder<String>{
 	@Override
 	public void setABreverse(boolean b) {
 		ABreverse = b;
+		setABreverseInternal();
+	}
+
+	private void setABreverseInternal() {
 		if(ABreverse) {
-			diffs[0] = diffb;
-			diffs[1] = diffa;
+			//diffs[0] = diffb;
+			//diffs[1] = diffa;
+			diffArrayIndexA = 1;
+			diffArrayIndexB = 0;
 		}else {
-			diffs[0] = diffa;
-			diffs[1] = diffb;
+			//diffs[0] = diffa;
+			//diffs[1] = diffb;
+			diffArrayIndexA = 0;
+			diffArrayIndexB = 1;
 		}
+		diffArrayObject.set(diffArrayIndexA, diffa);
+		diffArrayObject.set(diffArrayIndexB, diffb);
+		lcsIdxArrayObject.set(diffArrayIndexA, listLcsIdx_diffa);
+		lcsIdxArrayObject.set(diffArrayIndexB, listLcsIdx_diffb);
 	}
 
 	@Override
@@ -230,6 +389,15 @@ public class LcsStringList implements LcsBuilder<String>{
 		}
 	}
 
+	public void setOriginalDiffA(List<String> diffa, boolean isReverseOrder) {
+		if (ABreverse) {
+			this.diffBreverse = isReverseOrder;
+			this.diffb = diffa;
+		} else {
+			this.diffAreverse = isReverseOrder;
+			this.diffa = diffa;
+		}
+	}
 
 	public List<String> getOriginalDiffA() {
 		return diffa;
@@ -251,6 +419,15 @@ public class LcsStringList implements LcsBuilder<String>{
 		}
 	}
 
+	public void setOriginalDiffB(List<String> diffb, boolean isReverseOrder) {
+		if (ABreverse) {
+			this.diffAreverse = isReverseOrder;
+			this.diffa = diffb;
+		} else {
+			this.diffBreverse = isReverseOrder;
+			this.diffb = diffb;
+		}
+	}
 
 	public List<String> getOriginalDiffB() {
 		return diffb;
@@ -264,6 +441,24 @@ public class LcsStringList implements LcsBuilder<String>{
 	@Override
 	public int getDiffBSize() {
 		return diffb.size();
+	}
+
+	@Override
+	public void setWrapperSourceA(ArrayListWrapper<String> wrapperSourceA) {
+		if (ABreverse) {
+			this.wrapperSourceB = wrapperSourceA;
+		} else {
+			this.wrapperSourceA = wrapperSourceA;
+		}
+	}
+
+	@Override
+	public void setWrapperSourceB(ArrayListWrapper<String> wrapperSourceB) {
+		if (ABreverse) {
+			this.wrapperSourceA = wrapperSourceB;
+		} else {
+			this.wrapperSourceB = wrapperSourceB;
+		}
 	}
 
 	public void setDelimiter(String delimiter) {
@@ -317,11 +512,13 @@ public class LcsStringList implements LcsBuilder<String>{
 	}
 
 	/* obsolete */
+	@Deprecated
 	public void obsolete_setLcsChars(String c) {
 		lcschars = c;
 	}
 
 	/* obsolete */
+	@Deprecated
 	public String obsolete_getLcsChars() {
 		return lcschars;
 	}

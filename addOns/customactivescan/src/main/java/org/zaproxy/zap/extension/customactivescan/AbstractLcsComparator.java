@@ -1,6 +1,6 @@
 package org.zaproxy.zap.extension.customactivescan;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 

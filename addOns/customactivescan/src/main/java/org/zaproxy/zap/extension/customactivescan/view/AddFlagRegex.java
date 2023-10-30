@@ -57,7 +57,7 @@ public class AddFlagRegex extends GridBagJDialog<String>{
         testButton.addActionListener(l ->{
             List<RegexTestDialog.PaneTitleAndContent> paneTitleAndContentList = new ArrayList<>();
             RegexTestDialog.PaneContents paneContents = new RegexTestDialog.PaneContents(this.regexPatternField.getText());
-            paneContents.addTitleAndContent("Search Text", "");
+            paneContents.addTitleAndContent("Search Text", "", null);
             RegexTestDialog regexTestDialog = new RegexTestDialog(this,"Regex test", ModalityType.DOCUMENT_MODAL, paneContents);
             regexTestDialog.setRegexTextField(this.regexPatternField);
             regexTestDialog.setVisible(true);

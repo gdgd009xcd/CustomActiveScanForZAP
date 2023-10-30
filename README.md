@@ -2,7 +2,7 @@
 ![LICENSE](https://img.shields.io/github/license/gdgd009xcd/CustomActiveScanForZAP)
 [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/gdgd009xcd/CustomActiveScanForZAP.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/gdgd009xcd/CustomActiveScanForZAP/context:java)  
 
-A OWASP ZAP AddOn ActiveScan for detecting SQL injections.
+A ZAP AddOn ActiveScan for detecting SQL injections.
 Real Web application page has dynamic contents such as special sale products list or CSRF token, which is not affected by input parameters.
 The web application vulnerability scanner manipulates input parameters to detect vulnerabilities by affecting page content. 
 The scanner may fail to detect vulnerabilities if the dynamic content of the web page has contents which is unaffected by the input parameters. 
@@ -49,7 +49,7 @@ LCS remove the different token values ​​from the two responses as follows:
 
 ## Prerequisite
 
-* OWASP ZAP ver 2.13.0 or later
+* ZAPROXY ver 2.13.0 or later
 * java ver 11 or later
 
 ## Download & Building
@@ -80,3 +80,6 @@ $
 
 ## how to use
 [Basic Usage](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/1.0.-Basic-Usage)
+
+## Author
+### [gdgd009xcd](https://gdgd009xcd.github.io/)

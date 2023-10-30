@@ -1,12 +1,12 @@
 package org.zaproxy.zap.extension.customactivescan;
 
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class LcsStringListComparator extends LcsOnp<String>{
-	static Logger log = Logger.getLogger(LcsStringListComparator.class);
+
+	private final static org.apache.logging.log4j.Logger LOGGER4J =
+			org.apache.logging.log4j.LogManager.getLogger();
 
 	int MINROWLENGTH = 500; // if contents line count < MINROWLENGTH, then split contents by whitespace.
 	int EXTRACTLCS_UNIT = 500000; // extractLCS row unit.
@@ -22,7 +22,7 @@ public class LcsStringListComparator extends LcsOnp<String>{
 	String WHITESPCPLUS = "[ ,{}:\"\r\t\n]+";
 	
 	LcsStringListComparator(){
-		super(log);
+		super(LOGGER4J);
 	}
 
 	/**
@@ -381,85 +381,17 @@ public class LcsStringListComparator extends LcsOnp<String>{
 
 		//CharacterList ca = new CharacterList(a);
 		//CharacterList cb = new CharacterList(b);
-		final String stringA = a;
-		final String stringB = b;
-		ArrayListWrapper<Character> charListWrapperA = new ArrayListWrapper<>() {
-			@Override
-			public int size() {
-				return stringA.length();
-			}
-
-			@Override
-			public Character get(int index) {
-				return stringA.charAt(index);
-			}
-
-			@Override
-			public boolean isOriginalReverseOrder() {
-				return false;
-			}
-
-			@Override
-			public List<Character> getOriginalList() {
-				char[] charArray = stringA.toCharArray();
-				List<Character> clist = new ArrayList<>();
-				for(char c: charArray) {
-					clist.add(c);
-				}
-				return clist;
-			}
-
-			@Override
-			public int getRowSize() {
-				return 0;
-			}
-
-			@Override
-			public String getDelimiter() {
-				return null;
-			}
-		};
-
-		ArrayListWrapper<Character> charListWrapperB = new ArrayListWrapper<>() {
-			@Override
-			public int size() {
-				return stringB.length();
-			}
-
-			@Override
-			public Character get(int index) {
-				return stringB.charAt(index);
-			}
-
-			@Override
-			public boolean isOriginalReverseOrder() {
-				return false;
-			}
-
-			@Override
-			public List<Character> getOriginalList() {
-				char[] charArray = stringB.toCharArray();
-				List<Character> clist = new ArrayList<>();
-				for(char c: charArray) {
-					clist.add(c);
-				}
-				return clist;
-			}
-
-			@Override
-			public int getRowSize() {
-				return 0;
-			}
-
-			@Override
-			public String getDelimiter() {
-				return null;
-			}
-		};
-
+		//final String stringA = a;
+		//final String stringB = b;
+		CharListWrapperFactory charListWrapperFactoryA = new CharListWrapperFactory(a);
+		CharListWrapperFactory charListWrapperFactoryB = new CharListWrapperFactory(b);
+		ArrayListWrapper<Character> charListWrapperA = charListWrapperFactoryA.getCharListWrapper();
+		ArrayListWrapper<Character> charListWrapperB = charListWrapperFactoryB.getCharListWrapper();
+		ArrayListWrapper<String> stringListWrapperA = charListWrapperFactoryA.getStringListWrapper();
+		ArrayListWrapper<String> stringListWrapperB = charListWrapperFactoryB.getStringListWrapper();
 		LcsCharacterList clcs = new LcsCharacterList();
 		int cpercent = calcPercentChar(charListWrapperA, charListWrapperB, clcs);
-		result.initLcsCharacterList(clcs);
+		result.initLcsCharacterList(clcs, stringListWrapperA, stringListWrapperB);
 		return cpercent;
 	}
 }
