@@ -20,19 +20,20 @@ public class CustomScanJSONData {
 
     public static String VERSION_CONSTANT = "1.0";
 
-    // Gson members
+    // <---START LINE: "@Expose" members output to JSON file.
     @Expose
     public String Version = VERSION_CONSTANT;
-
     @Expose
     List<ScanRule> scanRuleList;
-    // exclude the following field when serializing/deserializing
+    // --->END LINE: "@Expose" members output to JSON file.
+
+    // Without "@Expose" member which is no output to JSON file
     List<ScanRule> sampleRuleList;
 
     // Non-Gson members(static)
     private static final String SAMPLE_PREFIX = "customactivescan.sample.";
-    private static final String SAMPLE_SQL_FILE_PATH = ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString(SAMPLE_PREFIX + "sql");
-    private static final String SAMPLE_PENTEST_FILE_PATH = ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString(SAMPLE_PREFIX + "pentest");
+    private static final String SAMPLE_SQL_FILE_PATH = ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString("customactivescan.sample.sql");
+    private static final String SAMPLE_PENTEST_FILE_PATH = ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString("customactivescan.sample.pentest");
     private static String defaultpattern = "{" +
             "\"name\" : \"Sample SQL Injection\", " +
             "\"patterns\" :  [" +
@@ -120,6 +121,7 @@ public class CustomScanJSONData {
     };
 
     public static class ScanRule implements DeepClone {
+        // <---START LINE: "@Expose" members output to JSON file.
         @Expose
         public RuleType ruleType;
         @Expose
@@ -136,7 +138,7 @@ public class CustomScanJSONData {
         public InjectionPatterns patterns;
         @Expose
         public List<String> flagResultItems;
-
+        // --->END LINE: "@Expose" members output to JSON file.
 
         public String getRuleTypeName() {
             return ruleType.name();
@@ -171,7 +173,7 @@ public class CustomScanJSONData {
 
         public void initSampleSQL() {
             this.ruleType = RuleType.SQL;
-            this.doScanLogOutput = false;
+            this.doScanLogOutput = true;
             Gson gson = new Gson();
             try (Reader gsonReader = new FileReader(SAMPLE_SQL_FILE_PATH)) {
                 this.patterns = gson.fromJson(gsonReader, InjectionPatterns.class);

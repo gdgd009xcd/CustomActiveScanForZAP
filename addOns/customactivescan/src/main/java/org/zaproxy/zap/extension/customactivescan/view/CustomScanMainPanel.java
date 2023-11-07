@@ -26,8 +26,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
-
 @SuppressWarnings("serial")
 public class CustomScanMainPanel extends JPanel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
@@ -310,9 +308,9 @@ public class CustomScanMainPanel extends JPanel {
         idleTimePanel.setBorder(idleTimePanelTitledBorder);
 
         // randomize idle time or not
-        randomizeIdleTimeCheckBox = new JCheckBox(Constant.messages.getString(MESSAGE_PREFIX + "title.randomidletime"));
+        randomizeIdleTimeCheckBox = new JCheckBox(Constant.messages.getString("customactivescan.testsqlinjection.title.randomidletime"));
         randomizeIdleTimeCheckBox.setSelected(selectedScanRule.isRandomIdleTime());
-        randomizeIdleTimeCheckBox.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.randomidletime"));
+        randomizeIdleTimeCheckBox.setToolTipText(Constant.messages.getString("customactivescan.testsqlinjection.tooltip.randomidletime"));
         randomizeIdleTimeCheckBox.addActionListener(actionEvent->{
             CustomScanJSONData.ScanRule currentScanRule = getSelectedScanRule();
             if (currentScanRule.isRandomIdleTime() != randomizeIdleTimeCheckBox.isSelected()) {
@@ -329,11 +327,11 @@ public class CustomScanMainPanel extends JPanel {
         // Minimum idle time between  sending requests
         LineBorder minimumIdleTimeBorderLine = new LineBorder(Color.BLUE, 1, true);
         TitledBorder minimumIdleTimeTitledBorder = new TitledBorder(minimumIdleTimeBorderLine,
-                Constant.messages.getString(MESSAGE_PREFIX + "title.minidletime"),
+                Constant.messages.getString("customactivescan.testsqlinjection.title.minidletime"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         minimumIdleTimeTextField = new JTextField(Integer.toString(selectedScanRule.getMinIdleTime()));
-        minimumIdleTimeTextField.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.minidletime"));
+        minimumIdleTimeTextField.setToolTipText(Constant.messages.getString("customactivescan.testsqlinjection.tooltip.minidletime"));
         minimumIdleTimeTextField.setBorder(minimumIdleTimeTitledBorder);
         minimumIdleTimeTextField.setInputVerifier(new MinIdleTimeVerifier(this));
         idleTimePanel.add(minimumIdleTimeTextField);
@@ -341,11 +339,11 @@ public class CustomScanMainPanel extends JPanel {
         // Maximum idle time between  sending requests
         LineBorder maximumIdleTimeBorderLine = new LineBorder(Color.BLUE, 1, true);
         TitledBorder maximumIdleTimeTitledBorder = new TitledBorder(maximumIdleTimeBorderLine,
-                Constant.messages.getString(MESSAGE_PREFIX + "title.maxidletime"),
+                Constant.messages.getString("customactivescan.testsqlinjection.title.maxidletime"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         maximumIdleTimeTextField = new JTextField(Integer.toString(selectedScanRule.getMaxIdleTime()));
-        maximumIdleTimeTextField.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.maxidletime"));
+        maximumIdleTimeTextField.setToolTipText(Constant.messages.getString("customactivescan.testsqlinjection.tooltip.maxidletime"));
         maximumIdleTimeTextField.setBorder(maximumIdleTimeTitledBorder);
         maximumIdleTimeTextField.setInputVerifier(new MaxIdleTimeVerifier(this));
 
@@ -353,12 +351,12 @@ public class CustomScanMainPanel extends JPanel {
 
         LineBorder requestCountBorderLine = new LineBorder(Color.BLUE, 1, true);
         TitledBorder requestCountTitledBorder = new TitledBorder(requestCountBorderLine,
-                Constant.messages.getString(MESSAGE_PREFIX + "title.sendingrequestcount"),
+                Constant.messages.getString("customactivescan.testsqlinjection.title.sendingrequestcount"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         requestCountTextField = new JTextField(5);
         requestCountTextField.setBorder(requestCountTitledBorder);
-        requestCountTextField.setToolTipText(Constant.messages.getString(MESSAGE_PREFIX + "tooltip.sendingrequestcount"));
+        requestCountTextField.setToolTipText(Constant.messages.getString("customactivescan.testsqlinjection.tooltip.sendingrequestcount"));
         requestCountTextField.setText(Integer.toString(selectedScanRule.getRequestCount()));
         requestCountTextField.setInputVerifier(new RequestCountVerifier(this));
         idleTimePanel.add(requestCountTextField);

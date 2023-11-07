@@ -8,6 +8,7 @@ import org.zaproxy.zap.extension.customactivescan.model.WaitTimerObject;
 import org.zaproxy.zap.extension.customactivescan.view.CustomScanMainPanel;
 import org.zaproxy.zap.extension.customactivescan.view.MainWorkPanelTab;
 import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
+import org.zaproxy.zap.extension.customactivescan.view.PopUpMenuInAlert;
 import org.zaproxy.zap.extension.customactivescan.view.ScanLogPanelFrame;
 
 import java.util.Map;
@@ -32,9 +33,11 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	public static final String ZAP_ICONS = ZAP_RESOURCES_ROOT_ABSPATH + "/icons";// you can access any files under ZAP_ICONS
 																				 // by code like yourClassName.class.getResource(ZAP_ICONS + "/pause.png")
 
-	public static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
+	//public static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
 
 	public static CustomScanMainPanel customScanMainPanel = null;
+
+	private PopUpMenuInAlert popUpMenuInAlert = null;
 	private static boolean unLoadCalled = false;
 
 	public static Map<HostProcess, Integer> hostProcessScannerIdMap = null;
@@ -64,7 +67,7 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 
 	@Override
 	public String getDescription() {
-		return Constant.messages.getString("customactivescan.desc");
+		return Constant.messages.getString("customactivescan.desc.text");
 	}
 	
 	@Override
@@ -115,6 +118,18 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 		hook
 				.getHookView()
 				.addWorkPanel(new MainWorkPanelTab(hook, this));
+
+		//experimental use
+		//hook.getHookMenu().addPopupMenuItem(getPopUpMenuInAlert());
+
+
+	}
+
+	private PopUpMenuInAlert getPopUpMenuInAlert() {
+		if (this.popUpMenuInAlert == null) {
+			this.popUpMenuInAlert = new PopUpMenuInAlert();
+		}
+		return this.popUpMenuInAlert;
 	}
 
 	@Override

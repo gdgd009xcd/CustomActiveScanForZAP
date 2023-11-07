@@ -12,20 +12,19 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
-
 @SuppressWarnings("serial")
 public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
+    // <---createMainPanelContent initialize member start line---
     // these parameters are set value by createMainPanelContent method.
     // these parameters MUST NOT initialize at declaration here.
     // because createMainPanelContent method is called before parameter initialization process in this class
@@ -36,6 +35,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     private List<SearchTextPane> searchTextPaneList;
     JCheckBox searchCountCheckBox;
+    Map<String, InterfaceGenerateStyler> generateStylerMap;
+    private int fixedStyleWidthMax;
+    // ---createMainPanelContent initialize member end line--->
 
     // no used parameters in createMainPanelContent method
     private RegexTestOptionPane optionPane = null;
@@ -44,6 +46,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     private Frame frame = null;
     private DisposeChildInterface parent = null;
 
+
+
+
     static final String SELECTEDGROUP_STYLENAME = "selectedGroupStyle";
     static final String CURRENT_SELECTEDGROUP_STYLENAME = "currentSelectedGroupStyle";
     static final String SELECTED_STYLENAME = "selectedStyle";
@@ -51,6 +56,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     static final String ADD_UNDERLINE_STYLENAME = "addUnderLineStyle";
     static final String DEL_UNDERLINE_STYLENAME = "delUnderLineStyle";
     static final String MARK_LCS_STYLENAME = "markLcsStyle";
+    static final String CRIMAGE_STYLENAME = "caridgeReturnStyle";
+    static final String ADD_BOLD_STYLENAME = "addBoldFontStyle";
+    static final String FIXED_LABEL_STYLENAME = "fixedLabelStyle";
 
     static final String[] styleNameArray = {
             SELECTEDGROUP_STYLENAME,
@@ -59,11 +67,15 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             CURRENT_SELECTED_STYLENAME,
             ADD_UNDERLINE_STYLENAME,
             DEL_UNDERLINE_STYLENAME,
-            MARK_LCS_STYLENAME
+            MARK_LCS_STYLENAME,
+            CRIMAGE_STYLENAME,
+            ADD_BOLD_STYLENAME,
+            FIXED_LABEL_STYLENAME
     };
 
     static final Color COLOR_PURPLE = new Color(128,0, 128);
     static final Color COLOR_OLIVE = new Color(128,128,0);
+    static final Color COLOR_THICK_BLUE = new Color(10,25,226);
 
     static class SearchTextPane {
         // search text
@@ -76,6 +88,8 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         int caretIndex;
         boolean hasGroup;
         List<StartEndPosition> charIndexOfLcs;
+
+
 
         SearchTextPane(List<StartEndPosition> charIndexOfLcs) {
             searchTextPane = null;
@@ -93,15 +107,32 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     static class PaneTitleAndContent {
         String title;
         String content;
+        boolean editable = false;
+        List<InterfaceOptionStaticStyler> optionStylerList;
         List<StartEndPosition> charIndexesOfContent;
         PaneTitleAndContent(){
             title = "";
             content = "";
+            optionStylerList = null;
         }
         PaneTitleAndContent(String title, String content, List<StartEndPosition> charIndexesOfContent) {
             this.title = title;
             this.content = content;
             this.charIndexesOfContent = charIndexesOfContent;
+        }
+
+        PaneTitleAndContent(String title, String content, List<StartEndPosition> charIndexesOfContent, boolean editable) {
+            this.title = title;
+            this.content = content;
+            this.charIndexesOfContent = charIndexesOfContent;
+            this.editable = editable;
+        }
+        PaneTitleAndContent(String title, String content, List<StartEndPosition> charIndexesOfContent,
+                            List<InterfaceOptionStaticStyler> optionStylerList) {
+            this.title = title;
+            this.content = content;
+            this.charIndexesOfContent = charIndexesOfContent;
+            this.optionStylerList = optionStylerList;
         }
     }
 
@@ -117,6 +148,17 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             PaneTitleAndContent paneTitleAndContent = new PaneTitleAndContent(title, content, charIndexesOfContent);
             paneTitleAndContentList.add(paneTitleAndContent);
         }
+
+        public void addTitleAndContent(String title, String content, boolean editable) {
+            PaneTitleAndContent paneTitleAndContent = new PaneTitleAndContent(title, content, null, editable);
+            paneTitleAndContentList.add(paneTitleAndContent);
+        }
+
+        public void addTitleAndContent(String title, String content, List<StartEndPosition> charIndexesOfContent,
+                                       List<InterfaceOptionStaticStyler> optionStylerList) {
+            PaneTitleAndContent paneTitleAndContent = new PaneTitleAndContent(title, content, charIndexesOfContent, optionStylerList);
+            paneTitleAndContentList.add(paneTitleAndContent);
+        }
     }
 
     private JTextField targetTextField;
@@ -127,7 +169,13 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         this.dialog = dialog;
     }
 
-    public RegexTestDialog(Frame frame, DisposeChildInterface parent, String title, ModalityType modalityType, PaneContents paneContents) {
+    public RegexTestDialog(
+            Frame frame,
+            DisposeChildInterface parent,
+            String title,
+            ModalityType modalityType,
+            PaneContents paneContents
+           ) {
         super(frame, title, modalityType, paneContents, GridBagConstraints.BOTH);
         this.frame = frame;
         this.parent = parent;
@@ -135,6 +183,11 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     private JPanel createRegexTestDialogContent(PaneContents paneContents) {
         searchTextPaneList = new ArrayList<>();
+        generateStylerMap = new HashMap<>();
+        JLabel fixedTestLabel = new JLabel("HHHHHHHHHHHHH");
+        Dimension preferDim = fixedTestLabel.getPreferredSize();
+        this.fixedStyleWidthMax = (int)preferDim.getWidth();
+
         JPanel panel = new JPanel();
         GridBagLayout gridBagLayout = new GridBagLayout();
         panel.setLayout(gridBagLayout);
@@ -226,22 +279,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         tabbedPane = new JTabbedPane();
         tabbedPane.setBorder(searchTextTitledBorder);
         for(PaneTitleAndContent titleAndContent: paneContents.paneTitleAndContentList) {
-            SearchTextPane searchTextPane = new SearchTextPane(titleAndContent.charIndexesOfContent);
-            JScrollPane searchTextScroller = new JScrollPane();
-            searchTextScroller.setPreferredSize(new Dimension(400, 500));
-            searchTextScroller.setAutoscrolls(true);
-            searchTextScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            searchTextPane.searchTextPane = new JTextPane();
-            searchTextPane.searchTextPane.setEditorKit(new TextPaneWrapEditorKit());
-            StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
-            createStyles(doc);
-
-
-            searchTextPane.searchTextPane.setText(titleAndContent.content);
-            searchTextPane.searchTextPane.setCaretPosition(0);
-            searchTextScroller.setViewportView(searchTextPane.searchTextPane);
-
-            tabbedPane.add(titleAndContent.title, searchTextScroller);
+            SearchTextPane searchTextPane = createSearchTextScroller(titleAndContent, tabbedPane);
             searchTextPaneList.add(searchTextPane);
         }
 
@@ -267,13 +305,13 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                         int foundCount = searchTextPane.findplist.size();
                         if (foundCount > 0) {
                             counterString = String.format(
-                                    Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                                    Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.checkbox.formatfound"),
                                     searchTextPane.caretIndex + 1,
                                     foundCount);
                         }
                     }
                     RegexTestDialog.this.searchCountCheckBox.setText(counterString);
-                    setImplicitStyles(searchTextPane);
+                    setImplicitStyles(searchTextPane, false);
                 }
 
             }
@@ -283,27 +321,101 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     }
 
 
-    private void createStyles(StyledDocument doc) {
-        //Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
-        Style defaultStyle = null;
-        Style selectedGroupStyle = doc.addStyle(SELECTEDGROUP_STYLENAME, defaultStyle);
-        StyleConstants.setForeground(selectedGroupStyle, Color.MAGENTA);
-        StyleConstants.setBackground(selectedGroupStyle, Color.ORANGE);
-        Style currentSelectedGroupStyle = doc.addStyle(CURRENT_SELECTEDGROUP_STYLENAME, defaultStyle);
-        StyleConstants.setForeground(currentSelectedGroupStyle, Color.WHITE);
-        StyleConstants.setBackground(currentSelectedGroupStyle, Color.GREEN);
-        Style selectedStyle = doc.addStyle(SELECTED_STYLENAME, defaultStyle);
-        StyleConstants.setForeground(selectedStyle, Color.BLACK);
-        StyleConstants.setBackground(selectedStyle, Color.ORANGE);
-        Style currentSelectedStyle = doc.addStyle(CURRENT_SELECTED_STYLENAME, defaultStyle);
-        StyleConstants.setForeground(currentSelectedStyle, Color.BLACK);
-        StyleConstants.setBackground(currentSelectedStyle, Color.GREEN);
-        Style addUnderLineStyle = doc.addStyle(ADD_UNDERLINE_STYLENAME, defaultStyle);
-        StyleConstants.setUnderline(addUnderLineStyle, true);
-        Style delUnderLineStyle = doc.addStyle(DEL_UNDERLINE_STYLENAME, defaultStyle);
-        StyleConstants.setUnderline(delUnderLineStyle, false);
-        Style markLcsStyle = doc.addStyle(MARK_LCS_STYLENAME, defaultStyle);
-        StyleConstants.setBackground(markLcsStyle, Color.RED);
+    private SearchTextPane createSearchTextScroller(PaneTitleAndContent titleAndContent, JTabbedPane tabbedPane) {
+        SearchTextPane searchTextPane = new SearchTextPane(titleAndContent.charIndexesOfContent);
+        JScrollPane searchTextScroller = new JScrollPane();
+        searchTextScroller.setPreferredSize(new Dimension(600, 500));
+        searchTextScroller.setAutoscrolls(true);
+        searchTextScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        searchTextPane.searchTextPane = new JTextPane();
+        searchTextPane.searchTextPane.setEditable(titleAndContent.editable);
+        // setEditorKit create new Document and set it to JTextPane.
+        // setEditorKit call TextPaneWrapEditorKit.createDocument method for setting new one.
+        // so I override TextPaneWrapEditorKit.createDocument method for setting new document.
+        searchTextPane.searchTextPane.setEditorKit(new TextPaneWrapEditorKit(SwingStyleProvider.createSwingStyle().createStyledDocument()));
+        StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+        createStyles(doc, titleAndContent.optionStylerList);
+
+        LOGGER4J.debug("title[" + titleAndContent.title + "] size=" + titleAndContent.content.length());
+        try {
+            doc.remove(0, doc.getLength());
+        }catch (Exception ex) {
+            LOGGER4J.error(ex.getMessage(), ex);
+        }
+        insertStringCR(doc, 0, titleAndContent.content);
+        searchTextPane.searchTextPane.setCaretPosition(0);
+        searchTextScroller.setViewportView(searchTextPane.searchTextPane);
+        tabbedPane.add(titleAndContent.title, searchTextScroller);
+        return searchTextPane;
+    }
+    private void createStyles(StyledDocument doc, List<InterfaceOptionStaticStyler> optionStylerList) {
+        Style defaultStyle = SwingStyle.getDefaultStyle(doc);
+        for (String styleName: styleNameArray) {
+            Style style = doc.getStyle(styleName);
+            if (style == null) {
+                Style newStyle = doc.addStyle(styleName, defaultStyle);
+                InterfaceGenerateStyler generateStyler = null;
+                switch(styleName){
+                    case SELECTEDGROUP_STYLENAME:
+                        StyleConstants.setForeground(newStyle, Color.MAGENTA);
+                        StyleConstants.setBackground(newStyle, Color.ORANGE);
+                        break;
+                    case CURRENT_SELECTEDGROUP_STYLENAME:
+                        StyleConstants.setForeground(newStyle, Color.WHITE);
+                        StyleConstants.setBackground(newStyle, Color.GREEN);
+                        break;
+                    case SELECTED_STYLENAME:
+                        StyleConstants.setForeground(newStyle, Color.BLACK);
+                        StyleConstants.setBackground(newStyle, Color.ORANGE);
+                        break;
+                    case CURRENT_SELECTED_STYLENAME:
+                        StyleConstants.setForeground(newStyle, Color.BLACK);
+                        StyleConstants.setBackground(newStyle, Color.GREEN);
+                        break;
+                    case ADD_UNDERLINE_STYLENAME:
+                        StyleConstants.setUnderline(newStyle, true);
+                        break;
+                    case DEL_UNDERLINE_STYLENAME:
+                        StyleConstants.setUnderline(newStyle, false);
+                        break;
+                    case MARK_LCS_STYLENAME:
+                        StyleConstants.setForeground(newStyle, COLOR_THICK_BLUE);
+                        break;
+                    case ADD_BOLD_STYLENAME:
+                        StyleConstants.setBold(newStyle,true);
+                        break;
+                    case CRIMAGE_STYLENAME:
+                        generateStyler = new InterfaceGenerateStyler() {
+                            @Override
+                            public Style getStyle(StyledDocument doc, String text) {
+                                return getCRstyle(doc);
+                            }
+                        };
+                        generateStylerMap.put(CRIMAGE_STYLENAME, generateStyler);
+                        break;
+                    case FIXED_LABEL_STYLENAME:
+                        generateStyler = new InterfaceGenerateStyler() {
+                            @Override
+                            public Style getStyle(StyledDocument doc, String text) {
+                                return getAlertTitleStyle(doc, text);
+                            }
+                        };
+                        generateStylerMap.put(FIXED_LABEL_STYLENAME, generateStyler);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        if(optionStylerList != null && !optionStylerList.isEmpty()) {
+            for(InterfaceOptionStaticStyler optionStyler: optionStylerList) {
+                Style style = doc.getStyle(optionStyler.getStyleName());
+                if (style == null) {
+                    style = doc.addStyle(optionStyler.getStyleName(), defaultStyle);
+                }
+                optionStyler.setStyleAttributes(style);
+            }
+        }
     }
 
     private void removeStyles(StyledDocument doc) {
@@ -313,6 +425,16 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 doc.removeStyle(styleName);
             }
         }
+    }
+
+    private Style getStyleWithText(StyledDocument doc, String styleName, String text) {
+        if (!this.generateStylerMap.isEmpty()) {
+            InterfaceGenerateStyler generateStyler = this.generateStylerMap.get(styleName);
+            if (generateStyler != null) {
+                return generateStyler.getStyle(doc, text);
+            }
+        }
+        return doc.getStyle(styleName);
     }
 
     @Override
@@ -371,6 +493,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         if (selectedTabbedPaneIndex > -1) {
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
             clearSearchedInfo(searchTextPane);
+            setImplicitStyles(searchTextPane, false);
         }
         searchCountCheckBox.setText("0/0");
     }
@@ -384,12 +507,8 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         if (searchTextPane != null) {
             StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
 
-            Style defaultStyleForALL = StyleContext.
-                    getDefaultStyleContext().
-                    getStyle(StyleContext.DEFAULT_STYLE);
-            doc.setCharacterAttributes(0, doc.getLength(), defaultStyleForALL, true);
-            removeStyles(doc);
-            createStyles(doc);
+            SwingStyle.clearAllCharacterAttributes(doc);
+
             if (searchTextPane.foundTextAttrPos != null) {
                 searchTextPane.foundTextAttrPos.clear();
             }
@@ -498,11 +617,11 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                         // spt0--->spt<matchval>ept-->ept0
 
                         if (ept0 > spt0) {
-                            Style style = doc.getStyle(SELECTED_STYLENAME);
-                            Style underLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
+                            Style style = getStyleWithText(doc, SELECTED_STYLENAME, null);
+                            Style underLineStyle = getStyleWithText(doc, DEL_UNDERLINE_STYLENAME, null);
                             if (fcount == 1) {
-                                underLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
-                                style = doc.getStyle(CURRENT_SELECTED_STYLENAME);
+                                underLineStyle = getStyleWithText(doc, ADD_UNDERLINE_STYLENAME, null);
+                                style = getStyleWithText(doc, CURRENT_SELECTED_STYLENAME, null);
                             }
                             doc.setCharacterAttributes(spt0, ept0 - spt0, style, false);
                             doc.setCharacterAttributes(spt0, ept0 - spt0, underLineStyle, false);
@@ -517,7 +636,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                             } else {
                                 styleName = SELECTEDGROUP_STYLENAME;
                             }
-                            Style style = doc.getStyle(styleName);
+                            Style style = getStyleWithText(doc, styleName, null);
                             doc.setCharacterAttributes(spt, ept - spt, style, false);
                             RegexSelectedTextPos rpos = new RegexSelectedTextPos(styleName, spt, ept);
                             searchTextPane.foundTextAttrPos.add(rpos);
@@ -536,7 +655,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 searchTextPane.caretIndex = 0;
                 int foundCount = searchTextPane.findplist.size();
                 String counterString = String.format(
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                        Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.checkbox.formatfound"),
                         searchTextPane.caretIndex + 1,
                         foundCount);
                 this.searchCountCheckBox.setText(counterString);
@@ -549,39 +668,75 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 Toolkit.getDefaultToolkit().beep();
                 if (searchCountCheckBox.isSelected()) {
                     JOptionPane.showMessageDialog(this,
-                            Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatnotfound"),
-                            Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
+                            Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.formatnotfound.text"),
+                            Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.title.text"),
                             JOptionPane.QUESTION_MESSAGE);
                 }
             }
         }
     }
 
-    public void setImplicitStylesOnSelectedPane() {
+    public void setImplicitStylesOnSelectedPane(boolean moveCaretToLcs) {
         int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
         if (selectedTabbedPaneIndex > -1) {
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
             if (searchTextPane != null) {
-                setImplicitStyles(searchTextPane);
+                setImplicitStyles(searchTextPane, moveCaretToLcs);
             }
         }
     }
 
-    private void setImplicitStyles(SearchTextPane searchTextPane){
+    private void setImplicitStyles(SearchTextPane searchTextPane, boolean moveCaretToLcs){
         StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
         if (searchTextPane.charIndexOfLcs != null && !searchTextPane.charIndexOfLcs.isEmpty()) {
-            Style style = doc.getStyle(MARK_LCS_STYLENAME);
-            if (style != null) {
+            Style baseLcsStyle = getStyleWithText(doc, MARK_LCS_STYLENAME, null);
+            Style outBoundStyle = getStyleWithText(doc, ADD_BOLD_STYLENAME, null);
+            if (baseLcsStyle != null) {
+                int outBoundStart = 0;
                 for (StartEndPosition position : searchTextPane.charIndexOfLcs) {
-                    doc.setCharacterAttributes(position.start, position.end - position.start, style, false);
+                    if (outBoundStart < position.start) {
+                        doc.setCharacterAttributes(outBoundStart, position.start - outBoundStart, outBoundStyle, true);
+                        if (moveCaretToLcs) {
+                            searchTextPane.searchTextPane.setCaretPosition(outBoundStart);
+                            moveCaretToLcs = false;
+                        }
+                    }
+                    Style lcsStyle = baseLcsStyle;
+                    String optionLcsStyleName = position.styleName;
+                    if (optionLcsStyleName != null) {
+                        try {
+                            String optionText = doc.getText(position.start, position.end - position.start);
+                            lcsStyle = getStyleWithText(doc, optionLcsStyleName, optionText);
+                        } catch (Exception ex) {
+                            LOGGER4J.error(ex.getMessage(), ex);
+                            lcsStyle = null;
+                        }
+                        if (lcsStyle == null) {
+                            lcsStyle = baseLcsStyle;
+                            String defaultName = SwingStyle.getDefaultStyleName(doc);
+                            LOGGER4J.debug("default=" + defaultName + " position.styleName is null but optionLcsStyleName=" + optionLcsStyleName);
+                        }
+                    }
+                    doc.setCharacterAttributes(position.start, position.end - position.start, lcsStyle, true);
+                    LOGGER4J.debug("LCS start=" + position.start + " end=" + position.end);
+                    outBoundStart = position.end;
                 }
+                int docLength = doc.getLength();
+                if (outBoundStart < docLength) {
+                    doc.setCharacterAttributes(outBoundStart, docLength - outBoundStart, outBoundStyle, true);
+                    if (moveCaretToLcs) {
+                        searchTextPane.searchTextPane.setCaretPosition(outBoundStart);
+                        moveCaretToLcs = false;
+                    }
+                }
+
             }
         }
     }
     private void popupRegexTestOptionPane(SearchTextPane searchTextPane) {
         int foundCount = searchTextPane.findplist.size();
         String counterString = String.format(
-                Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatfound"),
+                Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.formatfound.text"),
                 searchTextPane.caretIndex + 1,
                 foundCount);
 
@@ -589,7 +744,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         disposeChild();
         optionPane = new RegexTestOptionPane(
                 this,
-                Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.title"),
+                Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.title.text"),
                 ModalityType.DOCUMENT_MODAL, options, GridBagConstraints.NONE);
         optionPane.setVisible(true);
     }
@@ -612,12 +767,12 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                     String styleName = regexSelectedTextPos.getStyleName();
                     if (i == caretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
                         styleName = SELECTED_STYLENAME;// setting color to outside group
-                        Style delUnderLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
+                        Style delUnderLineStyle = getStyleWithText(doc, DEL_UNDERLINE_STYLENAME, null);
                         doc.setCharacterAttributes(spt, ept - spt, delUnderLineStyle, false);
                     } else {
                         styleName = SELECTEDGROUP_STYLENAME;// setting color to inside group
                     }
-                    Style style = doc.getStyle(styleName);
+                    Style style = getStyleWithText(doc, styleName, null);
                     doc.setCharacterAttributes(spt, ept - spt, style, false);
                 }
 
@@ -633,16 +788,16 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                     String styleName = regexSelectedTextPos.getStyleName();
                     if (i == nextCaretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
                         styleName = CURRENT_SELECTED_STYLENAME;// setting color to outside group
-                        Style addUnderLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
+                        Style addUnderLineStyle = getStyleWithText(doc, ADD_UNDERLINE_STYLENAME, null);
                         doc.setCharacterAttributes(spt, ept - spt, addUnderLineStyle, false);
                     } else {
                         styleName = CURRENT_SELECTEDGROUP_STYLENAME;// setting color to inside group
                     }
-                    Style style = doc.getStyle(styleName);
+                    Style style = getStyleWithText(doc, styleName, null);
                     doc.setCharacterAttributes(spt, ept - spt, style, false);
                 }
                 String counterString = String.format(
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                        Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.checkbox.formatfound"),
                         nextCaretIndex+1,
                         foundCount);
                 this.searchCountCheckBox.setText(counterString);
@@ -673,12 +828,12 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                     String styleName = regexSelectedTextPos.getStyleName();
                     if (i == caretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
                         styleName = SELECTED_STYLENAME;// setting color to outside group
-                        Style delUnderLineStyle = doc.getStyle(DEL_UNDERLINE_STYLENAME);
+                        Style delUnderLineStyle = getStyleWithText(doc, DEL_UNDERLINE_STYLENAME, null);
                         doc.setCharacterAttributes(spt, ept - spt, delUnderLineStyle, false);
                     } else {
                         styleName = SELECTEDGROUP_STYLENAME;// setting color to inside group
                     }
-                    Style style = doc.getStyle(styleName);
+                    Style style = getStyleWithText(doc, styleName, null);
                     doc.setCharacterAttributes(spt, ept - spt, style, false);
                 }
 
@@ -694,16 +849,16 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                     String styleName = regexSelectedTextPos.getStyleName();
                     if (i == nextCaretIndex * offset) {// spt0-->(spt-group->ept)-->ept0
                         styleName = CURRENT_SELECTED_STYLENAME;// setting color to outside group
-                        Style addUnderLineStyle = doc.getStyle(ADD_UNDERLINE_STYLENAME);
+                        Style addUnderLineStyle = getStyleWithText(doc, ADD_UNDERLINE_STYLENAME, null);
                         doc.setCharacterAttributes(spt, ept - spt, addUnderLineStyle, false);
                     } else {
                         styleName = CURRENT_SELECTEDGROUP_STYLENAME;// setting color to inside group
                     }
-                    Style style = doc.getStyle(styleName);
+                    Style style = getStyleWithText(doc, styleName, null);
                     doc.setCharacterAttributes(spt, ept - spt, style, false);
                 }
                 String counterString = String.format(
-                        Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.checkbox.formatfound"),
+                        Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.checkbox.formatfound"),
                         nextCaretIndex+1,
                         foundCount);
                 this.searchCountCheckBox.setText(counterString);
@@ -752,16 +907,121 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     }
 
     public void updateContentsWithPaneContents(PaneContents paneContents) {
-        int i = 0;
+
+        int currentPaneCount = this.tabbedPane.getTabCount();
+        int updatePaneCount = paneContents.paneTitleAndContentList.size();
+
+        int paneIndex = 0;
         for(PaneTitleAndContent titleAndContent: paneContents.paneTitleAndContentList) {
-            SearchTextPane searchTextPane = searchTextPaneList.get(i++);
-            searchTextPane.updateCharIndexOfLcs(titleAndContent.charIndexesOfContent);
-            searchTextPane.searchTextPane.setText(titleAndContent.content);
-            searchTextPane.searchTextPane.setSelectionStart(0);
-            searchTextPane.searchTextPane.setSelectionEnd(0);
-            searchTextPane.searchTextPane.setCaretPosition(0);
+            if (paneIndex >= currentPaneCount) {//create
+                SearchTextPane searchTextPane = createSearchTextScroller(titleAndContent, tabbedPane);
+                searchTextPaneList.add(searchTextPane);
+                paneIndex++;
+            } else {//update
+                SearchTextPane searchTextPane = searchTextPaneList.get(paneIndex++);
+                searchTextPane.updateCharIndexOfLcs(titleAndContent.charIndexesOfContent);
+
+                StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
+                try {
+                    doc.remove(0, doc.getLength());
+                } catch (Exception ex) {
+                    LOGGER4J.error(ex.getMessage(), ex);
+                }
+                insertStringCR(doc, 0, titleAndContent.content);
+                searchTextPane.searchTextPane.setSelectionStart(0);
+                searchTextPane.searchTextPane.setSelectionEnd(0);
+                searchTextPane.searchTextPane.setCaretPosition(0);
+            }
+        }
+        currentPaneCount = this.tabbedPane.getTabCount();
+        while(paneIndex < currentPaneCount) {
+            this.tabbedPane.remove(paneIndex);
+            this.searchTextPaneList.remove(paneIndex++);
         }
         resetScrollBarToLeftTop();
     }
 
+
+    private void insertStringCR(StyledDocument doc, int insertStartPosition, String text) {
+        if (text == null || text.length() < 1) return;
+        int cpos = 0;
+        int npos = -1;
+        int totallen = text.length();
+        while ((npos = text.indexOf("\r", cpos)) != -1) {
+            try {
+                doc.insertString(insertStartPosition, text.substring(cpos, npos), null);
+                cpos = npos;
+                insertStartPosition = doc.getLength();
+                doc.insertString(insertStartPosition, text.substring(cpos, cpos + 1), null);
+                doc.setCharacterAttributes(insertStartPosition, 1, getCRstyle(doc), true);
+                cpos++;
+                insertStartPosition = doc.getLength();
+            } catch (BadLocationException ex) {
+                LOGGER4J.error(ex.getMessage(), ex);
+            }
+        }
+        if (cpos < totallen) {
+            try {
+                doc.insertString(insertStartPosition, text.substring(cpos, totallen), null);
+            } catch (BadLocationException ex) {
+                LOGGER4J.error(ex.getMessage(), ex);
+            }
+        }
+    }
+
+    private Style getCRstyle(StyledDocument doc) {
+        Style CRstyle = doc.getStyle(CRIMAGE_STYLENAME);
+        // component must always create per call setComponent.
+        JLabel crlabel = new JLabel("CR");
+        crlabel.setOpaque(true);
+        LineBorder border = new LineBorder(Color.GREEN, 1, true);
+        Font labelFont = crlabel.getFont();
+        crlabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 8));
+        crlabel.setBorder(border);
+        float avf = crlabel.getAlignmentY();
+        // LOGGER4J.debug("Y=" + avf);
+        avf = (float) 0.8;
+        crlabel.setAlignmentY(avf);
+        // StyleConstants.setAlignment(defstyle, StyleConstants.ALIGN_CENTER);
+        StyleConstants.setComponent(CRstyle, crlabel);
+        return CRstyle;
+    }
+
+    private Style getAlertTitleStyle(StyledDocument doc, String text) {
+        return getFixedLabelstyle(doc, this.fixedStyleWidthMax, text);
+    }
+    private Style getFixedLabelstyle(StyledDocument doc, int width, String text) {
+        Style fixedLabelStyle = doc.getStyle(FIXED_LABEL_STYLENAME);
+        // component must always create per call setComponent.
+        JLabel fixedLabel = new JLabel(text);
+        //fixedLabel.setOpaque(true);
+        Dimension originalDim = fixedLabel.getPreferredSize();
+        LOGGER4J.debug("dim w=" + originalDim.getWidth() + " height=" + originalDim.getHeight());
+        fixedLabel.setPreferredSize(new Dimension(width, (int)originalDim.getHeight()));
+        fixedLabel.setMaximumSize(new Dimension(width, (int)originalDim.getHeight()));
+        LineBorder border = new LineBorder(Color.GREEN, 1, true);
+        //Font labelFont = crlabel.getFont();
+        //crlabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 8));
+        //fixedLabel.setBorder(border);
+        float avf = fixedLabel.getAlignmentY();
+        // LOGGER4J.debug("Y=" + avf);
+        avf = (float) 0.8;
+        fixedLabel.setAlignmentY(avf);
+        StyleConstants.setAlignment(fixedLabelStyle, StyleConstants.ALIGN_CENTER);
+        StyleConstants.setComponent(fixedLabelStyle, fixedLabel);
+        return fixedLabelStyle;
+    }
+
+    private Style getSampleButton(StyledDocument doc, String text) {
+        Style CRstyle = doc.getStyle(FIXED_LABEL_STYLENAME);
+        StyleConstants.setAlignment(CRstyle, StyleConstants.ALIGN_CENTER);
+
+        JButton button = new JButton();
+         button.setText(text);
+
+        button.setCursor(Cursor.getDefaultCursor());
+        button.setMargin(new Insets(0,0,0,0));
+        StyleConstants.setComponent(CRstyle, button);
+        return CRstyle;
+    }
 }

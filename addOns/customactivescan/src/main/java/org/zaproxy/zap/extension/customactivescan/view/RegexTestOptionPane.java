@@ -9,7 +9,6 @@ import javax.swing.text.StyledDocument;
 import javax.swing.text.Style;
 import java.awt.*;
 
-import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.MESSAGE_PREFIX;
 import static org.zaproxy.zap.extension.customactivescan.view.RegexTestDialog.*;
 
 @SuppressWarnings("serial")
@@ -67,7 +66,7 @@ public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.Rege
         this.dialog.nextBtnActionPerformed();
         int foundCount = searchTextPane.findplist.size();
         String message = String.format(
-                Constant.messages.getString(MESSAGE_PREFIX + "regexsearch.formatfound"),
+                Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.formatfound.text"),
                 searchTextPane.caretIndex + 1,
                 foundCount);
         messageLabel.setText(message);

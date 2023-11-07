@@ -33,6 +33,7 @@ public class CustomScannerListener implements org.parosproxy.paros.core.scanner.
                     @Override
                     public void run() {
                         scanLogPanel.disablePauseCheckBox();
+                        scanLogPanel.scrollScanLogTableToFirstTargetRow();
                     }
                 });
             }
@@ -60,7 +61,9 @@ public class CustomScannerListener implements org.parosproxy.paros.core.scanner.
 
     @Override
     public void alertFound(Alert alert) {
-
+        LOGGER4J.debug("alert id[" + alert.getAlertId() + "]");
+        LOGGER4J.debug("alert found Name[" + alert.getName() + "]");
+        LOGGER4J.debug("attack[" + alert.getAttack() + "]");
     }
 
     @Override

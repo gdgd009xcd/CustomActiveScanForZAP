@@ -3,22 +3,22 @@ package org.zaproxy.zap.extension.customactivescan.view;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * create basic dialog<br>
+ *
+ * <pre>
+ *  |------------------------------------------------|
+ *  |                                                |
+ *  |              mainPanelContent                  |
+ *  |                                                |
+ *  | -----------------------------------------------|
+ *  | | OK |                              |  CANCEL ||
+ *  |________________________________________________|
+ * </pre>
+ * @param <T>
+ */
 @SuppressWarnings("serial")
 public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildInterface {
-
-    /**
-     * create basic dialog<br>
-     *
-     * <pre>
-     *  |------------------------------------------------|
-     *  |                                                |
-     *  |              mainPanelContent                  |
-     *  |                                                |
-     *  | -----------------------------------------------|
-     *  | | OK |                              |  CANCEL ||
-     *  |________________________________________________|
-     * </pre>
-     */
 
     /**
      *

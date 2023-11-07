@@ -2,11 +2,13 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-## 23 - 2023-10-23
-### v0.7.7
+## [v0.8.0] - 2023-11-07
+### Changed
+- improve: display detected SQL injection on ScanLogPanel. now default befaviour while scanning is opened ScanLogPanel. but you can change this behaviour using [this checkbox](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/2.0.-CustomActiveScan-Tab-Panel#scanlog-panel)
+- improve: detected alert information is displayed at ScanLogPanel->popup the Result dialog. the Result Dialog shows compare LCS result of request/response and alert information.
 - bugfix: In Regex Test Dialog, Fixed incorrect behavior of the "Next" button that has skipped the next search string
 - improve: added new buttons/checkboxes to Regex Test Dialog. ([▲]Prev/[▼]Next Search button etc...) 
-- new feature: display detected SQL injection on ScanLogPanel(not completed.)
+
 
 ## 22 - 2023-10-18
 ### v0.7.6
@@ -106,8 +108,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### v0.0.3
 - getId changed to 40037
 ## 1 - 2020-09-02
-
 - first landing on github.
+
+## [v0.0.0] - 1970-0101
+### Added
+- xxxx...xx
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+### Sorry..
 
 
 
