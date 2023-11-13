@@ -16,7 +16,7 @@ public class CustomScannerListener implements org.parosproxy.paros.core.scanner.
     @Override
     public void scannerComplete(int id) {
         LOGGER4J.debug("scanner Completed scannerId[" + id + "]");
-        ScanLogPanelFrame scanLogPanelFrame = ExtensionAscanRules.scannerIdScanLogFrameMap.remove(id);
+        ScanLogPanelFrame scanLogPanelFrame = ExtensionAscanRules.getScanLogPanelFrame(id);
         PauseActionObject pauseActionObject = ExtensionAscanRules.scannerIdPauseActionMap.get(id);
 
         if (pauseActionObject != null) {
@@ -34,6 +34,7 @@ public class CustomScannerListener implements org.parosproxy.paros.core.scanner.
                     public void run() {
                         scanLogPanel.disablePauseCheckBox();
                         scanLogPanel.scrollScanLogTableToFirstTargetRow();
+                        scanLogPanel.repaintScanLogTable();
                     }
                 });
             }
@@ -41,12 +42,12 @@ public class CustomScannerListener implements org.parosproxy.paros.core.scanner.
 
         ExtensionAscanRules.scannerIdPauseActionMap.remove(id);
         ExtensionAscanRules.scannerIdWaitTimerMap.remove(id);
-        LOGGER4J.debug("scanner Completed scannerId[" + id + "] running scanlog count after this completion:" + ExtensionAscanRules.scannerIdScanLogFrameMap.size());
+        LOGGER4J.debug("scanner Completed scannerId[" + id + "] running scanlog count after this completion:" + ExtensionAscanRules.getSizeOfScanLogPanelFrameMap());
     }
 
     @Override
     public void hostNewScan(int id, String hostAndPort, HostProcess hostThread) {
-
+        LOGGER4J.debug("hostNewScan hostProcess:");
     }
 
     @Override

@@ -1,0 +1,96 @@
+package org.zaproxy.zap.extension.customactivescan;
+
+public class ParmGenMacroTraceParams {
+    int scannerId = -1;
+    private int tabIndex = -1; // Macro Request List tabindex in MacroBuilderUI
+    private int selected_request = -1; // scan target request stepno in ParmGenMacroTrace stepno
+    private int last_stepno = -1; // scan last request stepno in ParmGenMacroTrace stepno
+
+    public ParmGenMacroTraceParams(int scannerId, int selected_request, int lastStepNo, int tabindex) {
+        this.setParams(scannerId, selected_request, lastStepNo, tabindex);
+    }
+
+    public void setParams(int scannerId, int selected_request, int lastStepNo, int tabindex) {
+        this.scannerId = scannerId;
+        setSelectedRequestNo(selected_request);
+        setLastStepNo(lastStepNo);
+        this.tabIndex = tabindex;
+    }
+    public ParmGenMacroTraceParams(String hv) {
+        setString(hv);
+    }
+
+    /**
+     * Set Scan target request stepno in ParmGenMacroTrace.
+     *
+     * @param current
+     */
+    private void setSelectedRequestNo(int current) {
+        this.selected_request = current;
+    }
+
+    /**
+     * Get Scan target request stepno in ParmGenMacroTrace.
+     *
+     * @return
+     */
+    public int getSelectedRequestNo() {
+        return this.selected_request;
+    }
+
+    /**
+     * Set last perform request step in ParmGenMacroTrace. if this value == -1 then perform request
+     * entire ParmGenMacroTrace.rlist requests.
+     *
+     * @param last
+     */
+    private void setLastStepNo(int last) {
+        this.last_stepno = last;
+    }
+
+    /**
+     * Get last perform request step in ParmGenMacroTrace. if this value == -1 then perform request
+     * entire ParmGenMacroTrace.rlist requests.
+     *
+     * @return
+     */
+    public int getLastStepNo() {
+        return this.last_stepno;
+    }
+
+    /**
+     * get Macro Request List tabIndex in MacroBuilderUI
+     *
+     * @return
+     */
+    public int getTabIndex() {
+        return this.tabIndex;
+    }
+
+    public int getScannerId() {
+        return this.scannerId;
+    }
+
+    public String toString() {
+        return Integer.toString(this.selected_request)
+                + "|"
+                + Integer.toString(this.last_stepno)
+                + "|"
+                + Integer.toString(this.tabIndex);
+    }
+
+    private void setString(String s) {
+        if (s != null) {
+            String[] nv = s.split("\\|");
+            int nvlen = nv.length;
+            String[] nvpair = new String[nvlen];
+            while (nvlen-- > 0) {
+                nvpair[nvlen] = nv[nvlen];
+            }
+
+            selected_request = nv.length > 0 ? Integer.parseInt(nvpair[0]) : -1;
+            last_stepno = nv.length > 1 ? Integer.parseInt(nvpair[1]) : -1;
+            this.tabIndex = nv.length > 2 ? Integer.parseInt(nvpair[2]) : -1;
+        }
+    }
+}

@@ -2,13 +2,11 @@ package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.apache.commons.httpclient.URIException;
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.network.HttpMessage;
 import org.parosproxy.paros.network.HttpRequestHeader;
 import org.parosproxy.paros.network.HttpResponseHeader;
 import org.parosproxy.paros.core.scanner.Alert;
-import org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules;
-import org.zaproxy.zap.extension.customactivescan.HttpMessageWithLCSResponse;
-import org.zaproxy.zap.extension.customactivescan.StartEndPosition;
-import org.zaproxy.zap.extension.customactivescan.Utilities;
+import org.zaproxy.zap.extension.customactivescan.*;
 import org.zaproxy.zap.extension.customactivescan.model.AttackTitleType;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanJSONData;
 import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
@@ -36,7 +34,7 @@ import java.util.regex.Pattern;
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.ZAP_ICONS;
 
 @SuppressWarnings("serial")
-public class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition {
+public class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition, InterfacePopUpAction {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -88,9 +86,14 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
     RegexTestDialog regexTestDialog;
     int currentSelectedTableRowIndex = -1;
     int firstTargetRowIndex = -1;
+    HttpMessage selectedMessage = null;
+    private int scannerId;
+
+    private ParmGenMacroTraceParams pmtParams = null;
 
     public ScanLogPanel(JFrame jFrame, CustomScanMainPanel customScanMainPanel, String[] flagColumns, int scannerId, boolean isPaused) {
         super();
+        this.scannerId = scannerId;
         this.jFrame = jFrame;
         this.currentSelectedTableRowIndex = -1;
         setLayout(new BorderLayout());
@@ -286,7 +289,8 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             scanLogTable.getColumnModel().getColumn(colIndex++).setPreferredWidth(preferredWidth);
         }
 
-        JPopupMenu popupMenu = new JPopupMenu();
+        ScanLogPanelPopUp popupMenu = new ScanLogPanelPopUp(this);
+        /***
         JMenuItem menuShowSelectedMessage = new JMenuItem("showMessage");
         menuShowSelectedMessage.addActionListener(l ->{
             int selectedRowIndex = scanLogTable.getSelectedRow();
@@ -296,6 +300,7 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             }
         });
         popupMenu.add(menuShowSelectedMessage);
+         *****/
         scanLogTable.setComponentPopupMenu(popupMenu);
         scanLogTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         scanLogTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -306,6 +311,10 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
                     return;
                 }
                 int selectedRow = scanLogTable.getSelectedRow();
+                HttpMessageWithLCSResponse selectedMessageWithLCSResponse = resultMessageList.get(selectedRow);
+                selectedMessageWithLCSResponse.setPopUpInvokerComponent(ScanLogPanel.this);
+                selectedMessageWithLCSResponse.setPmtParams(ScanLogPanel.this.pmtParams);
+                ScanLogPanel.this.selectedMessage = selectedMessageWithLCSResponse;
                 if( ScanLogPanel.this.regexTestDialog != null) {// call showSelectedMessage when  already existed regexTestDialog.
                     LOGGER4J.debug("valueChanged excecuted:" + selectedRow);
                     ScanLogPanel.this.showSelectedMessage(selectedRow);
@@ -645,4 +654,36 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
         int rowIndex = getFirstTargetRowIndex();
         scrollScanLogTableToSpecifiedCellIndex(rowIndex, 0);
     }
+
+    public void repaintScanLogTable() {
+        this.scanLogTable.repaint();
+    }
+
+    public HttpMessage getSelectedMessage() {
+        return this.selectedMessage;
+    }
+
+    @Override
+    public void popUpActionPerformed(HttpMessage message) {
+        int selectedRowIndex = scanLogTable.getSelectedRow();
+        if (selectedRowIndex != -1) {
+            LOGGER4J.debug("menu show executed:" + selectedRowIndex);
+            showSelectedMessage(selectedRowIndex);
+        }
+    }
+
+    protected void postPmtParamsToScanLogPanel(int selectedRequestNo, int lastRequestNo, int tabIndex) {
+        LOGGER4J.info("ScanLogPanel postPmtParamsToScanLogPanel selectedRequestNo="
+                + selectedRequestNo + " lastRequestNo=" + lastRequestNo + " tabIndex=" + tabIndex);
+
+        this.pmtParams = new ParmGenMacroTraceParams(this.scannerId, selectedRequestNo, lastRequestNo, tabIndex);
+    }
+
+    public Integer getScannerId() {
+        return this.scannerId;
+    }
+
+
+
+
 }

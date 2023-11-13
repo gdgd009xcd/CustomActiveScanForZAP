@@ -604,6 +604,7 @@ public class CustomScanMainPanel extends JPanel {
             jfc.setSelectedFile(cfile);
         }
 
+        jfc.setAcceptAllFileFilterUsed(false);
         LOGGER4J.debug("start Popup Save Dialog");
         if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {// OK button
             File file = jfc.getSelectedFile();
@@ -677,6 +678,7 @@ public class CustomScanMainPanel extends JPanel {
             jfc.setSelectedFile(cfile);
         }
 
+        jfc.setAcceptAllFileFilterUsed(false);
         boolean loadResult = false;
         LOGGER4J.debug("start Popup Load Dialog");
         if (jfc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {// file open.

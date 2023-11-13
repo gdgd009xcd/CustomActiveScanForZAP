@@ -131,6 +131,7 @@ public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildI
      * }
      */
     protected void init(int fill, int anchor, Component mainPanelContent) {
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         GridBagLayout layout = new GridBagLayout();
         JPanel panel = new JPanel();
         panel.setLayout(layout);
