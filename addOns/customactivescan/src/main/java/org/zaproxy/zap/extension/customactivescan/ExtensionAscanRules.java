@@ -1,16 +1,24 @@
 package org.zaproxy.zap.extension.customactivescan;
 
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.core.scanner.HostProcess;
+import org.parosproxy.paros.extension.Extension;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
+import org.parosproxy.paros.view.View;
+import org.zaproxy.zap.control.AddOn;
+import org.zaproxy.zap.control.ExtensionFactory;
+import org.zaproxy.zap.extension.ascan.ExtensionActiveScan;
 import org.zaproxy.zap.extension.customactivescan.model.WaitTimerObject;
-import org.zaproxy.zap.extension.customactivescan.view.CustomScanMainPanel;
-import org.zaproxy.zap.extension.customactivescan.view.MainWorkPanelTab;
+import org.zaproxy.zap.extension.customactivescan.view.*;
 import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
-import org.zaproxy.zap.extension.customactivescan.view.ScanLogPanelFrame;
+import org.zaproxy.zap.utils.DisplayUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import javax.swing.ImageIcon;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,17 +37,21 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 			"org/zaproxy/zap/extension/customactivescan/resources";// RESOURCE root is relative path from addOns/customactivescan/src/main/resources
 
 	private static final String ZAP_RESOURCES_ROOT_ABSPATH = "/" + ZAP_RESOURCES_ROOT;
-	public static final String ZAP_ICONS = ZAP_RESOURCES_ROOT_ABSPATH + "/icons";// you can access any files under ZAP_ICONS
-																				 // by code like yourClassName.class.getResource(ZAP_ICONS + "/pause.png")
+	public static final String ZAP_ICONS = ZAP_RESOURCES_ROOT_ABSPATH + "/icons";
+	// you can access any files under ZAP_ICONS
+	// by code like yourClassName.class.getResource(ZAP_ICONS + "/pause.png")
+	public static ImageIcon cIcon = DisplayUtils.getScaledIcon(new ImageIcon(ScanLogPanel.class.getResource(ZAP_ICONS + "/C.png")));
 
-	public static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
+	//public static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
 
 	public static CustomScanMainPanel customScanMainPanel = null;
+
+	private PopUpMenuInAlert popUpMenuInAlert = null;
 	private static boolean unLoadCalled = false;
 
 	public static Map<HostProcess, Integer> hostProcessScannerIdMap = null;
 
-	public static Map<Integer, ScanLogPanelFrame> scannerIdScanLogFrameMap = null;
+	private static Map<Integer, ScanLogPanelFrame> scannerIdScanLogFrameMap = null;
 
 	public static Map<Integer, Thread> scannerIdThreadMap = null;
 
@@ -64,7 +76,7 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 
 	@Override
 	public String getDescription() {
-		return Constant.messages.getString("customactivescan.desc");
+		return Constant.messages.getString("customactivescan.desc.text");
 	}
 	
 	@Override
@@ -86,6 +98,7 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 			ExtensionAscanRules.customScanMainPanel.saveToNewFileIfNoSaved();
 		}
 		unLoadCalled = true;
+		setEnabled(false);
 	}
 
 	@Override
@@ -115,6 +128,19 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 		hook
 				.getHookView()
 				.addWorkPanel(new MainWorkPanelTab(hook, this));
+
+		//experimental use
+		//hook.getHookMenu().addPopupMenuItem(getPopUpMenuInAlert());
+
+		// popUp item for ScanLogPanel.
+		hook.getHookMenu().addPopupMenuItem(new PopUpMenuItem(ScanLogPanel.class,"showMessage", cIcon));
+	}
+
+	private PopUpMenuInAlert getPopUpMenuInAlert() {
+		if (this.popUpMenuInAlert == null) {
+			this.popUpMenuInAlert = new PopUpMenuInAlert();
+		}
+		return this.popUpMenuInAlert;
 	}
 
 	@Override
@@ -124,5 +150,61 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 		if (ExtensionAscanRules.customScanMainPanel != null && !unLoadCalled) {
 			ExtensionAscanRules.customScanMainPanel.saveToNewFileIfNoSaved();
 		}
+	}
+
+
+
+	private boolean isValidClassLoaded(
+			Class<? extends Object> unknownClazz,
+			String method,
+			Class<? extends Object> validClazz) {
+
+		try {
+			return unknownClazz.getMethod(method).getDeclaringClass().equals(validClazz);
+		} catch (NoSuchMethodException ex) {
+			LOGGER4J.error("isValidClassLoaded failed NoSuchMethodException method:" + method);
+		} catch (SecurityException ex) {
+			LOGGER4J.error(ex.getMessage(), ex);
+		}
+		return false;
+	}
+
+	public static ScanLogPanelFrame registerScanLogPanelFrame(int scannerId, ScanLogPanelFrame frame) {
+		return ExtensionAscanRules.scannerIdScanLogFrameMap.put(scannerId, frame);
+	}
+
+	public static ScanLogPanelFrame getScanLogPanelFrame(int scannerId) {
+		return ExtensionAscanRules.scannerIdScanLogFrameMap.get(scannerId);
+	}
+
+	public static ScanLogPanelFrame removeScanLogPanelFrame(int scannerId) {
+		return ExtensionAscanRules.scannerIdScanLogFrameMap.remove(scannerId);
+	}
+
+	public static int getSizeOfScanLogPanelFrameMap() {
+		return ExtensionAscanRules.scannerIdScanLogFrameMap.size();
+	}
+
+	public Integer[] postPmtParams(List<Integer[]> listIntegerArray) {
+		Integer[] postedArray = null;
+		List<Integer> postedList = new ArrayList<>();
+		for(Integer[] integerArray: listIntegerArray) {
+			int scannerId = integerArray[0];
+			int selectedRequestNo = integerArray[1];
+			int lastRequestNo = integerArray[2];
+			int tabIndex = integerArray[3];
+			ScanLogPanelFrame frame = getScanLogPanelFrame(scannerId);
+			if (frame != null) {
+				frame.postPmtParamsToScanLogPanel(selectedRequestNo, lastRequestNo, tabIndex);
+				postedList.add(scannerId);
+			}
+		}
+
+		postedArray = new Integer[postedList.size()];
+		int index = 0;
+		for(Integer i: postedList) {
+			postedArray[index++] = i;
+		}
+		return postedArray;
 	}
 }

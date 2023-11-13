@@ -2,6 +2,16 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [v0.8.0] - 2023-11-13
+### Changed
+- improve: display detected SQL injection on ScanLogPanel. now default befaviour while scanning is opened ScanLogPanel. but you can change this behaviour using [this checkbox](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/2.0.-CustomActiveScan-Tab-Panel#scanlog-panel)
+- improve: detected alert information is displayed at ScanLogPanel->popup the Result dialog. the Result Dialog shows compare LCS result of request/response and alert information.
+- bugfix: In Regex Test Dialog, Fixed incorrect behavior of the "Next" button that has skipped the next search string
+- improve: added new buttons/checkboxes to Regex Test Dialog. ([▲]Prev/[▼]Next Search button etc...) 
+- bugfix: Fixed a bug in the scanner pause function. If you close the ScanLog panel, the scan will be infinite waiting state in some situation.
+- maintenance: Added a function to cooperate with automacro builder.
+- maintenance: update README.md for adding image.
+
 ## 22 - 2023-10-18
 ### v0.7.6
 - maintenance: applied ”spotlessApply" to .kts files 
@@ -55,7 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## 12 - 2021-12-15
 ### v0.5.6
 - maintenance: removed the log4j2 library that this add-on contains
-- maintenance: upgraded OWASP ZAP dependency version  to 2.11.0
+- maintenance: upgraded ZAP dependency version  to 2.11.0
 
 ## 11 - 2021-12-11
 ### v0.5.5
@@ -100,8 +110,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### v0.0.3
 - getId changed to 40037
 ## 1 - 2020-09-02
-
 - first landing on github.
+
+## [v0.0.0] - 1970-0101
+### Added
+- xxxx...xx
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+### Sorry..
 
 
 

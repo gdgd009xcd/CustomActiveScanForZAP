@@ -12,16 +12,15 @@ public class InjectionPatterns implements DeepClone {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
+    // <---START LINE: "@Expose" members output to JSON file.
     @Expose
     public String name = null; // required : set something unique name
     @Expose
     public List<TrueFalsePattern> patterns = null;
-
-    public InjectionPatterns() {
-        clearPatterns();
-    }
+    // --->END LINE: "@Expose" members output to JSON file.
 
     public static class TrueFalsePattern implements DeepClone {
+        // <---START LINE: "@Expose" members output to JSON file.
         @Expose
         public String trueValuePattern = null; // required condition true   e.g.:[1'='1' -- ]
         @Expose
@@ -34,6 +33,11 @@ public class InjectionPatterns implements DeepClone {
         public String falseNamePattern = null; // optional condition false for sanitizing name
         @Expose
         public String errorNamePattern = null; // optional condition error for sanitizing name
+        // --->END LINE: "@Expose" members output to JSON file.
+
+        // Without "@Expose" members which is are NOT output to JSON file
+
+
 
         @Override
         public TrueFalsePattern clone() {
@@ -47,6 +51,9 @@ public class InjectionPatterns implements DeepClone {
         }
     }
 
+    public InjectionPatterns() {
+        clearPatterns();
+    }
     public void clearPatterns() {
         patterns = new ArrayList<>();
     }

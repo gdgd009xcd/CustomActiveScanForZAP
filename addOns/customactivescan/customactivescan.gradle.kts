@@ -1,6 +1,7 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.7.6"
+
+version = "0.8.0"
 description = "a Active Scanner with custmizable rules"
 
 val jar by tasks.getting(Jar::class) {
@@ -16,6 +17,7 @@ zapAddOn {
 
     manifest {
         author.set("gdgd009xcd")
+        url.set("https://gdgd009xcd.github.io/CustomActiveScanForZAP")
         repo.set("https://github.com/gdgd009xcd/CustomActiveScanForZAP")
         helpSet {
             baseName.set("help%LC%.helpset")
@@ -25,6 +27,7 @@ zapAddOn {
 }
 
 dependencies {
+    //implementation(files("../../../CustomActiveScanLib/out/artifacts/CustomActiveScanLib_jar/CustomActiveScanLib.jar"))
     implementation("com.google.code.gson:gson:2.9.0")
     testImplementation("org.apache.commons:commons-lang3:3.9")
 }

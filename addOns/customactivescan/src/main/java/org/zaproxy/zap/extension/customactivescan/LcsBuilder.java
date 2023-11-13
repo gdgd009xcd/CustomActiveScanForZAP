@@ -6,8 +6,12 @@ public interface LcsBuilder<T> {
 	public void append(T t);
 	public int size();
 	public void clear();
-	public void appenddiffA(T ta);
-	public void appenddiffB(T tb);
+	public void appendDiffA(T ta);
+	public void appendDiffB(T tb);
+	public void appendLcsIdxOnDiffA(int idx);
+	public List<Integer> getLcsIdxOnDiffA();
+	public List<Integer> getLcsIdxOnDiffB();
+	public void appendLcsIdxOnDiffB(int idx);
 	public void setReverse();
 	public boolean isReverseLCS();
 	public boolean isReverseDiffA();
@@ -20,4 +24,8 @@ public interface LcsBuilder<T> {
 	public void setOriginalDiffB(ArrayListWrapper<T> wrapperDiffB);
 	public int getDiffASize();
 	public int getDiffBSize();
+	public void setWrapperSourceA(ArrayListWrapper<T> wrapperSourceA);
+	public void setWrapperSourceB(ArrayListWrapper<T> wrapperSourceB);
+
+
 }

@@ -1,12 +1,19 @@
 package org.zaproxy.zap.extension.customactivescan;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LcsCharacterList implements LcsBuilder<Character>{
 	private StringBuilder builder = null;
+	List<Integer> listLcsIdx_diffa;
 	private StringBuilder da;
+	List<Integer> listLcsIdx_diffb;
+	GenericArray<List<Integer>> lcsIdxArrayObject;
+	List<Integer>[] lcsIdxArray;
+	int diffArrayIndexA;
+	int diffArrayIndexB;
 	private StringBuilder db;
-	private StringBuilder[] diff = null;
+	private StringBuilder[] diffArray = null;
 	private boolean lcsReverse;
 	private boolean diffAReverse;
 	private boolean diffBReverse;
@@ -42,13 +49,7 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 	@Override
 	public void setABreverse(boolean b) {
 		ABreverse = b;
-		if(ABreverse) {
-			diff[0] = db;
-			diff[1] = da;
-		}else {
-			diff[0] = da;
-			diff[1] = db;
-		}
+		setABreverseInternal();
 	}
 
 	@Override
@@ -116,6 +117,20 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 		return db.length();
 	}
 
+	@Override
+	public void setWrapperSourceA(ArrayListWrapper<Character> wrapperSourceA) {
+		if (ABreverse) {
+
+		} else {
+
+		}
+	}
+
+	@Override
+	public void setWrapperSourceB(ArrayListWrapper<Character> wrapperSourceB) {
+
+	}
+
 	/**
 	 * add character to builder as LCS.
 	 * add characters in REVERSE ORDER.
@@ -147,27 +162,42 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 		lcsReverse = false;
 		diffAReverse = false;
 		diffBReverse = false;
-		
-		diff = new StringBuilder[2];
-		if(ABreverse) {
-			diff[0] = db;
-			diff[1] = da;
-		}else {
-			diff[0] = da;
-			diff[1] = db;
-		}
+
+		listLcsIdx_diffa = new ArrayList<>();
+		listLcsIdx_diffb = new ArrayList<>();
+		lcsIdxArrayObject = new GenericArray<>(listLcsIdx_diffa, 2);
+		lcsIdxArray = lcsIdxArrayObject.getArray();
+		diffArray = new StringBuilder[2];
+		setABreverseInternal();
 	}
 
+	private void setABreverseInternal() {
+		if(ABreverse) {
+			//diffs[0] = diffb;
+			//diffs[1] = diffa;
+			diffArrayIndexA = 1;
+			diffArrayIndexB = 0;
+		}else {
+			//diffs[0] = diffa;
+			//diffs[1] = diffb;
+			diffArrayIndexA = 0;
+			diffArrayIndexB = 1;
+		}
+		diffArray[diffArrayIndexA] = da;
+		diffArray[diffArrayIndexB] = db;
+		lcsIdxArrayObject.set(diffArrayIndexA, listLcsIdx_diffa);
+		lcsIdxArrayObject.set(diffArrayIndexB, listLcsIdx_diffb);
+	}
 	/**
 	 * append Character to list diffA.<BR>
 	 * this method add Character to diffA in REVERSE ORDER.
 	 * @param ta
 	 */
 	@Override
-	public void appenddiffA(Character ta) {
+	public void appendDiffA(Character ta) {
 		// TODO Auto-generated method stub
-		
-		diff[0].append(ta);
+		//diff[0].append(ta);
+		diffArray[0].append(ta);
 		
 	}
 
@@ -177,12 +207,34 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 	 * @param tb
 	 */
 	@Override
-	public void appenddiffB(Character tb) {
+	public void appendDiffB(Character tb) {
 		// TODO Auto-generated method stub
-		diff[1].append(tb);
+		//diff[1].append(tb);
+		diffArray[1].append(tb);
 		
 	}
 
+	@Override
+	public void appendLcsIdxOnDiffA(int idx) {
+		//lcsIdxArray.get(0).add(idx);
+		lcsIdxArray[0].add(idx);
+	}
+
+	@Override
+	public void appendLcsIdxOnDiffB(int idx) {
+		//lcsIdxArray.get(1).add(idx);
+		lcsIdxArray[1].add(idx);
+	}
+
+	@Override
+	public List<Integer> getLcsIdxOnDiffA() {
+		return listLcsIdx_diffa;
+	}
+
+	@Override
+	public List<Integer> getLcsIdxOnDiffB() {
+		return listLcsIdx_diffb;
+	}
 
 	/**
 	 * get String from DiffA in "Original Order".

@@ -2,14 +2,14 @@
 ![LICENSE](https://img.shields.io/github/license/gdgd009xcd/CustomActiveScanForZAP)
 [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/gdgd009xcd/CustomActiveScanForZAP.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/gdgd009xcd/CustomActiveScanForZAP/context:java)  
 
-A OWASP ZAP AddOn ActiveScan for detecting SQL injections.
+A ZAP AddOn ActiveScan for detecting SQL injections.
 Real Web application page has dynamic contents such as special sale products list or CSRF token, which is not affected by input parameters.
 The web application vulnerability scanner manipulates input parameters to detect vulnerabilities by affecting page content. 
 The scanner may fail to detect vulnerabilities if the dynamic content of the web page has contents which is unaffected by the input parameters. 
 Therefore, this CustomActiveScan uses LCS (Longest Common Sequece) algorithm to remove these unnecessarily dynamic content.
 Due to this method, this scanner has a superior vulnerability detection capability.
 
-![mainpanel](https://raw.githubusercontent.com/gdgd009xcd/RELEASES/master/IMG/ZAP/customactivescantabmain.png)
+![typical usage](assets/images/custom.gif)
 
 ### how to remove these dynamic contents which is not affected input parameters.
 
@@ -42,14 +42,14 @@ LCS remove the different token values ​​from the two responses as follows:
 ##  SQL injection test some results.
 <table>
  <TR><TH ROWSPAN="2">SQL injection Detection rate<BR>(Detected/Total)</TH><TH>CustomActiveScan<BR>ForZAP <BR>0.5.2</TH><TH>Active Scanner Rules(alpha)<BR>32.0.0</TH><TH>Active Scanner Rules(beta)<BR>37.0.0</TH><TH>Active Scanner Rules<BR>41.0.0</TH><TH>Advanced SQLInjection Scanner<BR>15.0.0</TH></TR>
- <TR><TH>100%<BR>(12/12)</TH><TH>0%<BR>(0/12)</TH><TH>0%<BR>(0/12)</TH><TH>17%<BR>(2/12)</TH><TH>50%<BR>(6/12)</TH></TR>
+ <TR><TH>100%<BR>(10/10)</TH><TH>0%<BR>(0/10)</TH><TH>0%<BR>(0/10)</TH><TH>17%<BR>(2/10)</TH><TH>50%<BR>(6/10)</TH></TR>
  </table>
   
 [See Details](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/99.1.-SQL-injection-detection-test-results-with-ActiveScan)
 
 ## Prerequisite
 
-* OWASP ZAP ver 2.13.0 or later
+* ZAPROXY ver 2.13.0 or later
 * java ver 11 or later
 
 ## Download & Building
@@ -80,3 +80,6 @@ $
 
 ## how to use
 [Basic Usage](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/1.0.-Basic-Usage)
+
+## Author
+### [gdgd009xcd](https://gdgd009xcd.github.io/)

@@ -1,5 +1,13 @@
 package org.zaproxy.zap.extension.customactivescan;
 
+import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.control.Control;
+import org.parosproxy.paros.core.scanner.Alert;
+import org.parosproxy.paros.core.scanner.Plugin;
+import org.parosproxy.paros.core.scanner.PluginFactory;
+import org.zaproxy.zap.extension.pscan.ExtensionPassiveScan;
+import org.zaproxy.zap.extension.pscan.PluginPassiveScanner;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -567,5 +575,49 @@ public class Utilities {
             return true;
         }
         return false;
+    }
+    public static String getInputVectorName(Alert alert) {
+        String inputVector = alert.getInputVector();
+        if (inputVector.isEmpty()) {
+            return "";
+        }
+        String key = "variant.shortname." + inputVector;
+        if (Constant.messages.containsKey(key)) {
+            return Constant.messages.getString(key);
+        }
+        return inputVector;
+    }
+
+    public static String getSourceData(Alert alert) {
+        String source = Constant.messages.getString(alert.getSource().getI18nKey());
+        if (alert.getPluginId() == -1) {
+            return source;
+        }
+
+        StringBuilder strBuilder = new StringBuilder(source);
+        strBuilder.append(" (").append(alert.getPluginId());
+        if (alert.getSource() == Alert.Source.ACTIVE) {
+            Plugin plugin = PluginFactory.getLoadedPlugin(alert.getPluginId());
+            if (plugin != null) {
+                strBuilder.append(" - ").append(plugin.getName());
+            }
+        } else if (alert.getSource() == Alert.Source.PASSIVE) {
+            ExtensionPassiveScan ext =
+                    Control.getSingleton()
+                            .getExtensionLoader()
+                            .getExtension(ExtensionPassiveScan.class);
+            if (ext != null) {
+                PluginPassiveScanner scanner = ext.getPluginPassiveScanner(alert.getPluginId());
+                if (scanner != null) {
+                    strBuilder.append(" - ").append(scanner.getName());
+                }
+            }
+        }
+        strBuilder.append(')');
+        return strBuilder.toString();
+    }
+
+    public static String normlizedId(int id) {
+        return id != -1 ? Integer.toString(id) : "";
     }
 }

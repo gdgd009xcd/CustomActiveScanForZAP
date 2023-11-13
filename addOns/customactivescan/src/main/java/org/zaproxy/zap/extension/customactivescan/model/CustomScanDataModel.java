@@ -16,17 +16,18 @@ import java.util.List;
 public class CustomScanDataModel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
-    private final String CONFIG_PREFIX = "customactivescan.config.";
-    private final String CONFIG_FILE_PATH = ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString(CONFIG_PREFIX + "filename");
+    private final String CONFIG_FILE_PATH = ExtensionAscanRules.ZAPHOME_DIR + Constant.messages.getString("customactivescan.config.filename");
     private ConfigFile configFile = null;// config file JSON data which includes save file name path(absFileNamePath)
 
     private CustomScanJSONData customScanData;// configration data which is saved absFileNamePath
 
     public static class ConfigFile {
+        // <---START LINE: "@Expose" members output to JSON file.
         @Expose
         String absFileNamePath;
         @Expose
         boolean isSaved;
+        // --->END LINE: "@Expose" members output to JSON file.
 
         boolean isSampleLoaded;
 
