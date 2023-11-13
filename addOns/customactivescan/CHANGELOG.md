@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - improve: added new buttons/checkboxes to Regex Test Dialog. ([▲]Prev/[▼]Next Search button etc...) 
 - bugfix: Fixed a bug in the scanner pause function. If you close the ScanLog panel, the scan will be infinite waiting state in some situation.
 - maintenance: Added a function to cooperate with automacro builder.
+- maintenance: update README.md for adding image.
 
 ## 22 - 2023-10-18
 ### v0.7.6
