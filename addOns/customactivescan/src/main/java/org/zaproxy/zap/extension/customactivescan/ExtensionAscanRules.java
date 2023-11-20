@@ -46,6 +46,8 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 
 	public static CustomScanMainPanel customScanMainPanel = null;
 
+	private MainWorkPanelTab mainWorkPanelTab = null;
+
 	private PopUpMenuInAlert popUpMenuInAlert = null;
 	private static boolean unLoadCalled = false;
 
@@ -125,9 +127,11 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 			scannerIdWaitTimerMap = new ConcurrentHashMap<>();
 		}
 
+		this.mainWorkPanelTab = new MainWorkPanelTab(hook, this);
+
 		hook
 				.getHookView()
-				.addWorkPanel(new MainWorkPanelTab(hook, this));
+				.addWorkPanel(this.mainWorkPanelTab);
 
 		//experimental use
 		//hook.getHookMenu().addPopupMenuItem(getPopUpMenuInAlert());
@@ -206,5 +210,9 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 			postedArray[index++] = i;
 		}
 		return postedArray;
+	}
+
+	public MainWorkPanelTab getMainWorkPanelTab() {
+		return this.mainWorkPanelTab;
 	}
 }

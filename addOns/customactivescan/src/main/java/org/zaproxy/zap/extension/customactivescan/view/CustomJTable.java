@@ -7,9 +7,15 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+
+import org.parosproxy.paros.Constant;
+import org.zaproxy.zap.extension.customactivescan.model.ModifyType;
+
+import static org.zaproxy.zap.extension.customactivescan.view.MyFontUtils.getScale;
 
 @SuppressWarnings("serial")
 public class CustomJTable extends JTable implements CellEditorListener {
@@ -19,6 +25,30 @@ public class CustomJTable extends JTable implements CellEditorListener {
     CustomScanMainPanel mainPanel;
     JPopupMenu popupTableMenu;
 
+    private static final int[] columnSizes = {
+            5,
+            15,
+            15,
+            15,
+            15,
+            17,
+            18
+    };
+    private static final Object[] addRowData = new Object[] {
+            ModifyType.Add,
+            ""
+    };
+
+    private static final String[] headerToolTips = {
+            Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col0.tooltip.text"),
+            Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col1.tooltip.text"),
+            Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col2.tooltip.text"),
+            Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col3.tooltip.text"),
+            Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col4.tooltip.text"),
+            Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col5.tooltip.text"),
+            Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col6.tooltip.text")
+    };
+
     public CustomJTable(CustomScanMainPanel mainPanel, JScrollPane scroller, DefaultTableModel model) {
         super(model);
         this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);// you can select only 1 row at a time.
@@ -27,20 +57,38 @@ public class CustomJTable extends JTable implements CellEditorListener {
 
         scroller.setViewportView(this);
 
+        TableColumn column0 = this.getColumnModel().getColumn(0);
+        column0.setCellEditor(new ComboBoxCellEditor());
+        column0.setCellRenderer(new CustomJTableCellRenderer());
+        TableHeaderToolTips tableHeaderToolTips =  new TableHeaderToolTips(
+                this.getColumnModel(),
+                headerToolTips);
+        this.setTableHeader(tableHeaderToolTips);
+
+
+
+        for(int colIndex = 0; colIndex < this.getColumnModel().getColumnCount(); colIndex++) {
+            TableColumn column =  this.getColumnModel().getColumn(colIndex);
+            float width = (float) columnSizes[colIndex]/100 * 400;
+            int widthInteger = Math.round(width);
+            column.setPreferredWidth(widthInteger);
+        }
+
         // popup menu
         this.popupTableMenu = new JPopupMenu();
         JMenuItem insertTableRow = new JMenuItem("Insert");
         insertTableRow.addActionListener(l ->{
             int selectedRow = this.getSelectedRow();
             if (selectedRow != -1) {
-                this.tableModel.insertRow(selectedRow, new Object[0]);
+
+                this.tableModel.insertRow(selectedRow, addRowData);
             }
         });
         this.popupTableMenu.add(insertTableRow);
 
         JMenuItem addTableRow = new JMenuItem("Add");
         addTableRow.addActionListener(l ->{
-            this.tableModel.addRow(new Object[0]);
+            this.tableModel.addRow(addRowData);
         });
         this.popupTableMenu.add(addTableRow);
 
