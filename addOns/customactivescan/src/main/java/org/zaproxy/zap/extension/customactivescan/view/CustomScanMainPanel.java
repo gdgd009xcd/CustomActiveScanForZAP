@@ -1,9 +1,11 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.view.View;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanDataModel;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanJSONData;
 import org.zaproxy.zap.extension.customactivescan.model.InjectionPatterns;
+import org.zaproxy.zap.extension.customactivescan.model.ModifyType;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -20,6 +22,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,8 +51,12 @@ public class CustomScanMainPanel extends JPanel {
     JTextField maximumIdleTimeTextField;
     JTextField requestCountTextField;
 
-    public CustomScanMainPanel() {
+    private MainWorkPanelTab mainWorkPanelTab = null;
+
+    public CustomScanMainPanel(MainWorkPanelTab mainWorkPanelTab) {
         super(new GridBagLayout());
+
+        this.mainWorkPanelTab = mainWorkPanelTab;
 
         this.showFileDialog = false;
         this.ruleComboBoxActionIsNoNeedSave = false;
@@ -379,7 +386,7 @@ public class CustomScanMainPanel extends JPanel {
             DefaultTableModel defaultTableModel = new DefaultTableModel();
             if (selectedScanRule != null) {
                 ruleTypeLabel.setText(selectedScanRule.getRuleTypeName());
-                List<String[]> tableDataList = new ArrayList<>();
+                List<Object[]> tableDataList = new ArrayList<>();
 
                 if (scanLogCheckBox != null) {
                     LOGGER4J.debug("scanLogCheckBox setSelected in createRuleTable");
@@ -388,9 +395,11 @@ public class CustomScanMainPanel extends JPanel {
 
                 if (selectedScanRule.ruleType == CustomScanJSONData.RuleType.SQL) {
 
-                    String[] columnNames = {"TrueValue", "FalseValue", "ErrorValue", "TrueName", "FalseName", "ErrorName"};
+                    String[] columnNames = {"Modify", "TrueValue", "FalseValue", "ErrorValue", "TrueName", "FalseName", "ErrorName"};
                     for (InjectionPatterns.TrueFalsePattern patternRow : selectedScanRule.patterns.patterns) {
-                        String[] rowData = {patternRow.trueValuePattern,
+                        Object[] rowData = {
+                                patternRow.modifyType,
+                                patternRow.trueValuePattern,
                                 patternRow.falseValuePattern,
                                 patternRow.errorValuePattern,
                                 patternRow.trueNamePattern,
@@ -399,17 +408,18 @@ public class CustomScanMainPanel extends JPanel {
                         };
                         tableDataList.add(rowData);
                     }
-                    String[][] tableDataArray = tableDataList.toArray(new String[0][0]);// specified zero size array means that  new array will be allocated
+                    Object[][] tableDataArray = tableDataList.toArray(new Object[0][0]);// specified zero size array means that  new array will be allocated
                     defaultTableModel.setDataVector(tableDataArray, columnNames);
                 } else { // RuleType.PenTest
-                    String[] columnNames = {"trueValue"};
+                    String[] columnNames = {"Modify", "TrueValue"};
                     for (InjectionPatterns.TrueFalsePattern patternRow : selectedScanRule.patterns.patterns) {
-                        String[] rowData = {
+                        Object[] rowData = {
+                                patternRow.modifyType,
                                 patternRow.trueValuePattern
                         };
                         tableDataList.add(rowData);
                     }
-                    String[][] tableDataArray = tableDataList.toArray(new String[0][0]);// specified zero size array means that  new array will be allocated
+                    Object[][] tableDataArray = tableDataList.toArray(new Object[0][0]);// specified zero size array means that  new array will be allocated
                     defaultTableModel.setDataVector(tableDataArray, columnNames);
                 }
             } else {
@@ -530,6 +540,12 @@ public class CustomScanMainPanel extends JPanel {
                 this.flagPatternListModel.addElement(data);
             }
             this.ruleComboBoxActionIsNoNeedSave = false;
+            // <---this below code is exist for fixing problems in selecting JTable header
+            // (Null Exception is occured in some Flat IntelliJ LookAndFeel.)
+            View.getSingleton().getWorkbench().getTabbedWork().setVisible(this.mainWorkPanelTab, false);
+            View.getSingleton().getWorkbench().getTabbedWork().setVisible(this.mainWorkPanelTab, true);
+            this.mainWorkPanelTab.setTabFocus();
+            // --->
         }
     }
 
@@ -714,18 +730,20 @@ public class CustomScanMainPanel extends JPanel {
         if ( selectedScanRule.ruleType == CustomScanJSONData.RuleType.SQL) {
             for(int i = 0; i < rowCount; i++) {
                 selectedScanRule.patterns.addPattern(
-                        (String)jTableModel.getValueAt(i, 0),
+                        (ModifyType) jTableModel.getValueAt(i, 0),
                         (String)jTableModel.getValueAt(i, 1),
                         (String)jTableModel.getValueAt(i, 2),
                         (String)jTableModel.getValueAt(i, 3),
                         (String)jTableModel.getValueAt(i, 4),
-                        (String)jTableModel.getValueAt(i, 5)
+                        (String)jTableModel.getValueAt(i, 5),
+                        (String)jTableModel.getValueAt(i, 6)
                 );
             }
         } else {// PenTest
             for(int i = 0; i < rowCount; i++) {
                 selectedScanRule.patterns.addPattern(
-                        (String)jTableModel.getValueAt(i, 0),
+                        (ModifyType)jTableModel.getValueAt(i, 0),
+                        (String)jTableModel.getValueAt(i, 1),
                         null,
                         null,
                         null,
@@ -774,7 +792,7 @@ public class CustomScanMainPanel extends JPanel {
         scanRule.ruleType = ruleType;
         scanRule.doScanLogOutput = scanLogIsSelected;
         scanRule.patterns.name = ruleName;
-        scanRule.patterns.addPattern("", "", "", "", "", "");
+        scanRule.patterns.addPattern(ModifyType.Add,"", "", "", "", "", "");
         this.scanDataModel.addNewScanRule(scanRule);
         fileSaveAction();
         this.ruleComboBox.addItem(ruleName);// must do this after addNewScanRule method is called. because addItem method invoke ruleComboBoxActionPerformed method.

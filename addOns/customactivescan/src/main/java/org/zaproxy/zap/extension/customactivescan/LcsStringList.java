@@ -10,31 +10,33 @@ public class LcsStringList implements LcsBuilder<String>{
 
 	private static final IteratorActionFactory<String> iteratorActionStringFactory = new IteratorActionFactory<>();
 	private static final IteratorActionFactory<Integer> iteratorActionIntegerFactory = new IteratorActionFactory<>();
-	List<String> strings;
+	private List<String> strings;
 
-	List<Integer> listLcsIdx_diffa;
-	List<String> diffa;
-	ArrayListWrapper<String> wrapperSourceA = null;
+	private List<Integer> listLcsIdx_diffa;
+	private List<String> diffa;
+	private ArrayListWrapper<String> wrapperSourceA = null;
 
 
-	List<Integer> listLcsIdx_diffb;
-	List<String> diffb;
-	ArrayListWrapper<String> wrapperSourceB = null;
+	private List<Integer> listLcsIdx_diffb;
+	private List<String> diffb;
+	private ArrayListWrapper<String> wrapperSourceB = null;
 
-	String lcschars;
-	GenericArray<List<String>> diffArrayObject;
-	List<String>[] diffArray;
-	GenericArray<List<Integer>> lcsIdxArrayObject;
-	List<Integer>[] lcsIdxArray;
-	int diffArrayIndexA;
-	int diffArrayIndexB;
-	boolean lcsReverse;
-	boolean ABreverse = false;
-	boolean diffAreverse;
-	boolean diffBreverse;
-	String delimiter;
-	int rowSize;
-	boolean isInitializedByLcsCharacterList;
+	private String lcschars;
+	private GenericArray<List<String>> diffArrayObject;
+	private List<String>[] diffArray;
+	private GenericArray<List<Integer>> lcsIdxArrayObject;
+	private List<Integer>[] lcsIdxArray;
+	private int diffArrayIndexA;
+	private int diffArrayIndexB;
+	private boolean lcsReverse;
+	private boolean ABreverse = false;
+	private boolean diffAreverse;
+	private boolean diffBreverse;
+	private String delimiter;
+	private int rowSize;
+	private boolean isInitializedByLcsCharacterList;
+	private int aPercent;
+	private int bPercent;
 
 	LcsStringList(){
 		clear();
@@ -55,6 +57,7 @@ public class LcsStringList implements LcsBuilder<String>{
 		this.listLcsIdx_diffb = cl.getLcsIdxOnDiffB();// reverse order
 		this.wrapperSourceA = wrapperSourceA;
 		this.wrapperSourceB = wrapperSourceB;
+		this.setPercents(cl.getApercent(), cl.getBpercent());
 	}
 
 	@Override
@@ -103,6 +106,8 @@ public class LcsStringList implements LcsBuilder<String>{
 		setABreverseInternal();
 		delimiter = null;
 		rowSize = 1;
+		aPercent = -1;
+		bPercent = -1;
 
 	}
 
@@ -459,6 +464,23 @@ public class LcsStringList implements LcsBuilder<String>{
 		} else {
 			this.wrapperSourceB = wrapperSourceB;
 		}
+	}
+
+	@Override
+	public void setPercents(int aPercent, int bPercent) {
+		this.aPercent = aPercent;
+		this.bPercent = bPercent;
+
+	}
+
+	@Override
+	public int getApercent() {
+		return this.aPercent;
+	}
+
+	@Override
+	public int getBpercent() {
+		return this.bPercent;
 	}
 
 	public void setDelimiter(String delimiter) {

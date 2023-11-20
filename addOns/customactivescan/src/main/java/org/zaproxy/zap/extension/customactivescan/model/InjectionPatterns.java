@@ -22,6 +22,8 @@ public class InjectionPatterns implements DeepClone {
     public static class TrueFalsePattern implements DeepClone {
         // <---START LINE: "@Expose" members output to JSON file.
         @Expose
+        public ModifyType modifyType = ModifyType.Add;
+        @Expose
         public String trueValuePattern = null; // required condition true   e.g.:[1'='1' -- ]
         @Expose
         public String falseValuePattern = null; // required condition false e.g.:[1'='0' -- ]
@@ -58,8 +60,9 @@ public class InjectionPatterns implements DeepClone {
         patterns = new ArrayList<>();
     }
 
-    public void addPattern(String trueValue, String falseValue, String errorValue, String trueName, String falseName, String errorName) {
+    public void addPattern(ModifyType modifyType, String trueValue, String falseValue, String errorValue, String trueName, String falseName, String errorName) {
         TrueFalsePattern pattern = new TrueFalsePattern();
+        pattern.modifyType = modifyType;
         pattern.trueValuePattern = trueValue;
         pattern.falseValuePattern = falseValue;
         pattern.errorValuePattern = errorValue;

@@ -607,7 +607,8 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             if (resultMessageList.size() > row) {
                 HttpMessageWithLCSResponse message = resultMessageList.get(row);
                 if (message != null) {
-                    return message.hasResponseLCS() && message.getAttackTitleType() != AttackTitleType.Original;
+                    //return message.hasResponseLCS() && message.getAttackTitleType() != AttackTitleType.Original;
+                    return message.getAlert() != null;
                 }
             }
         } catch (Exception ex) {

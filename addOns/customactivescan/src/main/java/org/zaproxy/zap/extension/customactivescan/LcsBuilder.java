@@ -26,6 +26,11 @@ public interface LcsBuilder<T> {
 	public int getDiffBSize();
 	public void setWrapperSourceA(ArrayListWrapper<T> wrapperSourceA);
 	public void setWrapperSourceB(ArrayListWrapper<T> wrapperSourceB);
+	public void setPercents(int aPercent, int bPercent);
+	public int getApercent();
+	public int getBpercent();
+
+
 
 
 }

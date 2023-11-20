@@ -2,6 +2,12 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [v0.8.1] - 2023-11-20
+### Changed
+- improve : Added new column in [main panel](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/2.0.-CustomActiveScan-Main-Panel#1-sql-rule-type)
+- improve : [the result dialog](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/2.0.-CustomActiveScan-Main-Panel#4-result-dialog) always shows LCS compare results whether scanner detects injection or not.
+- maintenance: updated readme.md, wiki page
+
 ## [v0.8.0] - 2023-11-13
 ### Changed
 - improve: display detected SQL injection on ScanLogPanel. now default befaviour while scanning is opened ScanLogPanel. but you can change this behaviour using [this checkbox](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/2.0.-CustomActiveScan-Tab-Panel#scanlog-panel)

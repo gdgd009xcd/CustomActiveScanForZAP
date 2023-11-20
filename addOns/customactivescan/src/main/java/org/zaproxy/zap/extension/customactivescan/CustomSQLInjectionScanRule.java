@@ -9,6 +9,7 @@ import org.parosproxy.paros.core.scanner.Category;
 import org.parosproxy.paros.core.scanner.HostProcess;
 import org.parosproxy.paros.network.HttpHeaderField;
 import org.parosproxy.paros.network.HttpMessage;
+import org.parosproxy.paros.network.HttpRequestHeader;
 import org.parosproxy.paros.network.HttpResponseHeader;
 import org.zaproxy.zap.extension.ascan.ActiveScan;
 import org.zaproxy.zap.extension.ascan.ExtensionActiveScan;
@@ -24,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -241,6 +243,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
         HttpMessageWithLCSResponse normalMessage = sendRequestAndCalcLCS(
                 comparator,
+                ModifyType.Add,
                 null,
                 null,
                 scannerId,
@@ -251,18 +254,32 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 "[" + origParamValue + "]");
         if(normalMessage==null)return;
         normalMessage.setPercentString("");
-        updateScanLogPanel(scannerId,normalMessage, selectedScanRule);
+        updateScanLogPanel(scannerId,normalMessage, -1,null, selectedScanRule);
         String[] normalBodyOutputs = getUnstrippedStrippedResponse(normalMessage, origParamValue, null);
         int injectionPatternGroupIndex = 0;
 
+        boolean hasJsonBodyInRequest = false;
+        HttpRequestHeader requestHeader = msg.getRequestHeader();
+        if (requestHeader.hasContentType("json")) {
+            hasJsonBodyInRequest = true;
+        }
         LOOPTRUE: for(Iterator<InjectionPatterns.TrueFalsePattern> it = patterns.iterator(); it.hasNext() && !sqlInjectionFoundForUrl; injectionPatternGroupIndex++) {
             InjectionPatterns.TrueFalsePattern tfrpattern = it.next();
 
+            if (!hasJsonBodyInRequest && tfrpattern.modifyType == ModifyType.JSON) {// skip JSON test if request body Content-Type is NOT json.
+                continue;
+            }
+
+
             // 1. Original response matches true condition
             String trueValue = origParamValue + tfrpattern.trueValuePattern;
+            if (tfrpattern.modifyType != ModifyType.Add) {
+                trueValue = tfrpattern.trueValuePattern;
+            }
             String trueParamName = origParamName + (tfrpattern.trueNamePattern != null ? tfrpattern.trueNamePattern : "");
             HttpMessageWithLCSResponse trueMessage = sendRequestAndCalcLCS(
                     comparator,
+                    tfrpattern.modifyType,
                     trueParamName,
                     trueValue,
                     scannerId,
@@ -296,8 +313,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 boolean errorHasSQLError = false;
                 // 1. compare true and original/false
                 int normalTruePercent = comparator.compare(normalBodyOutputs[i] , trueBodyOutputs[i], originalTrueLCSs[i]);
-                trueMessage.setPercentString(Integer.toString(normalTruePercent/10));
-                updateScanLogPanel(scannerId,trueMessage, selectedScanRule);
+                if (i==0) {
+                    updateScanLogPanel(scannerId, trueMessage, originalTrueLCSs[i].getBpercent(), originalTrueLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
+                }
                 if (hasSQLErrors(trueBodyOutputs[i]) != null) {
                     trueHasSQLError = true;
                 }
@@ -323,9 +341,13 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (normalTruePercent >= this.NEALYEQUALPERCENT && !trueHasSQLError) {
                     if (falseBodyOutputs == null) {
                         falseValue = origParamValue + tfrpattern.falseValuePattern;
+                        if (tfrpattern.modifyType != ModifyType.Add) {
+                            falseValue = tfrpattern.falseValuePattern;
+                        }
                         falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
                         falseMessage = sendRequestAndCalcLCS(
                                 comparator,
+                                tfrpattern.modifyType,
                                 falseParamName,
                                 falseValue,
                                 scannerId,
@@ -339,8 +361,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         falseBodyOutputs = getUnstrippedStrippedResponse(falseMessage, falseValue, null);
                     }
                     normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
-                    falseMessage.setPercentString(Integer.toString(normalFalsePercent/10));
-                    updateScanLogPanel(scannerId,falseMessage, selectedScanRule);
+
+                    if (i==0) {
+                        updateScanLogPanel(scannerId, falseMessage, originalFalseLCSs[i].getBpercent() ,originalFalseLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
+                    }
                     LOGGER4J.debug("ParamName["
                             + falseParamName
                             + "] value["
@@ -396,9 +420,13 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
                 if (falseBodyOutputs == null) {
                     falseValue = origParamValue + tfrpattern.falseValuePattern;
+                    if (tfrpattern.modifyType != ModifyType.Add) {
+                        falseValue = tfrpattern.falseValuePattern;
+                    }
                     falseParamName = origParamName + (tfrpattern.falseNamePattern != null ? tfrpattern.falseNamePattern : "");
                     falseMessage = sendRequestAndCalcLCS(
                             comparator,
+                            tfrpattern.modifyType,
                             falseParamName,
                             falseValue,
                             scannerId,
@@ -415,8 +443,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
                 if (normalFalsePercent == -1) {
                     normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
-                    falseMessage.setPercentString(Integer.toString(normalFalsePercent/10));
-                    updateScanLogPanel(scannerId,falseMessage, selectedScanRule);
+                    if (i==0) {
+                        updateScanLogPanel(scannerId, falseMessage, originalFalseLCSs[i].getBpercent(),originalFalseLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
+                    }
                 }
 
 
@@ -615,9 +644,13 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (tfrpattern.errorValuePattern != null && !tfrpattern.errorValuePattern.isEmpty()) {
                     errorParamName = origParamName + (tfrpattern.errorNamePattern != null ? tfrpattern.errorNamePattern : "");
                     String errorValue = origParamValue + tfrpattern.errorValuePattern;
+                    if (tfrpattern.modifyType != ModifyType.Add) {
+                        errorValue = tfrpattern.errorValuePattern;
+                    }
                     if (errorBodyOutputs == null) {
                         errorMessage = sendRequestAndCalcLCS(
                                 comparator,
+                                tfrpattern.modifyType,
                                 errorParamName,
                                 errorValue,
                                 scannerId,
@@ -702,11 +735,17 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * @param selectedScanRule
      * @return index of resultMessage in ScanLogPanel.resultMessageList
      */
-    private int updateScanLogPanel(int scannerId, HttpMessageWithLCSResponse resultMessage, CustomScanJSONData.ScanRule selectedScanRule) {
+    private int updateScanLogPanel(int scannerId, HttpMessageWithLCSResponse resultMessage,int percent,List<StartEndPosition> lcsCharIndexOfResponseBody, CustomScanJSONData.ScanRule selectedScanRule) {
         ScanLogPanelFrame frame = ExtensionAscanRules.getScanLogPanelFrame(scannerId);
         if (frame != null) {
             ScanLogPanel scanLogPanel = frame.getScanLogPanel();
             if (scanLogPanel != null) {
+                if (percent > -1) {
+                    resultMessage.setPercentString(Integer.toString(percent / 10));
+                }
+                if (lcsCharIndexOfResponseBody != null &&  !lcsCharIndexOfResponseBody.isEmpty()) {
+                    resultMessage.setLcsCharacterIndexOfLcsResponse(lcsCharIndexOfResponseBody);
+                }
                 return scanLogPanel.updateScanLogTableModelWithResultMessage(resultMessage, selectedScanRule);
             }
         }
@@ -869,6 +908,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      */
     HttpMessageWithLCSResponse sendRequestAndCalcLCS(
             LcsStringListComparator comparator,
+            ModifyType modifyType,
             String origParamName,
             String paramValue,
             int scannerId,
@@ -887,7 +927,40 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         for(int cn = 0 ; cn<2; cn++) {
             msg2 = getNewMsg();
             if(origParamName!=null&&paramValue!=null) {
-                setParameter(msg2, origParamName, paramValue);
+                boolean replacedJsonBody = false;
+                if (modifyType == ModifyType.JSON) {
+                    HttpRequestHeader requestHeader = msg2.getRequestHeader();
+                    if (requestHeader.hasContentType("json")) {
+                        UUID uuid =  UUIDGenerator.getUUID();
+                        String embedDummy = "___" + uuid.toString() + "~~~";
+                        setParameter(msg2, origParamName, embedDummy);
+                        byte[] bodyBytes = msg2.getRequestBody().getBytes();
+                        String bodyCharset = msg2.getRequestBody().getCharset();
+                        try {
+                            String bodyString = new String(bodyBytes, bodyCharset);
+                            String quotedDummy = "\"" + embedDummy + "\"";
+                            Pattern pattern = Pattern.compile(quotedDummy,   Pattern.MULTILINE);
+                            Matcher matcher = pattern.matcher(bodyString);
+                            if (matcher.find()) {
+                                int stPos = matcher.start();
+                                int endPos = matcher.end();
+                                StringBuilder bodyBuffer =  new StringBuilder();
+                                bodyBuffer.append(bodyString.substring(0, stPos));
+                                bodyBuffer.append(paramValue);
+                                if (endPos < bodyString.length()) {
+                                    bodyBuffer.append(bodyString.substring(endPos));
+                                }
+                                msg2.getRequestBody().setBody(bodyBuffer.toString());
+                                replacedJsonBody = true;
+                            }
+                        } catch (Exception ex) {
+                            LOGGER4J.error(ex.getMessage(), ex);
+                        }
+                    }
+                }
+                if (!replacedJsonBody) {
+                    setParameter(msg2, origParamName, paramValue);
+                }
             }
 
             // wait until specified MSec passed
@@ -1303,6 +1376,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         List<StartEndPosition> lcsCharIndexOfNormalBody = originalTrueLCS.getCharacterPositionListOfLcsIdxDiffA();
         List<StartEndPosition> lcsCharIndexOfTrueBody = originalTrueLCS.getCharacterPositionListOfLcsIdxDiffB();
         List<StartEndPosition> lcsCharIndexOfFalseBody = originalFalseLCS.getCharacterPositionListOfLcsIdxDiffB();
+        int truePercent = originalTrueLCS.getBpercent();
+        int falsePercent = originalFalseLCS.getBpercent();
         String normalBodyString = normalBodyOutput;
         String trueBodyString = trueBodyOutput;
         String falseBodyString = falseBodyOutput;
@@ -1314,8 +1389,11 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         normalMessage.setLcsCharacterIndexOfLcsResponse(lcsCharIndexOfNormalBody);
         trueMessage.updateLcsResponse(trueBodyString);
         trueMessage.setLcsCharacterIndexOfLcsResponse(lcsCharIndexOfTrueBody);
+        trueMessage.setPercentString(Integer.toString(truePercent / 10));
         falseMessage.updateLcsResponse(falseBodyString);
         falseMessage.setLcsCharacterIndexOfLcsResponse(lcsCharIndexOfFalseBody);
+        falseMessage.setPercentString(Integer.toString(falsePercent / 10));
+
         String originalRequestString = normalMessage.getRequestHeader().toString() + normalMessage.getRequestBody().toString();
         String trueRequestString = trueMessage.getRequestHeader().toString() + trueMessage.getRequestBody().toString();
         String falseRequestString = falseMessage.getRequestHeader().toString() + falseMessage.getRequestBody().toString();

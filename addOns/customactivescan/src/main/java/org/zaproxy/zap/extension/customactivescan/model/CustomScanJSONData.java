@@ -58,6 +58,11 @@ public class CustomScanJSONData {
             "   \"errorValuePattern\": \"' rr  1=1 -- \"  " +
             "}," +
             "{ " +
+            "   \"modifyType\": \"JSON\"," +
+            "   \"trueValuePattern\":  \"{ \\\"$ne\\\" : 1 }\",  " +
+            "   \"falseValuePattern\": \"{ \\\"ne\\\" : 1 }\" " +
+            "}," +
+            "{ " +
             "   \"trueNamePattern\":  \"[$ne]\",  " +
             "   \"trueValuePattern\":  \"1\",  " +
             "   \"falseNamePattern\":  \"[ne]\",  " +

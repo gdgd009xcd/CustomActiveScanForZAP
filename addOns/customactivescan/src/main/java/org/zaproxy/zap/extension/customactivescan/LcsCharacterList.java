@@ -18,6 +18,8 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 	private boolean diffAReverse;
 	private boolean diffBReverse;
 	private boolean ABreverse = false;
+	private int aPercent;
+	private int bPercent;
 
 	
 	LcsCharacterList(){
@@ -131,6 +133,22 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 
 	}
 
+	@Override
+	public void setPercents(int aPercent, int bPercent) {
+		this.aPercent = aPercent;
+		this.bPercent = bPercent;
+	}
+
+	@Override
+	public int getApercent() {
+		return this.aPercent;
+	}
+
+	@Override
+	public int getBpercent() {
+		return this.bPercent;
+	}
+
 	/**
 	 * add character to builder as LCS.
 	 * add characters in REVERSE ORDER.
@@ -169,6 +187,8 @@ public class LcsCharacterList implements LcsBuilder<Character>{
 		lcsIdxArray = lcsIdxArrayObject.getArray();
 		diffArray = new StringBuilder[2];
 		setABreverseInternal();
+		this.aPercent = -1;
+		this.bPercent = -1;
 	}
 
 	private void setABreverseInternal() {
