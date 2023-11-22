@@ -41,8 +41,8 @@ LCS remove the different token values ​​from the two responses as follows:
 
 ##  SQL injection test some results.
 <table>
- <TR><TH ROWSPAN="2">SQL injection Detection rate<BR>(Detected/Total)</TH><TH>CustomActiveScan<BR>ForZAP <BR>0.8.1</TH><TH>Active Scanner Rules(alpha)<BR>??.0.0</TH><TH>Active Scanner Rules(beta)<BR>??.0.0</TH><TH>Active Scanner Rules<BR>57.0.0</TH><TH>Advanced SQLInjection Scanner<BR>??.0.0</TH></TR>
- <TR><TH>100%<BR>(14/14)</TH><TH>-%<BR>(-/-)</TH><TH>-%<BR>(-/-)</TH><TH>28%<BR>(4/14)</TH><TH>-%<BR>(-/-)</TH></TR>
+ <TR><TH ROWSPAN="2">SQL injection Detection rate<BR>(Detected/Total)</TH><TH>CustomActiveScan<BR>ForZAP <BR>0.8.1</TH><TH>Active Scanner Rules(alpha)<BR>44.0.0</TH><TH>Active Scanner Rules<BR>57.0.0</TH><TH>Advanced SQLInjection Scanner<BR>15.0.0</TH></TR>
+ <TR><TH>100%<BR>(14/14)</TH><TH>50%<BR>(2/4)</TH><TH>20%<BR>(2/10)</TH><TH>40%<BR>(4/10)</TH></TR>
  </table>
   
 [See Details](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/99.1.-SQL-injection-detection-test-results-with-ActiveScan)

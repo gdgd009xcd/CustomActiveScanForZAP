@@ -254,7 +254,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 "[" + origParamValue + "]");
         if(normalMessage==null)return;
         normalMessage.setPercentString("");
-        updateScanLogPanel(scannerId,normalMessage, -1,null, selectedScanRule);
+        updateScanLogPanel(scannerId,normalMessage, origParamName,-1,null, selectedScanRule);
         String[] normalBodyOutputs = getUnstrippedStrippedResponse(normalMessage, origParamValue, null);
         int injectionPatternGroupIndex = 0;
 
@@ -314,7 +314,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 // 1. compare true and original/false
                 int normalTruePercent = comparator.compare(normalBodyOutputs[i] , trueBodyOutputs[i], originalTrueLCSs[i]);
                 if (i==0) {
-                    updateScanLogPanel(scannerId, trueMessage, originalTrueLCSs[i].getBpercent(), originalTrueLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
+                    updateScanLogPanel(scannerId, trueMessage, trueParamName,originalTrueLCSs[i].getBpercent(), originalTrueLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
                 }
                 if (hasSQLErrors(trueBodyOutputs[i]) != null) {
                     trueHasSQLError = true;
@@ -363,7 +363,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
 
                     if (i==0) {
-                        updateScanLogPanel(scannerId, falseMessage, originalFalseLCSs[i].getBpercent() ,originalFalseLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
+                        updateScanLogPanel(scannerId, falseMessage, falseParamName,originalFalseLCSs[i].getBpercent() ,originalFalseLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
                     }
                     LOGGER4J.debug("ParamName["
                             + falseParamName
@@ -444,7 +444,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (normalFalsePercent == -1) {
                     normalFalsePercent = comparator.compare(normalBodyOutputs[i], falseBodyOutputs[i], originalFalseLCSs[i]);
                     if (i==0) {
-                        updateScanLogPanel(scannerId, falseMessage, originalFalseLCSs[i].getBpercent(),originalFalseLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
+                        updateScanLogPanel(scannerId, falseMessage, falseParamName,originalFalseLCSs[i].getBpercent(),originalFalseLCSs[i].getCharacterPositionListOfLcsIdxDiffB(), selectedScanRule);
                     }
                 }
 
@@ -718,12 +718,12 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * @param selectedScanRule
      * @return size of ScanLogPanel.resultMessageList
      */
-    private int addSendResultToScanLogPanel(int scannerId, HttpMessageWithLCSResponse resultMessage, CustomScanJSONData.ScanRule selectedScanRule) {
+    private int addSendResultToScanLogPanel(int scannerId, HttpMessageWithLCSResponse resultMessage, String paramName, CustomScanJSONData.ScanRule selectedScanRule) {
         ScanLogPanelFrame frame = ExtensionAscanRules.getScanLogPanelFrame(scannerId);
         if (frame != null) {
             ScanLogPanel scanLogPanel = frame.getScanLogPanel();
             if (scanLogPanel != null) {
-                return scanLogPanel.addMessageToScanLogTableModel(resultMessage, selectedScanRule);
+                return scanLogPanel.addMessageToScanLogTableModel(resultMessage, paramName, selectedScanRule);
             }
         }
         return -1;
@@ -735,7 +735,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * @param selectedScanRule
      * @return index of resultMessage in ScanLogPanel.resultMessageList
      */
-    private int updateScanLogPanel(int scannerId, HttpMessageWithLCSResponse resultMessage,int percent,List<StartEndPosition> lcsCharIndexOfResponseBody, CustomScanJSONData.ScanRule selectedScanRule) {
+    private int updateScanLogPanel(int scannerId, HttpMessageWithLCSResponse resultMessage,String paramName,int percent,List<StartEndPosition> lcsCharIndexOfResponseBody, CustomScanJSONData.ScanRule selectedScanRule) {
         ScanLogPanelFrame frame = ExtensionAscanRules.getScanLogPanelFrame(scannerId);
         if (frame != null) {
             ScanLogPanel scanLogPanel = frame.getScanLogPanel();
@@ -746,7 +746,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 if (lcsCharIndexOfResponseBody != null &&  !lcsCharIndexOfResponseBody.isEmpty()) {
                     resultMessage.setLcsCharacterIndexOfLcsResponse(lcsCharIndexOfResponseBody);
                 }
-                return scanLogPanel.updateScanLogTableModelWithResultMessage(resultMessage, selectedScanRule);
+                return scanLogPanel.updateScanLogTableModelWithResultMessage(resultMessage, paramName,selectedScanRule);
             }
         }
         return -1;
@@ -1002,7 +1002,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     originalAverageResponseSize,
                     attackTitleType,
                     attackTitleType.name() + lastPartOfTitleString);
-            addSendResultToScanLogPanel(scannerId, msg2withlcs, selectedScanRule);
+            addSendResultToScanLogPanel(scannerId, msg2withlcs, origParamName,selectedScanRule);
         }
 
         return msg2withlcs;
@@ -1276,7 +1276,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             sendAndReceive(msg2, false); //do not follow redirects
             // add resultMessage to ScanLogPanel
             HttpMessageWithLCSResponse httpMessageWithLCSResponse = new HttpMessageWithLCSResponse(msg2, attackTitleType);
-            addSendResultToScanLogPanel(scannerId, httpMessageWithLCSResponse, selectedScanRule);
+            addSendResultToScanLogPanel(scannerId, httpMessageWithLCSResponse, origParamName,selectedScanRule);
         } catch (Exception ex) {
             LOGGER4J.error("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
                     " when accessing: " + msg2.getRequestHeader().getURI().toString(), ex);

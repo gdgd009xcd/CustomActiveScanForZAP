@@ -5,6 +5,7 @@ import org.parosproxy.paros.view.View;
 import org.zaproxy.zap.view.messagecontainer.http.DefaultSingleHttpMessageContainer;
 
 import javax.swing.*;
+import javax.swing.text.Position;
 import java.awt.*;
 
 public class ScanLogPanelPopUp extends JPopupMenu {
@@ -14,9 +15,11 @@ public class ScanLogPanelPopUp extends JPopupMenu {
 
     private MainPopupMenu mainPopupMenu;
     private ScanLogPanel scanLogPanel;
-    ScanLogPanelPopUp(ScanLogPanel scanLogPanel) {
+    private JViewport scanLogViewPort = null;
+    ScanLogPanelPopUp(JScrollPane scanLogScroller, ScanLogPanel scanLogPanel) {
         this.scanLogPanel = scanLogPanel;
         this.mainPopupMenu = View.getSingleton().getPopupMenu();
+        this.scanLogViewPort = scanLogScroller.getViewport();
     }
         private static final long serialVersionUID = 1L;
 
@@ -55,7 +58,9 @@ public class ScanLogPanelPopUp extends JPopupMenu {
                             "ScanLogPopUpContainer",
                             scanLogPanel,
                             scanLogPanel.getSelectedMessage());
-            this.mainPopupMenu.show(messageContainer, x, y);
+            Point viewPoint = this.scanLogViewPort.getViewPosition();
+            // fix popup is showed in outer area of scanLogViewPort
+            this.mainPopupMenu.show(messageContainer, x, y - viewPoint.y);
 
             LOGGER4J.debug("x=" + x + " y=" + y);
         } else {
