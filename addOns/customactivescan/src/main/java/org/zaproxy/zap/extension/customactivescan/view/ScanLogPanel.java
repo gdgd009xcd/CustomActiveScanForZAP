@@ -47,6 +47,7 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col5.text"),
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col6.text"),
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col7.text"),
+            Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col8.text"),
     };
     private final String[] baseColumnToolTips = {
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col0.tooltip.text"),
@@ -57,6 +58,7 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col5.tooltip.text"),
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col6.tooltip.text"),
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col7.tooltip.text"),
+            Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col8.tooltip.text"),
     };
 
     private final int scanLogScrollerWidth = 800;
@@ -67,7 +69,8 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             7,
             10,
             10,
-            38,
+            10,
+            28,
             5,
     };
 
@@ -289,7 +292,7 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             scanLogTable.getColumnModel().getColumn(colIndex++).setPreferredWidth(preferredWidth);
         }
 
-        ScanLogPanelPopUp popupMenu = new ScanLogPanelPopUp(this);
+        ScanLogPanelPopUp popupMenu = new ScanLogPanelPopUp(scanLogScroller, this);
         /***
         JMenuItem menuShowSelectedMessage = new JMenuItem("showMessage");
         menuShowSelectedMessage.addActionListener(l ->{
@@ -389,7 +392,7 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
         return resultMessageList.size();
     }
 
-    private String[] generateRecordArrayFromMessage(HttpMessageWithLCSResponse resultMessage, CustomScanJSONData.ScanRule selectedScanRule) {
+    private String[] generateRecordArrayFromMessage(HttpMessageWithLCSResponse resultMessage, String paramName, CustomScanJSONData.ScanRule selectedScanRule) {
         // get baseColumn data : "Time", "Method", "URL", "Code", "Reason", "Length"
         // extract "Time" String from response header
         String timeString = "";
@@ -438,6 +441,7 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
         resultRecord.add(statusCodeString);
         resultRecord.add(reasonCodeString);
         resultRecord.add(contentLengthString);
+        resultRecord.add(paramName);
         resultRecord.add(resultMessage.getAttackTitleString());
         resultRecord.add(resultMessage.getPercentString());
 
@@ -456,22 +460,22 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
         return resultRecordArray;
     }
 
-    public int addMessageToScanLogTableModel(HttpMessageWithLCSResponse resultMessage, CustomScanJSONData.ScanRule selectedScanRule){
+    public int addMessageToScanLogTableModel(HttpMessageWithLCSResponse resultMessage, String paramName, CustomScanJSONData.ScanRule selectedScanRule){
         int sizeOfMessageList = 0; //  size of ScanLogPanel.resultMessageList
         // search regex pattern in response result message
         if (resultMessage != null) {
-            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage, selectedScanRule);
+            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage,  paramName, selectedScanRule);
             sizeOfMessageList = addRowToScanLogTableModel(resultRecordArray, resultMessage);
 
         }
         return sizeOfMessageList;
     }
 
-    public int updateScanLogTableModelWithResultMessage(HttpMessageWithLCSResponse resultMessage, CustomScanJSONData.ScanRule selectedScanRule) {
+    public int updateScanLogTableModelWithResultMessage(HttpMessageWithLCSResponse resultMessage, String paramName, CustomScanJSONData.ScanRule selectedScanRule) {
         // int rowIndex = resultMessageList.indexOf(resultMessage); this return sucks..
         int rowIndex = resultMessage.getMessageIndexInScanLogPanel();
         if (rowIndex > -1) {
-            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage, selectedScanRule);
+            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage,  paramName, selectedScanRule);
             int colIndex = 0;
             for(String columnValue: resultRecordArray){
                 this.scanLogTableModel.setValueAt(columnValue,rowIndex, colIndex++);
