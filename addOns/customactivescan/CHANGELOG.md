@@ -2,9 +2,16 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-## [v0.8.2] - 2023-11-22
+## [v0.8.3] - 2023-11-23
+### Added
+- maintenance: add "Default Sample SQL/Pentest pattern" to "CopyRule->Select Scan Rule Copy From" menu
 ### Changed
+- maintenance: updated README.md, wiki pages.
+
+## [v0.8.2] - 2023-11-22
+### Added
 - improve: added Parameter Name column to ScanLogPanel dialog.
+### Changed
 - bugfix : fixed PopUp menu is appeared in outsite of the ScanLogPanel.
 - maintenance: updated SQL injection test results.
 
