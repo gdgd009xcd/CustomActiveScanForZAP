@@ -14,6 +14,7 @@ public class AddRuleDialogByCopy extends GridBagJDialog<String> {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
+    public static final String DefaultRuleNamePrefix = "Default ";
     CustomScanMainPanel mainPanel;
     JTextField ruleNameField;
     JComboBox<String> ruleComboBox;
@@ -68,13 +69,11 @@ public class AddRuleDialogByCopy extends GridBagJDialog<String> {
             ruleComboBox.addItem(ruleName);
         }
 
-        // add sample rule if needed.
+        // add Default sample
         for(CustomScanJSONData.ScanRule scanRule: mainPanel.getSampleScanRuleList()) {
             String ruleName = scanRule.patterns.name;
-            if (!mainPanel.ruleNameIsExistInModel(ruleName, true)) {
-                LOGGER4J.debug("sample ruleName[" + ruleName + "]");
-                ruleComboBox.addItem(ruleName);
-            }
+            ruleName = DefaultRuleNamePrefix + ruleName;
+            ruleComboBox.addItem(ruleName);
         }
 
         ruleComboBox.setBorder(ruleComboTitledBorder);
@@ -107,7 +106,7 @@ public class AddRuleDialogByCopy extends GridBagJDialog<String> {
                 int index = ruleComboBox.getSelectedIndex();
                 this.mainPanel.addNewScanRuleByCopyFrom(ruleName, index);
             } else {
-                errorReasonText = String.format("<HTML>ruleName[%s] is already used. use another name.", ruleName);
+                errorReasonText = String.format("ruleName[%s] is already used. use another name.", ruleName);
             }
         }
         if (errorReasonText != null) {

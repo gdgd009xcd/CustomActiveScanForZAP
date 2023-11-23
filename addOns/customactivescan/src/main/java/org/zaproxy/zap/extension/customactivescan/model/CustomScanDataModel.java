@@ -13,6 +13,8 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
+import static org.zaproxy.zap.extension.customactivescan.view.AddRuleDialogByCopy.DefaultRuleNamePrefix;
+
 public class CustomScanDataModel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
@@ -211,6 +213,8 @@ public class CustomScanDataModel {
             if (!exceptSample) {
                 for (CustomScanJSONData.ScanRule rule : this.customScanData.sampleRuleList) {
                     if (ruleName.equals(rule.patterns.name)) {
+                        return true;
+                    } else if(ruleName.equals(DefaultRuleNamePrefix + rule.patterns.name)) {
                         return true;
                     }
                 }
