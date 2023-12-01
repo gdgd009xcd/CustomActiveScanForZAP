@@ -1,6 +1,7 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.apache.commons.httpclient.URIException;
+import org.apache.logging.log4j.Level;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.network.HttpMessage;
 import org.parosproxy.paros.network.HttpRequestHeader;
@@ -37,6 +38,7 @@ import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.ZAP
 public class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition, InterfacePopUpAction {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
+    final static Level LAPSETIME = Level.getLevel("LAPSETIME");
 
     private final String[] baseColumnNames = {
             Constant.messages.getString("customactivescan.ScanLogPanel.baseColumnNames.col0.text"),
@@ -485,6 +487,9 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
     }
 
     private void showSelectedMessage(int selectedTableRowIndex) {
+        long startTime = 0;
+        int selectedTabbedPane = -1;
+
         LOGGER4J.debug("selected row:" + selectedTableRowIndex);
         HttpMessageWithLCSResponse selectedMessage = resultMessageList.get(selectedTableRowIndex);
         if (selectedMessage != null && this.currentSelectedTableRowIndex != selectedTableRowIndex) {
@@ -499,24 +504,51 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             if (alert != null) {
                 addAlertToTitleAndContent(paneContents, alert);
             }
+
+            if (LAPSETIME != null) {
+                startTime = System.currentTimeMillis();
+            }
             if (this.regexTestDialog == null) {
+                selectedTabbedPane = 1;
                 regexTestDialog = new RegexTestDialog(
                         this.jFrame,
                         this,
                         "Result",
                         Dialog.ModalityType.MODELESS,
                         paneContents);
-                regexTestDialog.selectTabbedPane(1);
-                regexTestDialog.setVisible(true);
+
+                if (LAPSETIME != null) {//2.3 sec
+                    long endTime = System.currentTimeMillis();
+                    LOGGER4J.log(LAPSETIME, "showSelectedMessage 1 lapse(sec)=" + Math.round((float)(endTime - startTime)/100)/(float)10);
+                }
+                if (LAPSETIME != null) {
+                    startTime = System.currentTimeMillis();
+                }
+
                 regexTestDialog.resetScrollBarToLeftTop();
-                regexTestDialog.regexSearchActionPerformed(null);
+                if (LAPSETIME != null) {//2.3 sec
+                    long endTime = System.currentTimeMillis();
+                    LOGGER4J.log(LAPSETIME, "showSelectedMessage 2 lapse(sec)=" + Math.round((float)(endTime - startTime)/100)/(float)10);
+                }
+                if (LAPSETIME != null) {
+                    startTime = System.currentTimeMillis();
+                }
+                regexTestDialog.regexSearchActionPerformed(null, selectedTabbedPane);
+                regexTestDialog.selectTabbedPane(selectedTabbedPane);
             } else {
                 regexTestDialog.updateContentsWithPaneContents(paneContents);
                 regexTestDialog.resetScrollBarToLeftTop();
                 regexTestDialog.clearAllSearchedInfo();// this method must call
+                regexTestDialog.setImplicitStylesOnSelectedPane(true, selectedTabbedPane);
             }
-            regexTestDialog.setImplicitStylesOnSelectedPane(true);
             this.currentSelectedTableRowIndex = selectedTableRowIndex;
+            if (selectedTabbedPane > -1) {
+                regexTestDialog.setVisible(true);
+            }
+        }
+        if (LAPSETIME != null) {// 1.9 sec
+            long endTime = System.currentTimeMillis();
+            LOGGER4J.log(LAPSETIME, "showSelectedMessage 3 lapse(sec)=" + Math.round((float)(endTime - startTime)/100)/(float)10);
         }
     }
 
