@@ -14,8 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +23,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
+    final static Level LAPSETIME = Level.getLevel("LAPSETIME");
     // <---createMainPanelContent initialize member start line---
     // these parameters are set value by createMainPanelContent method.
     // these parameters MUST NOT initialize at declaration here.
@@ -77,9 +77,13 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     static final Color COLOR_OLIVE = new Color(128,128,0);
     static final Color COLOR_THICK_BLUE = new Color(10,25,226);
 
+    static final int MAX_CONTENT_WRAP_LENGTH = 250000;
     static class SearchTextPane {
+        //scroller
+        JScrollPane searchScroller;
         // search text
         JTextPane searchTextPane;
+        TextPaneWrapEditorKit wrapEditorKit;
         // attribute List for searched texts
         List<RegexSelectedTextPos> foundTextAttrPos;
         // caretPosition for searchd text at first
@@ -93,6 +97,8 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
         SearchTextPane(List<StartEndPosition> charIndexOfLcs) {
             searchTextPane = null;
+            searchScroller = null;
+            wrapEditorKit = null;
             foundTextAttrPos = new ArrayList<>();
             findplist = new ArrayList<>();
             caretIndex = 0;
@@ -199,7 +205,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         // Regex test button
         JButton regexTestButton = new JButton("Search");
         regexTestButton.addActionListener(e ->{
-            regexSearchActionPerformed(e);
+            regexSearchActionPerformed(e, -1);
         });
         buttonPanel.add(regexTestButton);
         JButton prevSearch = new JButton("▲");
@@ -228,7 +234,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         // button for clear attributes of found text
         JButton clearTestButton = new JButton("Clear");
         clearTestButton.addActionListener(e ->{
-            clearTestActionPerformed(e);
+            clearTestActionPerformed(e, -1);
         });
         buttonPanel.add(clearTestButton);
 
@@ -297,7 +303,12 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         tabbedPane.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
+                long startTime = 0;
+                if (LAPSETIME != null) {
+                    startTime = System.currentTimeMillis();
+                }
                 int selectedTabbedPaneIndex = RegexTestDialog.this.tabbedPane.getSelectedIndex();
+
                 if (selectedTabbedPaneIndex > -1) {
                     SearchTextPane searchTextPane = RegexTestDialog.this.searchTextPaneList.get(selectedTabbedPaneIndex);
                     String counterString = "0/0";
@@ -313,7 +324,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                     RegexTestDialog.this.searchCountCheckBox.setText(counterString);
                     setImplicitStyles(searchTextPane, false);
                 }
-
+                if (LAPSETIME != null) {
+                    long endTime = System.currentTimeMillis();
+                    LOGGER4J.log(LAPSETIME, "RegexTestDialog stateChanged lapse(sec)=" + Math.round((float)(endTime - startTime)/100)/(float)10);
+                }
             }
         });
 
@@ -326,13 +340,21 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         JScrollPane searchTextScroller = new JScrollPane();
         searchTextScroller.setPreferredSize(new Dimension(600, 500));
         searchTextScroller.setAutoscrolls(true);
-        searchTextScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        searchTextPane.searchTextPane = new JTextPane();
+
+        searchTextPane.searchTextPane = new JTextPane(SwingStyleProvider.createSwingStyle().createStyledDocument());
+        if (titleAndContent.content.length() < MAX_CONTENT_WRAP_LENGTH) {
+            // large size of wrapping Text is heavy load for JTextPane.
+            // Therefore, it is used when the size is less than MAX_CONTENT_WRAP_LENGTH.
+            searchTextPane.wrapEditorKit = new TextPaneWrapEditorKit(SwingStyleProvider.createSwingStyle().createStyledDocument());
+            searchTextPane.searchTextPane.setEditorKit(searchTextPane.wrapEditorKit);
+            searchTextScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        }
+        searchTextPane.searchScroller = searchTextScroller;
         searchTextPane.searchTextPane.setEditable(titleAndContent.editable);
         // setEditorKit create new Document and set it to JTextPane.
         // setEditorKit call TextPaneWrapEditorKit.createDocument method for setting new one.
         // so I override TextPaneWrapEditorKit.createDocument method for setting new document.
-        searchTextPane.searchTextPane.setEditorKit(new TextPaneWrapEditorKit(SwingStyleProvider.createSwingStyle().createStyledDocument()));
+
         StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
         createStyles(doc, titleAndContent.optionStylerList);
 
@@ -488,8 +510,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     }
 
-    private void clearTestActionPerformed(ActionEvent e) {
-        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+    private void clearTestActionPerformed(ActionEvent e, int selectedTabbedPaneIndex) {
+        if (selectedTabbedPaneIndex < 0) {
+            selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        }
         if (selectedTabbedPaneIndex > -1) {
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
             clearSearchedInfo(searchTextPane);
@@ -531,11 +555,13 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         searchCountCheckBox.setText("0/0");
     }
 
-    public void regexSearchActionPerformed(ActionEvent e) {
+    public void regexSearchActionPerformed(ActionEvent e, int selectedTabbedPaneIndex) {
         // clear attrubutes in searchTextPane
-        clearTestActionPerformed(null);
+        clearTestActionPerformed(null, selectedTabbedPaneIndex);
 
-        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        if (selectedTabbedPaneIndex < 0) {
+            selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        }
         if (selectedTabbedPaneIndex > -1) {
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
 
@@ -552,7 +578,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             try {
                 original = doc.getText(0, doc.getLength());
             } catch (BadLocationException ex) {
-                Logger.getLogger(RegexTestDialog.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER4J.error(ex.getMessage(), ex);
             }
 
             searchTextPane.findplist = new ArrayList<>();
@@ -676,8 +702,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         }
     }
 
-    public void setImplicitStylesOnSelectedPane(boolean moveCaretToLcs) {
-        int selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+    public void setImplicitStylesOnSelectedPane(boolean moveCaretToLcs, int selectedTabbedPaneIndex) {
+        if (selectedTabbedPaneIndex < 0) {
+            selectedTabbedPaneIndex = this.tabbedPane.getSelectedIndex();
+        }
         if (selectedTabbedPaneIndex > -1) {
             SearchTextPane searchTextPane = this.searchTextPaneList.get(selectedTabbedPaneIndex);
             if (searchTextPane != null) {
@@ -687,6 +715,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
     }
 
     private void setImplicitStyles(SearchTextPane searchTextPane, boolean moveCaretToLcs){
+        long startTime = 0;
+        if (LAPSETIME != null) {
+            startTime = System.currentTimeMillis();
+        }
         StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
         if (searchTextPane.charIndexOfLcs != null && !searchTextPane.charIndexOfLcs.isEmpty()) {
             Style baseLcsStyle = getStyleWithText(doc, MARK_LCS_STYLENAME, null);
@@ -731,6 +763,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 }
 
             }
+        }
+        if (LAPSETIME != null) {
+            long endTime = System.currentTimeMillis();
+            LOGGER4J.log(LAPSETIME, "setImplicitStyles lapse(sec)=" + Math.round((float)(endTime - startTime)/100)/(float)10);
         }
     }
     private void popupRegexTestOptionPane(SearchTextPane searchTextPane) {
@@ -919,14 +955,30 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 paneIndex++;
             } else {//update
                 SearchTextPane searchTextPane = searchTextPaneList.get(paneIndex++);
-                searchTextPane.updateCharIndexOfLcs(titleAndContent.charIndexesOfContent);
-
                 StyledDocument doc = searchTextPane.searchTextPane.getStyledDocument();
                 try {
                     doc.remove(0, doc.getLength());
                 } catch (Exception ex) {
                     LOGGER4J.error(ex.getMessage(), ex);
                 }
+
+                searchTextPane.updateCharIndexOfLcs(titleAndContent.charIndexesOfContent);
+                if (titleAndContent.content.length() < MAX_CONTENT_WRAP_LENGTH) {
+                    // large size of wrapping Text is heavy load for JTextPane.
+                    // Therefore, it is used when the size is less than MAX_CONTENT_WRAP_LENGTH.
+                    if (searchTextPane.wrapEditorKit == null) {
+                        searchTextPane.wrapEditorKit = new TextPaneWrapEditorKit(SwingStyleProvider.createSwingStyle().createStyledDocument());
+                        searchTextPane.searchTextPane.setEditorKit(searchTextPane.wrapEditorKit);
+                    }
+                    searchTextPane.searchScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                    searchTextPane.wrapEditorKit.setIsWrapText(true);
+                } else {
+                    searchTextPane.searchScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                    if (searchTextPane.wrapEditorKit != null) {
+                        searchTextPane.wrapEditorKit.setIsWrapText(false);
+                    }
+                }
+
                 insertStringCR(doc, 0, titleAndContent.content);
                 searchTextPane.searchTextPane.setSelectionStart(0);
                 searchTextPane.searchTextPane.setSelectionEnd(0);
@@ -943,6 +995,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
 
     private void insertStringCR(StyledDocument doc, int insertStartPosition, String text) {
+        long startTime = 0;
+        if (LAPSETIME != null) {
+            startTime = System.currentTimeMillis();
+        }
         if (text == null || text.length() < 1) return;
         int cpos = 0;
         int npos = -1;
@@ -966,6 +1022,10 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             } catch (BadLocationException ex) {
                 LOGGER4J.error(ex.getMessage(), ex);
             }
+        }
+        if (LAPSETIME != null) {
+            long endTime = System.currentTimeMillis();
+            LOGGER4J.log(LAPSETIME, "insertStringCR lapse(sec)=" + Math.round((float)(endTime - startTime)/100)/(float)10);
         }
     }
 

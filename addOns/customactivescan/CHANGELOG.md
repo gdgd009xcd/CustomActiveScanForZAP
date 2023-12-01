@@ -2,6 +2,10 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [v0.8.4] - 2023-12-02
+### Changed
+- improve: improved displaying performance of the Result Dialog.
+
 ## [v0.8.3] - 2023-11-23
 ### Added
 - maintenance: add "Default Sample SQL/Pentest pattern" to "CopyRule->Select Scan Rule Copy From" menu
