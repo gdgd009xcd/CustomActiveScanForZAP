@@ -2,6 +2,12 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [v0.8.5] - 2023-12-14
+### Added
+- new feature: Added next▼/prev▲　button action which move caret to next/prev Lcs position on Result Dialog.
+### Changed
+- maintenance: change gradle-build-action version from v2 to v2.11.0
+
 ## [v0.8.4] - 2023-12-02
 ### Changed
 - improve: improved displaying performance of the Result Dialog.
