@@ -17,6 +17,9 @@ import java.util.List;
 import org.apache.logging.log4j.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.triangleUpIcon;
+import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.triangleDownIcon;
+
 
 @SuppressWarnings("serial")
 public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
@@ -92,6 +95,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
         int caretIndex;
         boolean hasGroup;
         List<StartEndPosition> charIndexOfLcs;
+        List<Integer> outBoundOfLcsList;
+        int outBoundOfLcsIndex;
+
 
 
 
@@ -104,6 +110,8 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             caretIndex = 0;
             hasGroup = false;
             this.charIndexOfLcs = charIndexOfLcs;
+            this.outBoundOfLcsList = new ArrayList<>();
+            this.outBoundOfLcsIndex = -1;
         }
         void updateCharIndexOfLcs(List<StartEndPosition> charIndexOfLcs) {
             this.charIndexOfLcs = charIndexOfLcs;
@@ -208,7 +216,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             regexSearchActionPerformed(e, -1);
         });
         buttonPanel.add(regexTestButton);
-        JButton prevSearch = new JButton("▲");
+        JButton prevSearch = new JButton(triangleUpIcon);
         prevSearch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -216,7 +224,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             }
         });
         buttonPanel.add(prevSearch);
-        JButton nextSearch = new JButton("▼");
+        JButton nextSearch = new JButton(triangleDownIcon);
         nextSearch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -716,6 +724,8 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     private void setImplicitStyles(SearchTextPane searchTextPane, boolean moveCaretToLcs){
         long startTime = 0;
+        searchTextPane.outBoundOfLcsList.clear();
+        searchTextPane.outBoundOfLcsIndex = -1;
         if (LAPSETIME != null) {
             startTime = System.currentTimeMillis();
         }
@@ -731,7 +741,9 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                         if (moveCaretToLcs) {
                             searchTextPane.searchTextPane.setCaretPosition(outBoundStart);
                             moveCaretToLcs = false;
+                            searchTextPane.outBoundOfLcsIndex = 0;
                         }
+                        searchTextPane.outBoundOfLcsList.add(outBoundStart);
                     }
                     Style lcsStyle = baseLcsStyle;
                     String optionLcsStyleName = position.styleName;
@@ -759,10 +771,19 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                     if (moveCaretToLcs) {
                         searchTextPane.searchTextPane.setCaretPosition(outBoundStart);
                         moveCaretToLcs = false;
+                        searchTextPane.outBoundOfLcsIndex = 0;
                     }
+                    searchTextPane.outBoundOfLcsList.add(outBoundStart);
                 }
 
             }
+        }
+        if (moveCaretToLcs && !searchTextPane.outBoundOfLcsList.isEmpty() && searchTextPane.findplist.isEmpty()) {
+            String counterString = String.format(
+                    Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.checkbox.formatfound"),
+                    searchTextPane.outBoundOfLcsIndex+1,
+                    searchTextPane.outBoundOfLcsList.size());
+            this.searchCountCheckBox.setText(counterString);
         }
         if (LAPSETIME != null) {
             long endTime = System.currentTimeMillis();
@@ -842,6 +863,8 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 if(searchCountCheckBox.isSelected() && optionPane == null) {
                     popupRegexTestOptionPane(searchTextPane);
                 }
+            } else {
+                nextBtnActionDefault(searchTextPane);
             }
         }
     }
@@ -903,7 +926,43 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
                 if(searchCountCheckBox.isSelected() && optionPane == null) {
                     popupRegexTestOptionPane(searchTextPane);
                 }
+            } else {
+                prevBtnActionDefault(searchTextPane);
             }
+        }
+    }
+
+    private void nextBtnActionDefault(SearchTextPane selectedSearchTextPane) {
+        if(!selectedSearchTextPane.outBoundOfLcsList.isEmpty()) {
+            int maxLcsList = selectedSearchTextPane.outBoundOfLcsList.size();
+            if ( ++selectedSearchTextPane.outBoundOfLcsIndex >= maxLcsList) {
+                selectedSearchTextPane.outBoundOfLcsIndex = 0;
+            }
+            int oubBoundStart = selectedSearchTextPane.outBoundOfLcsList.get(selectedSearchTextPane.outBoundOfLcsIndex);
+            selectedSearchTextPane.searchTextPane.setCaretPosition(oubBoundStart);
+
+            String counterString = String.format(
+                    Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.checkbox.formatfound"),
+                    selectedSearchTextPane.outBoundOfLcsIndex+1,
+                    selectedSearchTextPane.outBoundOfLcsList.size());
+            this.searchCountCheckBox.setText(counterString);
+
+        }
+    }
+
+    private void prevBtnActionDefault(SearchTextPane selectedSearchTextPane) {
+        if (!selectedSearchTextPane.outBoundOfLcsList.isEmpty()) {
+            int maxLcsList = selectedSearchTextPane.outBoundOfLcsList.size();
+            if (--selectedSearchTextPane.outBoundOfLcsIndex < 0) {
+                selectedSearchTextPane.outBoundOfLcsIndex = maxLcsList - 1;
+            }
+            int oubBoundStart = selectedSearchTextPane.outBoundOfLcsList.get(selectedSearchTextPane.outBoundOfLcsIndex);
+            selectedSearchTextPane.searchTextPane.setCaretPosition(oubBoundStart);
+            String counterString = String.format(
+                    Constant.messages.getString("customactivescan.testsqlinjection.regexsearch.checkbox.formatfound"),
+                    selectedSearchTextPane.outBoundOfLcsIndex+1,
+                    selectedSearchTextPane.outBoundOfLcsList.size());
+            this.searchCountCheckBox.setText(counterString);
         }
     }
 
