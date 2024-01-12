@@ -3,6 +3,7 @@ package org.zaproxy.zap.extension.customactivescan.view;
 import org.apache.commons.httpclient.URIException;
 import org.apache.logging.log4j.Level;
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.core.scanner.NameValuePair;
 import org.parosproxy.paros.network.HttpMessage;
 import org.parosproxy.paros.network.HttpRequestHeader;
 import org.parosproxy.paros.network.HttpResponseHeader;
@@ -394,7 +395,10 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
         return resultMessageList.size();
     }
 
-    private String[] generateRecordArrayFromMessage(HttpMessageWithLCSResponse resultMessage, String paramName, CustomScanJSONData.ScanRule selectedScanRule) {
+    private String[] generateRecordArrayFromMessage(HttpMessageWithLCSResponse resultMessage,
+                                                    NameValuePair nameValuePair,
+                                                    String paramName,
+                                                    CustomScanJSONData.ScanRule selectedScanRule) {
         // get baseColumn data : "Time", "Method", "URL", "Code", "Reason", "Length"
         // extract "Time" String from response header
         String timeString = "";
@@ -443,6 +447,16 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
         resultRecord.add(statusCodeString);
         resultRecord.add(reasonCodeString);
         resultRecord.add(contentLengthString);
+        int targetType = nameValuePair.getType();
+        if (targetType == NameValuePair.TYPE_UNDEFINED) {
+            StartEndPosition startEndPosition = resultMessage.getNameValuePairStartEnd(nameValuePair);
+            String insertPositionString = "["
+                    + Integer.toString(startEndPosition.start)
+                    + ","
+                    + Integer.toString(startEndPosition.end)
+                    + "]";
+            paramName = insertPositionString;
+        }
         resultRecord.add(paramName);
         resultRecord.add(resultMessage.getAttackTitleString());
         resultRecord.add(resultMessage.getPercentString());
@@ -462,22 +476,22 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
         return resultRecordArray;
     }
 
-    public int addMessageToScanLogTableModel(HttpMessageWithLCSResponse resultMessage, String paramName, CustomScanJSONData.ScanRule selectedScanRule){
+    public int addMessageToScanLogTableModel(HttpMessageWithLCSResponse resultMessage, NameValuePair nameValuePair, String paramName, CustomScanJSONData.ScanRule selectedScanRule){
         int sizeOfMessageList = 0; //  size of ScanLogPanel.resultMessageList
         // search regex pattern in response result message
         if (resultMessage != null) {
-            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage,  paramName, selectedScanRule);
+            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage, nameValuePair, paramName, selectedScanRule);
             sizeOfMessageList = addRowToScanLogTableModel(resultRecordArray, resultMessage);
 
         }
         return sizeOfMessageList;
     }
 
-    public int updateScanLogTableModelWithResultMessage(HttpMessageWithLCSResponse resultMessage, String paramName, CustomScanJSONData.ScanRule selectedScanRule) {
+    public int updateScanLogTableModelWithResultMessage(HttpMessageWithLCSResponse resultMessage, NameValuePair nameValuePair, String paramName, CustomScanJSONData.ScanRule selectedScanRule) {
         // int rowIndex = resultMessageList.indexOf(resultMessage); this return sucks..
         int rowIndex = resultMessage.getMessageIndexInScanLogPanel();
         if (rowIndex > -1) {
-            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage,  paramName, selectedScanRule);
+            String[] resultRecordArray = generateRecordArrayFromMessage(resultMessage,  nameValuePair, paramName, selectedScanRule);
             int colIndex = 0;
             for(String columnValue: resultRecordArray){
                 this.scanLogTableModel.setValueAt(columnValue,rowIndex, colIndex++);

@@ -18,32 +18,33 @@ For example, you have a web page that contains a CSRF token. The CSRF token has 
 To erase this token, this addon sends two identical http requests and computes the response LCS of the two requests.
 LCS remove the different token values ​​from the two responses as follows:
  
-<PRE>
-[response1]
-&lt;form action="add.php" method="POST"&gt;
-&lt;input type="hidden" name="token" value="<font color="red">dbc8ee88f64bf794505ef74e41d6e5a4</font>"&gt;
-&lt;input type="submit"  value="Complete"&gt;
-&lt;/form&gt;
 
-[response2]
-&lt;form action="add.php" method="POST"&gt;
-&lt;input type="hidden" name="token" value="bcb138585064356efa927ab196cbf8ec"&gt;
-&lt;input type="submit"  value="Complete"&gt;
-&lt;/form&gt;
+    [response1]
+    <form action="add.php" method="POST">
+    <input type="hidden" name="token" value="dbc8ee88f64bf794505ef74e41d6e5a4">
+    <input type="submit"  value="Complete">
+    </form>
+    
+    [response2]
+    <form action="add.php" method="POST">
+    <input type="hidden" name="token" value="bcb138585064356efa927ab196cbf8ec">
+    <input type="submit"  value="Complete">
+    </form>
+    
+    [LCS]
+    <form action="add.php" method="POST">
+    <input type="hidden" name="token" value=">
+    <input type="submit"  value="Complete">
+    </form>
+    
 
-[LCS]
-&lt;form action="add.php" method="POST"&gt;
-&lt;input type="hidden" name="token" value="&gt;
-&lt;input type="submit"  value="Complete"&gt;
-&lt;/form&gt;
-</PRE>
 * Before calculating the LCS, this addon splits the response content by whitespace/JSON/HTML delimiters or characters and stores it in an array.
 
 ##  SQL injection test some results.
-<table>
+<TABLE>
  <TR><TH ROWSPAN="2">SQL injection Detection rate<BR>(Detected/Total)</TH><TH>CustomActiveScan<BR>ForZAP <BR>0.8.3</TH><TH>Active Scanner Rules(alpha)<BR>44.0.0</TH><TH>Active Scanner Rules<BR>57.0.0</TH><TH>Advanced SQLInjection Scanner<BR>15.0.0</TH></TR>
  <TR><TH>100%<BR>(14/14)</TH><TH>50%<BR>(2/4)</TH><TH>20%<BR>(2/10)</TH><TH>40%<BR>(4/10)</TH></TR>
- </table>
+</TABLE>
   
 [See Details](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/99.1.-SQL-injection-detection-test-results-with-ActiveScan)
 
@@ -79,6 +80,13 @@ $
 3）restart zap(sorry, currently this addon does not work unless restart zap after install it.)
 
 ## how to use
+This is automatically called when you start active scannig after already installed default scanners.
+If you have any doubts whether this scanner is actually being called, you can import the [CustomScan.policy](CustomScan.policy) file. This policy forces the use of CustomScan when invoking active scan. using guide is follows:
+1) download [CustomScan.policy](CustomScan.policy)
+1) select menu [Analyse->Scan Policy Manager->import], and load CustomScan.policy file.
+2) when you start scan, select policy [Custom Scan]. 
+
+Information on how to use can be found at the following link: <BR>
 [Basic Usage](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/1.0.-Basic-Usage)
 
 ## Author
