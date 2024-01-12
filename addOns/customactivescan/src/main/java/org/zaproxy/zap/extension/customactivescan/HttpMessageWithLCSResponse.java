@@ -1,12 +1,16 @@
 package org.zaproxy.zap.extension.customactivescan;
 
 import org.parosproxy.paros.core.scanner.Alert;
-import org.parosproxy.paros.network.HttpMalformedHeaderException;
+import org.parosproxy.paros.core.scanner.NameValuePair;
+import org.parosproxy.paros.core.scanner.VariantUserDefined;
+import org.parosproxy.paros.network.HttpHeader;
 import org.parosproxy.paros.network.HttpMessage;
+import org.parosproxy.paros.network.HttpRequestHeader;
 import org.zaproxy.zap.extension.customactivescan.model.AttackTitleType;
 import org.zaproxy.zap.extension.customactivescan.view.InterfacePopUpAction;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HttpMessageWithLCSResponse extends HttpMessage implements InterfacePopUpAction {
@@ -25,6 +29,8 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
     private AttackTitleType attackTitleType = null;
     private Component popUpInvokerComponent = null;
     private ParmGenMacroTraceParams pmtParams = null;
+
+    List<UrlEncodedInsertionRange> encodeRangeList = null;
 
     HttpMessageWithLCSResponse(
             HttpMessage htmsg,
@@ -74,7 +80,8 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
     }
 
     /**
-     *  set index of message in ScanLogPanel.resultMessageList
+     * set index of message in ScanLogPanel.resultMessageList
+     *
      * @param index
      */
     public void setMessageIndexInScanLogPanel(int index) {
@@ -82,7 +89,8 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
     }
 
     /**
-     *  get index of message in ScanLogPanel.resultMessageList
+     * get index of message in ScanLogPanel.resultMessageList
+     *
      * @return index of messageList
      */
     public int getMessageIndexInScanLogPanel() {
@@ -106,8 +114,9 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
     }
 
     public boolean hasRequestLCS() {
-        return (this.lcsCharacterIndexOfLcsRequest !=null && !this.lcsCharacterIndexOfLcsRequest.isEmpty());
+        return (this.lcsCharacterIndexOfLcsRequest != null && !this.lcsCharacterIndexOfLcsRequest.isEmpty());
     }
+
     public List<StartEndPosition> getLcsCharacterIndexOfLcsResponse() {
         return this.lcsCharacterIndexOfLcsResponse;
     }
@@ -118,6 +127,7 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
 
     /**
      * get LCS response. LCS response consists of response header and Response body.
+     *
      * @return
      */
     public String getLCSResponse() {
@@ -126,6 +136,7 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
 
     /**
      * get Original Average Size from 2 Responses
+     *
      * @return
      */
     public int getOriginalAverageResponseSize() {
@@ -134,21 +145,25 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
 
     /**
      * get response's 3digit status using worst(most largest) 3digit status in 2 responses.
+     *
      * @return
      */
-    public int getWorstResponseStatus() { return this.worstResponseStatus; }
+    public int getWorstResponseStatus() {
+        return this.worstResponseStatus;
+    }
 
     public String getAttackTitleString() {
         return attackTitleString;
     }
 
-    public void setPercentString(String percent){
+    public void setPercentString(String percent) {
         this.percentString = percent;
     }
 
     public String getPercentString() {
         return this.percentString;
     }
+
     public AttackTitleType getAttackTitleType() {
         return this.attackTitleType;
     }
@@ -164,10 +179,11 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
     public void setPopUpInvokerComponent(Component component) {
         this.popUpInvokerComponent = component;
     }
+
     @Override
     public void popUpActionPerformed(HttpMessage message) {
         if (this.popUpInvokerComponent != null) {
-            if (InterfacePopUpAction.class.isAssignableFrom(this.popUpInvokerComponent.getClass())){
+            if (InterfacePopUpAction.class.isAssignableFrom(this.popUpInvokerComponent.getClass())) {
                 InterfacePopUpAction action = (InterfacePopUpAction) this.popUpInvokerComponent;
                 action.popUpActionPerformed(message);
             }
@@ -184,18 +200,13 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
         return newMessage;
     }
 
-    public void hello(String data, Integer i) {
-
-        LOGGER4J.info("hello from customactive data:" + data + " i=" + i.toString());
-    }
-
     public void setPmtParams(ParmGenMacroTraceParams pmtParams) {
         this.pmtParams = pmtParams;
     }
 
     public Integer[] getPmtParamsArray() {
         if (this.pmtParams != null) {
-            return new Integer[] {
+            return new Integer[]{
                     this.pmtParams.scannerId,
                     this.pmtParams.getSelectedRequestNo(),
                     this.pmtParams.getLastStepNo(),
@@ -204,5 +215,92 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
         }
         return null;
     }
+
+    private List<UrlEncodedInsertionRange> getUrlEncodedPositions() {
+        // getPrimeHeader() + CRLF + getHeadersAsString() + CRLF
+
+        HttpRequestHeader requestHeader = this.getRequestHeader();
+        String CRLF = HttpHeader.CRLF;
+        String primeHeaderWithOutCrLf = requestHeader.getPrimeHeader();
+        String requestHeaderStrings = requestHeader.getHeadersAsString();
+        String headerPartString = primeHeaderWithOutCrLf + CRLF + requestHeaderStrings + CRLF;
+        String wholeMessageString = headerPartString + this.getRequestBody().toString();
+        List<UrlEncodedInsertionRange> encodeRangeListLocal = new ArrayList<>();
+
+        // if www-url-encoded then add encodeRange
+        String contentTypeValue = requestHeader.getHeader(HttpRequestHeader.CONTENT_TYPE);
+        if (contentTypeValue != null
+                && contentTypeValue.toUpperCase().indexOf(
+                HttpRequestHeader
+                        .FORM_URLENCODED_CONTENT_TYPE
+                        .toUpperCase()
+        ) != -1) {
+            UrlEncodedInsertionRange encodeRange = new UrlEncodedInsertionRange(0, wholeMessageString.length());
+            encodeRangeListLocal.add(encodeRange);
+        } else {
+            UrlEncodedInsertionRange encodeRange = new UrlEncodedInsertionRange(0, headerPartString.length() - 1);
+            encodeRangeListLocal.add(encodeRange);
+        }
+
+
+        return encodeRangeListLocal;
+    }
+
+    private boolean isWithInUrlEncodedRange(int start, int end) {
+        if (this.encodeRangeList == null) {
+            this.encodeRangeList = getUrlEncodedPositions();
+        }
+        for (UrlEncodedInsertionRange range : this.encodeRangeList) {
+            if (range.start <= start && range.end >= end && start <= end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * get user defined start/end index of NameValuePair position
+     * @param nameValuePair
+     * @return start/end index
+     */
+    public StartEndPosition getNameValuePairStartEnd(NameValuePair nameValuePair) {
+        VariantUserDefined variantUserDefined = new VariantUserDefined();
+        int originalLength = getWholeMessageString(this).length();
+        String value = "!___CUSTOM12345ACTIVE___$";
+        HttpMessage copiedThis = new HttpMessage(this);
+        variantUserDefined.setMessage(copiedThis);
+        variantUserDefined.setParameter(copiedThis, nameValuePair, "", value);
+        String wholeString = getWholeMessageString(copiedThis);
+        int newLength = wholeString.length();
+        int start = wholeString.indexOf(value);
+        int difference = newLength - originalLength;
+        int end = start + value.length() - difference;
+        if (end < start) {
+            end = start;
+        }
+        LOGGER4J.debug("Variant userdefined start,end = " + start + "," + end);
+        return new StartEndPosition(start, end);
+    }
+
+    /**
+     * return true if specified StartEndPosition is in URLEncoded range.
+     * 
+     * @param startEndPosition
+     * @return
+     */
+    public boolean isNameValuePariWithInUrlEncoded(StartEndPosition startEndPosition) {
+        return isWithInUrlEncodedRange(startEndPosition.start, startEndPosition.end);
+    }
+
+    private String getWholeMessageString(HttpMessage httpMessage) {
+        HttpRequestHeader requestHeader = httpMessage.getRequestHeader();
+        String CRLF = HttpHeader.CRLF;
+        String primeHeaderWithOutCrLf = requestHeader.getPrimeHeader();
+        String requestHeaderStrings = requestHeader.getHeadersAsString();
+        String headerPartString = primeHeaderWithOutCrLf + CRLF + requestHeaderStrings + CRLF;
+        String originalMessageString = headerPartString + httpMessage.getRequestBody().toString();
+        return originalMessageString;
+    }
+
 
 }

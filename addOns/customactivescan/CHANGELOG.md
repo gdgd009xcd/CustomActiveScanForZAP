@@ -2,6 +2,10 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [v0.8.6] - 2024-01-12
+### Added
+- improve: Supported custom vectors which specify custom locations in the http request on active scanning.
+
 ## [v0.8.5] - 2023-12-14
 ### Added
 - new feature: Added next▼/prev▲　button action which move caret to next/prev Lcs position on Result Dialog.
