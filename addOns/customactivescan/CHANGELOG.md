@@ -2,6 +2,14 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [v0.8.7] - 2024-02-21
+### Changed
+- bugfix: fixed an issue where deleting a row in the ScanRule table would cause an exception if the ComboBox had input focus.
+- maintenance: Changed some hardcoded text to I18N text.
+### Added
+- improve: Added javahelp button in MenuBar of main panel.
+
+
 ## [v0.8.6] - 2024-01-12
 ### Added
 - improve: Supported custom vectors which specify custom locations in the http request on active scanning.

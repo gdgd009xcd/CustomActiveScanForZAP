@@ -41,8 +41,10 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 	// you can access any files under ZAP_ICONS
 	// by code like yourClassName.class.getResource(ZAP_ICONS + "/pause.png")
 	public static ImageIcon cIcon = DisplayUtils.getScaledIcon(new ImageIcon(ScanLogPanel.class.getResource(ZAP_ICONS + "/C.png")));
+	public static ImageIcon qIcon = DisplayUtils.getScaledIcon(new ImageIcon(ScanLogPanel.class.getResource(ZAP_ICONS + "/Q.png")));
 	public static ImageIcon triangleUpIcon = DisplayUtils.getScaledIcon(new ImageIcon(ScanLogPanel.class.getResource(ZAP_ICONS + "/triangleUp.png")));
 	public static ImageIcon triangleDownIcon = DisplayUtils.getScaledIcon(new ImageIcon(ScanLogPanel.class.getResource(ZAP_ICONS + "/triangleDown.png")));
+
 
 	//public static final String MESSAGE_PREFIX = "customactivescan.testsqlinjection.";
 

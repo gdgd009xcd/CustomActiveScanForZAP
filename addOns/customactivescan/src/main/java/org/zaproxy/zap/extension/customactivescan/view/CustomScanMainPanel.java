@@ -2,10 +2,12 @@ package org.zaproxy.zap.extension.customactivescan.view;
 
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.view.View;
+import org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanDataModel;
 import org.zaproxy.zap.extension.customactivescan.model.CustomScanJSONData;
 import org.zaproxy.zap.extension.customactivescan.model.InjectionPatterns;
 import org.zaproxy.zap.extension.customactivescan.model.ModifyType;
+import org.zaproxy.zap.extension.help.ExtensionHelp;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -15,12 +17,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.File;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
@@ -79,29 +76,29 @@ public class CustomScanMainPanel extends JPanel {
         scanRuleMenuBarPanel.setLayout(borderLayout);
         JMenuBar scanRuleMenuBar = new JMenuBar();
         //scanRuleMenuBar.setPreferredSize(new Dimension(50, 27));
-        JMenu scanRuleMenuTitle = new JMenu("Rule");
+        JMenu scanRuleMenuTitle = new JMenu(Constant.messages.getString("customactivescan.customscanmainpanel.rule.text"));
         scanRuleMenuBar.add(scanRuleMenuTitle);
-        JMenuItem addRuleMenuItem = new JMenuItem("Add Rule");
+        JMenuItem addRuleMenuItem = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.rule.add.text"));
         scanRuleMenuTitle.add(addRuleMenuItem);
         addRuleMenuItem.addActionListener(e ->{
             addRuleActionPerformed(e);
         });
-        JMenuItem addRuleCopyFromMenuItem = new JMenuItem("Copy Rule");
+        JMenuItem addRuleCopyFromMenuItem = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.rule.copy.text"));
         scanRuleMenuTitle.add(addRuleCopyFromMenuItem);
         addRuleCopyFromMenuItem.addActionListener(e -> {
             copyRuleActionPerformed(e);
         });
-        JMenuItem delRuleMenuItem = new JMenuItem("Del Rule");
+        JMenuItem delRuleMenuItem = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.rule.del.text"));
         scanRuleMenuTitle.add(delRuleMenuItem);
         delRuleMenuItem.addActionListener(e ->{
             delRuleActionPerformed(e);
         });
-        JMenuItem loadFileMenuItem = new JMenuItem("Load");
+        JMenuItem loadFileMenuItem = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.rule.load.text"));
         scanRuleMenuTitle.add(loadFileMenuItem);
         loadFileMenuItem.addActionListener(e ->{
             loadFileActionPerformed(e);
         });
-        JMenuItem saveFileMenuItem = new JMenuItem("Save as");
+        JMenuItem saveFileMenuItem = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.rule.saveas.text"));
         scanRuleMenuTitle.add(saveFileMenuItem);
         saveFileMenuItem.addActionListener(e ->{
             saveFileActionPerformed(e);
@@ -117,6 +114,19 @@ public class CustomScanMainPanel extends JPanel {
         JLabel spaceLabel = new JLabel(" ");
         scanRuleMenuBar.add(ruleTypeLabel);
         scanRuleMenuBar.add(spaceLabel);
+
+        //help menu
+        JButton scanRuleHelpBtn = new JButton(ExtensionAscanRules.qIcon);
+        scanRuleHelpBtn.setToolTipText(Constant.messages.getString("customactivescan.customscanmainpanel.helpBtnTooltip.text"));
+        scanRuleHelpBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ExtensionHelp.showHelp("addon.customactivescan");
+            }
+        });
+        scanRuleMenuBar.add(scanRuleHelpBtn);
+        scanRuleMenuBar.add(new JSeparator(SwingConstants.VERTICAL));
+
         // Gridbaglayout cannot handle JMenuBar properly, so we use Borderlayout for JMenuBar
         scanRuleMenuBarPanel.add(scanRuleMenuBar, BorderLayout.LINE_START);
 
@@ -151,7 +161,7 @@ public class CustomScanMainPanel extends JPanel {
         rulePatternScroller.setAutoscrolls(true);
         LineBorder rulePatternBorderLine = new LineBorder(Color.BLACK, 2, true);
         TitledBorder rulePatternTitledBorder = new TitledBorder(rulePatternBorderLine,
-                "Attacking Patterns for CustomActiveScan",
+                Constant.messages.getString("customactivescan.customscanmainpanel.rulePatternTitledBorder.text"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         rulePatternScroller.setBorder(rulePatternTitledBorder);
@@ -188,12 +198,12 @@ public class CustomScanMainPanel extends JPanel {
         scanLogPanel.setLayout(borderLayout);
         LineBorder scanLogPanelBorderLine = new LineBorder(Color.BLACK, 2, true);
         TitledBorder scanLogPanelTitledBorder = new TitledBorder(scanLogPanelBorderLine,
-                "\"ScanLog\" window for displaying output response results",
+                Constant.messages.getString("customactivescan.customscanmainpanel.scanLogPanelTitledBorder.text"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         scanLogPanel.setBorder(scanLogPanelTitledBorder);
 
-        scanLogCheckBox = new JCheckBox("Response results output to \"ScanLog\" window");
+        scanLogCheckBox = new JCheckBox(Constant.messages.getString("customactivescan.customscanmainpanel.scanLogCheckBox.text"));
         if (selectedScanRule != null) {
             scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
         } else {
@@ -222,17 +232,17 @@ public class CustomScanMainPanel extends JPanel {
         }
         this.flagPatternList = new JList<>(this.flagPatternListModel);
         this.flagPatternPopupMenu = new JPopupMenu();
-        JMenuItem flagPatternAdd = new JMenuItem("Add");
+        JMenuItem flagPatternAdd = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.flagPatternAdd.text"));
         flagPatternAdd.addActionListener(l ->{
             addFlagPatternActionPerformed(l, true);
         });
         this.flagPatternPopupMenu.add(flagPatternAdd);
-        this.flagPatternMod = new JMenuItem("Mod");
+        this.flagPatternMod = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.flagPatternMod.text"));
         this.flagPatternMod.addActionListener(l ->{
             addFlagPatternActionPerformed(l, false);
         });
         this.flagPatternPopupMenu.add(flagPatternMod);
-        JMenuItem flagPatternDel = new JMenuItem("Del");
+        JMenuItem flagPatternDel = new JMenuItem(Constant.messages.getString("customactivescan.customscanmainpanel.flagPatternDel.text"));
         flagPatternDel.addActionListener(l -> {
             int selectedIndex = this.flagPatternList.getSelectedIndex();
             if (selectedIndex != -1) {
@@ -272,7 +282,7 @@ public class CustomScanMainPanel extends JPanel {
         flagPatternScroller.setAutoscrolls(true);
         LineBorder flagPatternBorderLine = new LineBorder(Color.BLUE, 1, true);
         TitledBorder flagPatternTitledBorder = new TitledBorder(flagPatternBorderLine,
-                "Regexes for detecting keywords in response results",
+                Constant.messages.getString("customactivescan.customscanmainpanel.flagPatternTitledBorder.text"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         flagPatternScroller.setBorder(flagPatternTitledBorder);
@@ -309,7 +319,7 @@ public class CustomScanMainPanel extends JPanel {
         idleTimePanel.setLayout(idleTimeLayout);
         LineBorder idleTimePanelBorderLine = new LineBorder(Color.BLACK, 1, true);
         TitledBorder idleTimePanelTitledBorder = new TitledBorder(idleTimePanelBorderLine,
-                "Configurations: Idle Time | request count until next pausing",
+                Constant.messages.getString("customactivescan.customscanmainpanel.idleTimePanelTitledBorder.text"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
         idleTimePanel.setBorder(idleTimePanelTitledBorder);
@@ -459,17 +469,17 @@ public class CustomScanMainPanel extends JPanel {
 
     public void addRuleActionPerformed(ActionEvent e) {
         LOGGER4J.debug("addRuleActionPerformed");
-        new AddRuleDialog(this, "AddRule", Dialog.ModalityType.DOCUMENT_MODAL).setVisible(true);
+        new AddRuleDialog(this, Constant.messages.getString("customactivescan.customscanmainpanel.AddRuleDialogTitle.text"), Dialog.ModalityType.DOCUMENT_MODAL).setVisible(true);
     }
 
     public void copyRuleActionPerformed(ActionEvent e) {
         LOGGER4J.debug("copyRuleActionPerformed");
-        new AddRuleDialogByCopy(this, "CopyRule", Dialog.ModalityType.DOCUMENT_MODAL).setVisible(true);
+        new AddRuleDialogByCopy(this, Constant.messages.getString("customactivescan.customscanmainpanel.AddRuleDialogByCopyTitle.text"), Dialog.ModalityType.DOCUMENT_MODAL).setVisible(true);
     }
 
     public void delRuleActionPerformed(ActionEvent e) {
         String selectedItem = (String)this.ruleComboBox.getSelectedItem();
-        int optionNo = JOptionPane.showConfirmDialog(this, "Delete Rule[" + selectedItem + "] anyway?", "Delete Rule", JOptionPane.YES_NO_OPTION);
+        int optionNo = JOptionPane.showConfirmDialog(this, Constant.messages.getString("customactivescan.customscanmainpanel.delRuleConfirmDialogMessage.arg0.text", selectedItem), Constant.messages.getString("customactivescan.customscanmainpanel.delRuleConfirmDialogTitle.text"), JOptionPane.YES_NO_OPTION);
         switch(optionNo) {
             case JOptionPane.YES_OPTION:
                 int selectedRuleIndex = this.ruleComboBox.getSelectedIndex();
@@ -509,7 +519,7 @@ public class CustomScanMainPanel extends JPanel {
     }
 
     public void addFlagPatternActionPerformed(ActionEvent e, boolean isAddAction) {
-        AddFlagRegex addFlagRegexDialog = new AddFlagRegex(this, "Add/Mod flag result item regex", Dialog.ModalityType.DOCUMENT_MODAL);
+        AddFlagRegex addFlagRegexDialog = new AddFlagRegex(this, Constant.messages.getString("customactivescan.customscanmainpanel.addFlagRegexDialogTitle.text"), Dialog.ModalityType.DOCUMENT_MODAL);
         addFlagRegexDialog.setFlagPatternList(this.flagPatternList, isAddAction);
         addFlagRegexDialog.setVisible(true);
     }
@@ -602,10 +612,10 @@ public class CustomScanMainPanel extends JPanel {
                 File f = getSelectedFile();
                 if (f.exists() && getDialogType() == SAVE_DIALOG) {
                     String m = String.format(
-                            "<html>%s already exists.<br>Do you want to replace it?",
+                            Constant.messages.getString("customactivescan.customscanmainpanel.saveToNewFileApproveAlreadyExistFileFormat.text"),
                             f.getAbsolutePath());
                     int rv = JOptionPane.showConfirmDialog(
-                            this, m, "Save As", JOptionPane.YES_NO_OPTION);
+                            this, m, Constant.messages.getString("customactivescan.customscanmainpanel.saveToNewFileConfirmTitle.text"), JOptionPane.YES_NO_OPTION);
                     if (rv != JOptionPane.YES_OPTION) {
                         return;
                     }
@@ -615,7 +625,7 @@ public class CustomScanMainPanel extends JPanel {
         };
         FileFilterForJSON pFilter = new FileFilterForJSON();
         jfc.setFileFilter(pFilter);
-        jfc.setDialogTitle("CustomActiveScan Save");
+        jfc.setDialogTitle(Constant.messages.getString("customactivescan.customscanmainpanel.saveToNewFileJfcTitle.text"));
         if (cfile != null) {
             jfc.setSelectedFile(cfile);
         }
@@ -678,10 +688,10 @@ public class CustomScanMainPanel extends JPanel {
                 File f = getSelectedFile();
                 if (!f.exists() && getDialogType() == OPEN_DIALOG) {
                     String m = String.format(
-                            "File Not Found:%s",
+                            Constant.messages.getString("customactivescan.customscanmainpanel.loadScanDataModelApproveFileNotFoundFormat.text"),
                             f.getAbsolutePath());
                     JOptionPane.showMessageDialog(
-                            this, m, "File Not Found", JOptionPane.ERROR_MESSAGE);
+                            this, m, Constant.messages.getString("customactivescan.customscanmainpanel.loadScanDataModelApproveFileNotFoundDialogTitle.text"), JOptionPane.ERROR_MESSAGE);
                     return;// failed file open.
                 }
                 super.approveSelection();// succeeded file open.
@@ -689,7 +699,7 @@ public class CustomScanMainPanel extends JPanel {
         };
         FileFilterForJSON pFilter = new FileFilterForJSON();
         jfc.setFileFilter(pFilter);
-        jfc.setDialogTitle("CustomActiveScan Load");
+        jfc.setDialogTitle(Constant.messages.getString("customactivescan.customscanmainpanel.loadScanDataModelJfcTitle.text"));
         if (cfile != null) {
             jfc.setSelectedFile(cfile);
         }

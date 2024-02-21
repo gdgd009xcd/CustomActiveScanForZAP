@@ -96,6 +96,10 @@ public class CustomJTable extends JTable implements CellEditorListener {
         delTableRow.addActionListener(l ->{
             int selectedRow = this.getSelectedRow();
             if (selectedRow != -1) {
+                if (isEditing()) { // if there is on focus in ComboBox, We must call editingStopped before remove it.
+                    // Because after calling remove row, editingStopped will be called at deleted row,col position and exception will be raised.
+                    getCellEditor().stopCellEditing();
+                }
                 this.tableModel.removeRow(selectedRow);
                 this.mainPanel.updateModelWithJTableModel(this.tableModel);// update CustomScanDataModel with JTable's Data
             }
@@ -180,7 +184,11 @@ public class CustomJTable extends JTable implements CellEditorListener {
 
     @Override
     public void editingStopped(ChangeEvent e) {
-        super.editingStopped(e);
+        try {
+            super.editingStopped(e);
+        } catch(Exception ex) {
+            LOGGER4J.error(ex.getMessage(), ex);
+        }
         LOGGER4J.debug("editingStopped");
         // update CustomScanDataModel with this JTable contents
         mainPanel.updateModelWithJTableModel(tableModel);
