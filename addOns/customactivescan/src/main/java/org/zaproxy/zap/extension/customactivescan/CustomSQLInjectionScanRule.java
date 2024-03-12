@@ -4,10 +4,7 @@ import org.apache.logging.log4j.Level;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.core.scanner.*;
-import org.parosproxy.paros.network.HttpHeaderField;
-import org.parosproxy.paros.network.HttpMessage;
-import org.parosproxy.paros.network.HttpRequestHeader;
-import org.parosproxy.paros.network.HttpResponseHeader;
+import org.parosproxy.paros.network.*;
 import org.zaproxy.zap.extension.ascan.ActiveScan;
 import org.zaproxy.zap.extension.ascan.ExtensionActiveScan;
 import org.zaproxy.zap.extension.customactivescan.model.*;
@@ -19,7 +16,9 @@ import org.zaproxy.zap.network.HttpResponseBody;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -126,7 +125,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 ExtensionAscanRules.hostProcessScannerIdMap.put(hProcess, scannerId);
                 WaitTimerObject waitTimerObject = new WaitTimerObject();
                 ExtensionAscanRules.scannerIdWaitTimerMap.put(scannerId, waitTimerObject);
-                if (selectedScanRule.doScanLogOutput) {
+                if (selectedScanRule.getDoScanLogOutput()) {
                     final int finalScannerId = scannerId;
                     try {
 
@@ -283,8 +282,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 continue;
             }
 
-
             // 1. Original response matches true condition
+            String patternValue = tfrpattern.trueValuePattern;
             String trueValue = origParamValue + tfrpattern.trueValuePattern;
             if (tfrpattern.modifyType != ModifyType.Add) {
                 trueValue = tfrpattern.trueValuePattern;
@@ -295,7 +294,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     tfrpattern.modifyType,
                     originalParam,
                     trueParamName,
-                    trueValue,
+                    patternValue,
                     scannerId,
                     selectedScanRule,
                     pauseActionObject,
@@ -354,6 +353,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 // 1-1. original(normal body) is equal to true body
                 if (normalTruePercent >= this.NEALYEQUALPERCENT && !trueHasSQLError) {
                     if (falseBodyOutputs == null) {
+                        patternValue = tfrpattern.falseValuePattern;
                         falseValue = origParamValue + tfrpattern.falseValuePattern;
                         if (tfrpattern.modifyType != ModifyType.Add) {
                             falseValue = tfrpattern.falseValuePattern;
@@ -364,7 +364,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                                 tfrpattern.modifyType,
                                 originalParam,
                                 falseParamName,
-                                falseValue,
+                                patternValue,
                                 scannerId,
                                 selectedScanRule,
                                 pauseActionObject,
@@ -435,6 +435,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
                 if (falseBodyOutputs == null) {
                     falseValue = origParamValue + tfrpattern.falseValuePattern;
+                    patternValue = tfrpattern.falseValuePattern;
                     if (tfrpattern.modifyType != ModifyType.Add) {
                         falseValue = tfrpattern.falseValuePattern;
                     }
@@ -444,7 +445,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             tfrpattern.modifyType,
                             originalParam,
                             falseParamName,
-                            falseValue,
+                            patternValue,
                             scannerId,
                             selectedScanRule,
                             pauseActionObject,
@@ -659,6 +660,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 String errorParamName = origParamName;
                 if (tfrpattern.errorValuePattern != null && !tfrpattern.errorValuePattern.isEmpty()) {
                     errorParamName = origParamName + (tfrpattern.errorNamePattern != null ? tfrpattern.errorNamePattern : "");
+                    patternValue = tfrpattern.errorValuePattern;
                     String errorValue = origParamValue + tfrpattern.errorValuePattern;
                     if (tfrpattern.modifyType != ModifyType.Add) {
                         errorValue = tfrpattern.errorValuePattern;
@@ -669,7 +671,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                                 tfrpattern.modifyType,
                                 originalParam,
                                 errorParamName,
-                                errorValue,
+                                patternValue,
                                 scannerId,
                                 selectedScanRule,
                                 pauseActionObject,
@@ -710,23 +712,26 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     }
 
     private void scanByPenTestRule(HttpMessage msg,
-                                   NameValuePair originalParam,
+                                   NameValuePair nameValuePair,
                                    int scannerId,
                                    CustomScanJSONData.ScanRule selectedScanRule,
                                    PauseActionObject pauseActionObject,
                                    WaitTimerObject waitTimerObject) {
         LOGGER4J.debug("start scanByPenTestRule");
-        String origParamName = originalParam.getName();
-        String origParamValue = originalParam.getValue();
+        String origParamName = nameValuePair.getName();
+        String origParamValue = nameValuePair.getValue();
 
         List<InjectionPatterns.TrueFalsePattern> patterns = selectedScanRule.patterns.patterns;
 
         for(Iterator<InjectionPatterns.TrueFalsePattern> it = patterns.iterator(); it.hasNext();) {
             InjectionPatterns.TrueFalsePattern tfrpattern = it.next();
-            String injectedParamValue = origParamValue + tfrpattern.trueValuePattern;
-            HttpMessage resultMessage = sendOneMessage(originalParam,
+            String patternValue = tfrpattern.trueValuePattern;
+
+            HttpMessage resultMessage = sendOneMessage(
+                    tfrpattern.modifyType,
+                    nameValuePair,
                     origParamName,
-                    injectedParamValue,
+                    patternValue,
                     scannerId,
                     pauseActionObject,
                     waitTimerObject,
@@ -742,12 +747,23 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      * @param selectedScanRule
      * @return size of ScanLogPanel.resultMessageList
      */
-    private int addSendResultToScanLogPanel(int scannerId, HttpMessageWithLCSResponse resultMessage, NameValuePair nameValuePair, String paramName, CustomScanJSONData.ScanRule selectedScanRule) {
+    private int addSendResultToScanLogPanel(
+            int scannerId,
+            HttpMessageWithLCSResponse resultMessage,
+            NameValuePair nameValuePair,
+            String paramName,
+            CustomScanJSONData.ScanRule selectedScanRule,
+            StartEndPosition userDefinedStartEnd) {
         ScanLogPanelFrame frame = ExtensionAscanRules.getScanLogPanelFrame(scannerId);
         if (frame != null) {
             ScanLogPanel scanLogPanel = frame.getScanLogPanel();
             if (scanLogPanel != null) {
-                return scanLogPanel.addMessageToScanLogTableModel(resultMessage, nameValuePair, paramName, selectedScanRule);
+                return scanLogPanel.addMessageToScanLogTableModel(
+                        resultMessage,
+                        nameValuePair,
+                        paramName,
+                        selectedScanRule,
+                        userDefinedStartEnd);
             }
         }
         return -1;
@@ -922,7 +938,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
      *      * It can remove CSRF token or random's from response.
      * @param comparator
      * @param origParamName
-     * @param paramValue
+     * @param patternValue
      * @param scannerId
      * @param selectedScanRule
      * @param pauseActionObject
@@ -935,7 +951,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             ModifyType modifyType,
             NameValuePair nameValuePair,
             String origParamName,
-            String paramValue,
+            String patternValue,
             int scannerId,
             CustomScanJSONData.ScanRule selectedScanRule,
             PauseActionObject pauseActionObject,
@@ -946,61 +962,32 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         String[] res = new String[2];
         res[0]=null; res[1] = null;
         HttpMessage msg2 = getNewMsg();
-        if (nameValuePair.getType() == NameValuePair.TYPE_UNDEFINED) {
-            HttpMessageWithLCSResponse msg2WithLCS = new HttpMessageWithLCSResponse(msg2, attackTitleType);
-            StartEndPosition startEndPosition = msg2WithLCS.getNameValuePairStartEnd(nameValuePair);
-            if (msg2WithLCS.isNameValuePariWithInUrlEncoded(startEndPosition)) {
-                try {
-                    String newValue = URLEncoder.encode(
-                            paramValue,
-                            StandardCharsets.UTF_8);
-                    paramValue = newValue;
-                } catch (Exception e) {
-                    LOGGER4J.error(e.getMessage(), e);
-                }
-            }
+        if (selectedScanRule.isConvertURLdecodedValue()
+                && patternValue != null) {
+            patternValue = patternValue.replace("+", "%2b");
         }
+
         HttpMessageWithLCSResponse msg2withlcs = null;
         String lcsResponse = "";
 
         int worstResponseStatus = -1;
+
+        StartEndPosition userDefinedStartEnd = null;
+        if (nameValuePair.getType() == NameValuePair.TYPE_UNDEFINED) {
+            HttpMessageWithLCSResponse httpMessageWithLCSResponse = new HttpMessageWithLCSResponse(msg2);
+            userDefinedStartEnd = httpMessageWithLCSResponse.getNameValuePairStartEnd(nameValuePair);
+        }
         for(int cn = 0 ; cn<2; cn++) {
             msg2 = getNewMsg();
-            if(origParamName!=null&&paramValue!=null) {
-                boolean replacedJsonBody = false;
-                if (modifyType == ModifyType.JSON) {
-                    HttpRequestHeader requestHeader = msg2.getRequestHeader();
-                    if (requestHeader.hasContentType("json")) {
-                        UUID uuid =  UUIDGenerator.getUUID();
-                        String embedDummy = "___" + uuid.toString() + "~~~";
-                        setParameter(msg2, origParamName, embedDummy);
-                        byte[] bodyBytes = msg2.getRequestBody().getBytes();
-                        String bodyCharset = msg2.getRequestBody().getCharset();
-                        try {
-                            String bodyString = new String(bodyBytes, bodyCharset);
-                            String quotedDummy = "\"" + embedDummy + "\"";
-                            Pattern pattern = Pattern.compile(quotedDummy,   Pattern.MULTILINE);
-                            Matcher matcher = pattern.matcher(bodyString);
-                            if (matcher.find()) {
-                                int stPos = matcher.start();
-                                int endPos = matcher.end();
-                                StringBuilder bodyBuffer =  new StringBuilder();
-                                bodyBuffer.append(bodyString.substring(0, stPos));
-                                bodyBuffer.append(paramValue);
-                                if (endPos < bodyString.length()) {
-                                    bodyBuffer.append(bodyString.substring(endPos));
-                                }
-                                msg2.getRequestBody().setBody(bodyBuffer.toString());
-                                replacedJsonBody = true;
-                            }
-                        } catch (Exception ex) {
-                            LOGGER4J.error(ex.getMessage(), ex);
-                        }
-                    }
-                }
-                if (!replacedJsonBody) {
-                    setParameter(msg2, origParamName, paramValue);
-                }
+
+            if (patternValue != null) {
+                setPatternToHttpMessage(
+                        modifyType,
+                        selectedScanRule,
+                        origParamName,
+                        msg2,
+                        nameValuePair,
+                        patternValue);
             }
 
             // wait until specified MSec passed
@@ -1043,7 +1030,13 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     originalAverageResponseSize,
                     attackTitleType,
                     attackTitleType.name() + lastPartOfTitleString);
-            addSendResultToScanLogPanel(scannerId, msg2withlcs, nameValuePair, origParamName,selectedScanRule);
+            addSendResultToScanLogPanel(
+                    scannerId,
+                    msg2withlcs,
+                    nameValuePair,
+                    origParamName,
+                    selectedScanRule,
+                    userDefinedStartEnd);
         }
 
         return msg2withlcs;
@@ -1294,14 +1287,16 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         return null;
     }
 
-    HttpMessage sendOneMessage(NameValuePair nameValuePair,
+    HttpMessage sendOneMessage(
+            ModifyType modifyType,
+            NameValuePair nameValuePair,
             String origParamName,
-                               String paramValue,
-                               int scannerId,
-                               PauseActionObject pauseActionObject,
-                               WaitTimerObject waitTimerObject,
-                               CustomScanJSONData.ScanRule selectedScanRule,
-                               AttackTitleType attackTitleType) {
+            String patternValue,
+            int scannerId,
+            PauseActionObject pauseActionObject,
+            WaitTimerObject waitTimerObject,
+            CustomScanJSONData.ScanRule selectedScanRule,
+            AttackTitleType attackTitleType) {
 
         // wait until specified MSec passed
         waitTimerObject.waitUntilSpecifiedTimePassed(selectedScanRule);
@@ -1309,30 +1304,38 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         pauseAction(scannerId, pauseActionObject);
 
         HttpMessage msg2 = getNewMsg();
+
+        StartEndPosition userDefinedStartEnd = null;
         if (nameValuePair.getType() == NameValuePair.TYPE_UNDEFINED) {
-            HttpMessageWithLCSResponse msg2WithLCS = new HttpMessageWithLCSResponse(msg2, attackTitleType);
-            StartEndPosition startEndPosition = msg2WithLCS.getNameValuePairStartEnd(nameValuePair);
-            if (msg2WithLCS.isNameValuePariWithInUrlEncoded(startEndPosition)) {
-                try {
-                    String newValue = URLEncoder.encode(
-                            paramValue,
-                            StandardCharsets.UTF_8);
-                    paramValue = newValue;
-                } catch (Exception e) {
-                    LOGGER4J.error(e.getMessage(), e);
-                }
+            HttpMessageWithLCSResponse httpMessageWithLCSResponse = new HttpMessageWithLCSResponse(msg2);
+            userDefinedStartEnd = httpMessageWithLCSResponse.getNameValuePairStartEnd(nameValuePair);
+        }
+
+        if (patternValue != null) {
+            if (selectedScanRule.isConvertURLdecodedValue()) {
+                patternValue = patternValue.replace("+", "%2b");
             }
+            setPatternToHttpMessage(
+                    modifyType,
+                    selectedScanRule,
+                    origParamName,
+                    msg2,
+                    nameValuePair,
+                    patternValue);
         }
-        if(origParamName!=null&&paramValue!=null) {
-            setParameter(msg2, origParamName, paramValue);
-        }
+
 
         try {
             LOGGER4J.debug("sending message.");
             sendAndReceive(msg2, false); //do not follow redirects
             // add resultMessage to ScanLogPanel
             HttpMessageWithLCSResponse httpMessageWithLCSResponse = new HttpMessageWithLCSResponse(msg2, attackTitleType);
-            addSendResultToScanLogPanel(scannerId, httpMessageWithLCSResponse,nameValuePair, origParamName,selectedScanRule);
+            addSendResultToScanLogPanel(
+                    scannerId,
+                    httpMessageWithLCSResponse,
+                    nameValuePair,
+                    origParamName,selectedScanRule,
+                    userDefinedStartEnd);
         } catch (Exception ex) {
             LOGGER4J.error("Caught " + ex.getClass().getName() + " " + ex.getMessage() +
                     " when accessing: " + msg2.getRequestHeader().getURI().toString(), ex);
@@ -1470,6 +1473,401 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         trueMessage.setLcsCharacterIndexOfLcsRequest(lcsCharIndexOfTrueRequest);
         falseMessage.setLcsCharacterIndexOfLcsRequest(lcsCharIndexOfFalseRequest);
     }
+
+
+    private java.nio.charset.Charset getDecodeCharsetFromNameValuePair(NameValuePair nameValuePair) {
+        java.nio.charset.Charset decodeCharSet = StandardCharsets.ISO_8859_1;
+        switch(nameValuePair.getType()){
+            case NameValuePair.TYPE_URL_PATH:
+                // special URLencode for URL_PATH
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                break;
+            case NameValuePair.TYPE_QUERY_STRING:
+                // UTF-8 encode
+                // hardcoded value is UTF-8 in org.parosproxy.paros.core.scanner.AbstractPlugin::getURLEncode
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                decodeCharSet = StandardCharsets.UTF_8;
+                break;
+            case NameValuePair.TYPE_COOKIE:
+                // UTF-8 encode
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                break;
+            case NameValuePair.TYPE_HEADER:
+                // non-encode, but this Type has not capable to handle byte data.
+                // solution: use ordinary setParameter .
+                break;
+            case NameValuePair.TYPE_POST_DATA:
+                // UTF-8 encode
+                // hardcoded value is UTF-8 in org.parosproxy.paros.core.scanner.AbstractPlugin::getURLEncode
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                decodeCharSet = StandardCharsets.UTF_8;
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_PARAM:// non-file param
+                // solution: use byte data of request body.
+                // 1) set dummy string to value, and call ordinary setParameter.
+                // 2) use getBytes() for getting body bytes.
+                // 3) get position of dummy string by searching dummy string in body as binary data.
+                // 4) replace dummy string to raw value with using it's position.
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_FILE_PARAM:// file content
+                // solution: same as above.
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_FILE_NAME:// file name
+                // this Type cannot handle byte data.
+                // solution: use ordinary setParameter .
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_FILE_CONTENTTYPE:// content-type
+                // this Type cannot handle byte data.
+                // solution: use ordinary setParameter .
+                break;
+            case NameValuePair.TYPE_JSON:
+                //String escapeSafeChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%()=~|-^`{}*_?@[]:;/.,";
+                // double quoted
+                // whether it is escaped or not , always it applied StringEscapeUtils.escapeJava(value)
+                // solution: use byte data of request body.
+                // 1) set dummy string to value, and call ordinary setParameter.
+                // 2) use getBytes() for getting body bytes.
+                // 3) get position of dummy string by searching dummy string in body as binary data.
+                // 4) replace dummy string to escapedJava value with using it's position.
+                break;
+            case NameValuePair.TYPE_GRAPHQL_INLINE:// inline arguments in GRAPH QL
+                //String escapeSafeChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%()=~|-^`{}*_?@[]:;/.,";
+                // solution: use above steps.
+                // StringEscapeUtils.escapeXml11(value)
+                break;
+            case NameValuePair.TYPE_UNDEFINED:
+
+                break;
+            default:
+                break;
+        }
+        return decodeCharSet;
+    }
+
+    /**
+     * set Parameter to httpMessage
+     *
+     * @param modifyType
+     * @param selectedScanRule
+     * @param paramName
+     * @param httpMessage
+     * @param nameValuePair
+     * @param patternValue
+     */
+    private void setPatternToHttpMessage(
+            ModifyType modifyType,
+            CustomScanJSONData.ScanRule selectedScanRule,
+            String paramName,
+            HttpMessage httpMessage,
+            NameValuePair nameValuePair,
+            String patternValue) {
+
+        String originalValue = nameValuePair.getValue();
+        if (modifyType != ModifyType.Add) {
+            originalValue = "";
+        }
+        boolean isConvertURLDecodedValue = selectedScanRule.isConvertURLdecodedValue();
+        switch(nameValuePair.getType()){
+            case NameValuePair.TYPE_URL_PATH:
+                // special URLencode for URL_PATH
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                if (isConvertURLDecodedValue) {
+                    setEscapedParameter(httpMessage, paramName, getEscapedParamValueUTF8(originalValue, patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_QUERY_STRING:
+                // UTF-8 encode
+                // hardcoded value is UTF-8 in org.parosproxy.paros.core.scanner.AbstractPlugin::getURLEncode
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                if (isConvertURLDecodedValue) {
+                    setEscapedParameter(httpMessage, paramName, getEscapedParamValueUTF8(originalValue, patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_COOKIE:
+                // UTF-8 encode
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                if (isConvertURLDecodedValue) {
+                    setEscapedParameter(httpMessage, paramName, getEscapedParamValueUTF8(originalValue, patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_HEADER:
+                // non-encode, but this Type has not capable to handle byte data.
+                if(isConvertURLDecodedValue) {
+                    // convert the portion of URLEncoded ISO8859 value to String
+                    setEscapedParameter(httpMessage, paramName, originalValue + getRawParamValueUTF8(patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_POST_DATA:
+                // UTF-8 encode
+                // hardcoded value is UTF-8 in org.parosproxy.paros.core.scanner.AbstractPlugin::getURLEncode
+                // solution: newValue = encodeUTF8 originalValue + encodeISO8859_1 patternValue
+                // and use setEscapedParameter
+                if (isConvertURLDecodedValue) {
+                    setEscapedParameter(httpMessage, paramName, getEscapedParamValueUTF8(originalValue, patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_PARAM:// non-file param
+                embedParamValueToRequestBodyAsBytes(httpMessage, paramName, originalValue, patternValue, isConvertURLDecodedValue);
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_FILE_PARAM:// file content
+                embedParamValueToRequestBodyAsBytes(httpMessage, paramName, originalValue, patternValue, isConvertURLDecodedValue);
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_FILE_NAME:// file name
+                // this Type cannot handle byte data.
+                if (isConvertURLDecodedValue) {
+                    setEscapedParameter(httpMessage, paramName, originalValue + getRawParamValueUTF8(patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_MULTIPART_DATA_FILE_CONTENTTYPE:// content-type
+                // this Type cannot handle byte data.
+                if (isConvertURLDecodedValue) {
+                    setEscapedParameter(httpMessage, paramName, originalValue + getRawParamValueUTF8(patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_JSON:
+                // String escapeSafeChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%()=~|-^`{}*_?@[]:;/.,";
+                // double quoted
+                // whether it is escaped or not , always it applied StringEscapeUtils.escapeJava(value)
+                // solution: use byte data of request body.
+                // 1) set dummy string to value, and call ordinary setParameter.
+                // 2) use getBytes() for getting body bytes.
+                // 3a) get position of dummy string by searching dummy string in body as binary data.
+                //    if ModifyType.JSON then apply following 3b step for removing double quotes.
+                // 3b) get position of double quoted dummy string by searching those string in body as binary data
+                // 4) replace founded dummy string to escapedJava value with using it's position as binary data.
+                {
+                    HttpMessage msg2 = getNewMsg();
+                    UUID uuid = UUIDGenerator.getUUID();
+                    String embedDummy = "X___" + uuid.toString() + "~~~Y";
+                    setParameter(msg2, paramName, embedDummy);
+                    byte[] bodyBytes = msg2.getRequestBody().getBytes();
+                    String charsetName = msg2.getRequestBody().getCharset();
+                    Charset charset = Charset.forName(charsetName);
+                    LOGGER4J.debug("embed charset:" + charset);
+                    ParmGenBinUtil binBytes = new ParmGenBinUtil(originalValue.getBytes(charset));
+                    if (isConvertURLDecodedValue) {
+                        PartialURLDecodeISO8859_1ToBytes partialURLDecodeISO88591ToBytes = new PartialURLDecodeISO8859_1ToBytes(
+                                patternValue,
+                                StandardCharsets.UTF_8);
+                        binBytes.concat(partialURLDecodeISO88591ToBytes.action());
+                    } else {
+                        binBytes.concat(patternValue.getBytes(StandardCharsets.UTF_8));
+                    }
+                    String quotedDummy = "\"" + embedDummy + "\"";
+                    String bodyString = msg2.getRequestBody().toString();
+                    String keyString = embedDummy;
+                    if (bodyString != null
+                            && bodyString.indexOf(quotedDummy) != -1
+                            && modifyType == ModifyType.JSON) {
+                        keyString = quotedDummy;
+                    }
+                    ReplaceByteSequence replaceByteSequence = new ReplaceByteSequence(
+                            bodyBytes,
+                            keyString.getBytes(StandardCharsets.UTF_8),
+                            binBytes.getBytes());
+                    byte[] outputBodyBytes = replaceByteSequence.action(0);
+                    httpMessage.setRequestBody(outputBodyBytes);
+                }
+                break;
+            case NameValuePair.TYPE_GRAPHQL_INLINE:// inline arguments in GRAPH QL
+                // currently, no use.
+                LOGGER4J.warn("TYPE_GRAPHQL_INLINE");
+                if (isConvertURLDecodedValue) {
+                    setEscapedParameter(httpMessage, paramName, originalValue + getRawParamValueUTF8(patternValue));
+                } else {
+                    setParameter(httpMessage, paramName, originalValue + patternValue);
+                }
+                break;
+            case NameValuePair.TYPE_UNDEFINED:
+                // if isNameValuePariWithInUrlEncoded is true then encode value and set value by using oridinary setParameter
+                // THe isNameValuePairWithInUrlEncoded method must detect following URLencoded areas.
+                //  a) URL path in primeheader http://domain.com/URL_path1/URL_path2/index.php
+                //  b) The query string is placed after question mark in the primeheader.
+                //  c) the value is placed in www-url-encoded body.
+                // else then use TYPE_JSON steps except 3b step.
+                // Hint
+                // URI uri = HttpMessage.getRequestHeader().getURI();
+                // String uri.getPath()
+                // String uri.getQuery();
+                // List<String> HttpMessage.getRequestHeader().getHeaderValues(HttpHeader.COOKIE)
+                {
+                    HttpMessage msg2 = getNewMsg();
+                    UUID uuid = UUIDGenerator.getUUID();
+                    String embedDummy = "X___" + uuid.toString() + "~~~Y";
+                    setParameter(msg2, paramName, embedDummy);
+                    String charsetName = msg2.getRequestBody().getCharset();
+                    Charset charset = Charset.forName(charsetName);
+                    LOGGER4J.debug("embed charset:" + charset);
+                    boolean isURLEncoded = false;
+                    org.apache.commons.httpclient.URI uri = msg2.getRequestHeader().getURI();
+                    try {
+                        String paths = uri.getPath();
+                        if (paths != null && paths.indexOf(embedDummy) != -1) {
+                            isURLEncoded = true;
+                        }
+                        String queries = uri.getQuery();
+                        if (queries != null && queries.indexOf(embedDummy) != -1) {
+                            isURLEncoded = true;
+                        }
+                        List<String> cookies = msg2.getRequestHeader().getHeaderValues(HttpHeader.COOKIE);
+                        for(String cookie: cookies) {
+                            if(cookie != null && cookie.indexOf(embedDummy) != -1) {
+                                isURLEncoded = true;
+                                break;
+                            }
+                        }
+                    }catch (Exception ex) {
+                    }
+                    String primeHeaderWithOutCrLf = msg2.getRequestHeader().getPrimeHeader();
+                    String requestHeaderStrings = msg2.getRequestHeader().getHeadersAsString();
+                    String headerPartString = primeHeaderWithOutCrLf + CRLF + requestHeaderStrings + CRLF;
+                    boolean insertionPointIsHeaderPart = false;
+                    if (headerPartString.indexOf(embedDummy) != -1){
+                        insertionPointIsHeaderPart = true;
+                    }
+                    if (!isURLEncoded) {
+                        String contentTypeValue = msg2.getRequestHeader().getHeader(HttpRequestHeader.CONTENT_TYPE);
+                        if (contentTypeValue != null
+                                && contentTypeValue.toUpperCase().indexOf(
+                                HttpRequestHeader
+                                        .FORM_URLENCODED_CONTENT_TYPE
+                                        .toUpperCase()
+                        ) != -1
+                                && !insertionPointIsHeaderPart) {
+                            isURLEncoded = true;
+                        }
+                    }
+
+                    String paramValueEncoded = "";
+                    String paramValueRaw = originalValue + patternValue;
+                    if (isURLEncoded) {
+                        if (isConvertURLDecodedValue) {
+                            paramValueEncoded = getEscapedParamValueUTF8(originalValue, patternValue);
+                        } else {
+                            paramValueEncoded = URLEncoder.encode(originalValue + patternValue, StandardCharsets.UTF_8);
+                        }
+                    } else if (isConvertURLDecodedValue) {
+                        paramValueRaw = originalValue + getRawParamValueUTF8(patternValue);
+                    }
+
+
+                    if (insertionPointIsHeaderPart) {
+                        // embed position is header
+                        if(isURLEncoded) {
+                            setEscapedParameter(httpMessage, paramName, paramValueEncoded);
+                        } else {
+                            LOGGER4J.debug("paramName=" + paramName + " paramValueRaw=" + paramValueRaw);
+                            setParameter(httpMessage, paramName, paramValueRaw);
+                        }
+                    } else {
+                        // embed position is body
+                        if (isURLEncoded) {
+                            setEscapedParameter(httpMessage, paramName, paramValueEncoded);
+                        } else {
+                            byte[] bodyBytes = msg2.getRequestBody().getBytes();
+                            ParmGenBinUtil replaceBytes = new ParmGenBinUtil(originalValue.getBytes(charset));
+                            if (isConvertURLDecodedValue) {
+                                PartialURLDecodeISO8859_1ToBytes partialURLDecodeISO88591ToBytes =
+                                        new PartialURLDecodeISO8859_1ToBytes(
+                                                patternValue,
+                                                StandardCharsets.UTF_8);
+                                replaceBytes.concat(partialURLDecodeISO88591ToBytes.action());
+                            } else {
+                                replaceBytes.concat(patternValue.getBytes(StandardCharsets.UTF_8));
+                            }
+                            ReplaceByteSequence replaceByteSequence =
+                                    new ReplaceByteSequence(
+                                            bodyBytes,
+                                            embedDummy.getBytes(StandardCharsets.UTF_8),
+                                            replaceBytes.getBytes());
+                            byte[] outputBodyBytes = replaceByteSequence.action(0);
+                            httpMessage.setRequestBody(outputBodyBytes);
+                        }
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * embed parameter value which contains URL encoded value to request body.
+     *
+     * @param httpMessage
+     * @param paramName
+     * @param originalValue
+     * @param patternValue
+     * @param isConvertURLDecodedValue
+     */
+    private void embedParamValueToRequestBodyAsBytes(
+            HttpMessage httpMessage,
+            String paramName,
+            String originalValue,
+            String patternValue,
+            boolean isConvertURLDecodedValue)
+    {
+        HttpMessage msg2 = getNewMsg();
+        UUID uuid = UUIDGenerator.getUUID();
+        String embedDummy = "X___" + uuid.toString() + "~~~Y";
+        setParameter(msg2, paramName, embedDummy);
+        byte[] bodyBytes = msg2.getRequestBody().getBytes();
+        String charsetName = msg2.getRequestBody().getCharset();
+        Charset charset = Charset.forName(charsetName);
+        LOGGER4J.debug("embed charset:" + charset);
+        ParmGenBinUtil binBuffer =  new ParmGenBinUtil(originalValue.getBytes(charset));
+        byte[] patternBytes = patternValue.getBytes(StandardCharsets.UTF_8);
+        if (isConvertURLDecodedValue) {
+            PartialURLDecodeISO8859_1ToBytes partialURLDecodeISO88591ToBytes = new PartialURLDecodeISO8859_1ToBytes(
+                    patternValue,
+                    StandardCharsets.UTF_8);
+            patternBytes = partialURLDecodeISO88591ToBytes.action();
+        }
+        binBuffer.concat(patternBytes);
+        ReplaceByteSequence replaceByteSequence = new ReplaceByteSequence(
+                bodyBytes,
+                embedDummy.getBytes(StandardCharsets.UTF_8),
+                binBuffer.getBytes());
+        byte[] outputBodyBytes = replaceByteSequence.action(0);
+        httpMessage.setRequestBody(outputBodyBytes);
+    }
+
+    private String getEscapedParamValueUTF8(String originalValue, String patternValue) {
+        String originalValueEncoded = "";
+        if(!originalValue.isEmpty()) {
+            originalValueEncoded = URLEncoder.encode(originalValue, StandardCharsets.UTF_8);
+        }
+        PartialURLEncodeUTF8 partialURLEncodeUTF8 = new PartialURLEncodeUTF8(patternValue);
+        return originalValueEncoded + partialURLEncodeUTF8.action();
+    }
+
+
+    private String getRawParamValueUTF8(String patternValue) {
+        PartialURLDecodeISO8859_1 partialURLDecodeISO88591 = new PartialURLDecodeISO8859_1(patternValue);
+        return partialURLDecodeISO88591.action();
+    }
+
 
     public void hello(String mess, Integer i) {
         LOGGER4J.info("ScanRule hello mess:" + mess + " i=" + i.toString());

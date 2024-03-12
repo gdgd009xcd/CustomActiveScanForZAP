@@ -2,6 +2,10 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [v0.8.8] - 2024-03-12
+### Added
+- new feature: Supported URLEncoded(%XX) value within pattern for embeding binary data on the request. see [this](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/2.0.-CustomActiveScan-Main-Panel/#5-decode-urlencodedxx-value-check-box)
+
 ## [v0.8.7] - 2024-02-21
 ### Changed
 - bugfix: fixed an issue where deleting a row in the ScanRule table would cause an exception if the ComboBox had input focus.

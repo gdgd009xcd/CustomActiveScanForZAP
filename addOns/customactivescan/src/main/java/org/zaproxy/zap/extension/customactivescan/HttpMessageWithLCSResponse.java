@@ -10,6 +10,7 @@ import org.zaproxy.zap.extension.customactivescan.model.AttackTitleType;
 import org.zaproxy.zap.extension.customactivescan.view.InterfacePopUpAction;
 
 import java.awt.*;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +62,10 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
 
     private HttpMessageWithLCSResponse(HttpMessageWithLCSResponse message) {
         super(message);
+    }
+
+    protected HttpMessageWithLCSResponse(HttpMessage httpMessage) {
+        super(httpMessage);
     }
 
     private void copyMembersToDest(HttpMessageWithLCSResponse dest) {

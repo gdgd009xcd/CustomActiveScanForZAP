@@ -19,7 +19,6 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,6 +31,7 @@ public class CustomScanMainPanel extends JPanel {
             org.apache.logging.log4j.LogManager.getLogger();
 
     private JLabel ruleTypeLabel = null;
+    private JCheckBox convertURLencodedToRawValueChexkBox;
     private JScrollPane rulePatternScroller = null;
     private int selectedScanRuleIndex = -1;
     private CustomScanDataModel scanDataModel;
@@ -154,17 +154,66 @@ public class CustomScanMainPanel extends JPanel {
         gridBagLayout.setConstraints(scanRuleMenuBarPanel, gbc);
         add(scanRuleMenuBarPanel);
 
-        // custom scan pattern list
-        rulePatternScroller = new JScrollPane();
-        createRuleTable(selectedScanRule);
-        rulePatternScroller.setPreferredSize(new Dimension(400,400));
-        rulePatternScroller.setAutoscrolls(true);
+        // create borderlayout for adding option input components in the future
+        //  |-------------border layout PAGE_START--------------------|
+        //  | |---------Box layout BoxLayout.Y_AXIS-----------------| |
+        //  | | checkBox1 ------------------|                       | |
+        //  | | checkBox2 ------------------|                       | |
+        //  | |-----------------------------------------------------| |
+        //  |-------------border layout PAGE_CENTER-------------------|
+        //  | |---------------- JScrollPane ------------------------| |
+        //  | |                                                     | |
+        //  | |-----------------------------------------------------| |
+        //  |---------------------------------------------------------|
+        //
+        // ｃreate BorderLayout JPanel
+        JPanel rulePatternBorderPanel = new JPanel();
+        BorderLayout rulePatternBorderLayout = new BorderLayout();
+        rulePatternBorderLayout.setVgap(10);
+        rulePatternBorderPanel.setLayout(rulePatternBorderLayout);
+        // set border to this BorderLayout JPanel
         LineBorder rulePatternBorderLine = new LineBorder(Color.BLACK, 2, true);
         TitledBorder rulePatternTitledBorder = new TitledBorder(rulePatternBorderLine,
                 Constant.messages.getString("customactivescan.customscanmainpanel.rulePatternTitledBorder.text"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP);
-        rulePatternScroller.setBorder(rulePatternTitledBorder);
+        rulePatternBorderPanel.setBorder(rulePatternTitledBorder);
+
+        // create BoxLayout.Y=AXIS
+        JPanel rulePatternOptionsBoxPanel = new JPanel();
+        rulePatternOptionsBoxPanel.setLayout(new BoxLayout(rulePatternOptionsBoxPanel, BoxLayout.Y_AXIS));
+        // create checkBox
+        convertURLencodedToRawValueChexkBox = new JCheckBox(Constant.messages.getString("customactivescan.customscanmainpanel.convertURLencodedToRawValueChexkBox.text"));
+        convertURLencodedToRawValueChexkBox.setToolTipText(Constant.messages.getString("customactivescan.customscanmainpanel.convertURLencodedToRawValueChexkBox.toolTip.text"));
+        if (selectedScanRule != null) {
+            convertURLencodedToRawValueChexkBox.setSelected(selectedScanRule.isConvertURLdecodedValue());
+        } else {
+            convertURLencodedToRawValueChexkBox.setSelected(false);
+        }
+        convertURLencodedToRawValueChexkBox.addActionListener(e -> {
+                CustomScanJSONData.ScanRule currentScanRule = getSelectedScanRule();
+                if (currentScanRule != null && !this.ruleComboBoxActionIsNoNeedSave) {
+                    LOGGER4J.debug("START convertURLencodedToRawValueChexkBox addActionListener called.");
+                    currentScanRule.setConvertURLdecodedValue(this.convertURLencodedToRawValueChexkBox.isSelected());
+                    fileSaveAction();// The convertURL CheckBox is focusout when the save dialog appears
+                    LOGGER4J.debug("END convertURLencodedToRawValueChexkBox addActionListener called.");
+                }
+            }
+        );
+
+        rulePatternOptionsBoxPanel.add(convertURLencodedToRawValueChexkBox);//add checkBox to BoxLayout JPanel
+        // add BoxLayout JPanel to PAGE_START area of BorderLayout JPanel
+        rulePatternBorderPanel.add(rulePatternOptionsBoxPanel, BorderLayout.PAGE_START);
+
+        // custom scan pattern list
+        rulePatternScroller = new JScrollPane();
+        createRuleTable(selectedScanRule);
+        rulePatternScroller.setPreferredSize(new Dimension(400,400));
+        rulePatternScroller.setAutoscrolls(true);
+
+
+        // add JScrolledPane to CENTER area of BorderLayout JPanel
+        rulePatternBorderPanel.add(rulePatternScroller, BorderLayout.CENTER);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
@@ -174,8 +223,9 @@ public class CustomScanMainPanel extends JPanel {
         gbc.weighty = 0.5d;
         gbc.insets = new Insets(1,1,1,1);
         //gbc.anchor = GridBagConstraints.FIRST_LINE_START;
-        gridBagLayout.setConstraints(rulePatternScroller, gbc);
-        add(rulePatternScroller);
+        gridBagLayout.setConstraints(rulePatternBorderPanel, gbc);
+        // add BorderLayout in this Panel.
+        add(rulePatternBorderPanel);
 
         // separator
         JSeparator separator1 = new JSeparator();
@@ -205,7 +255,7 @@ public class CustomScanMainPanel extends JPanel {
 
         scanLogCheckBox = new JCheckBox(Constant.messages.getString("customactivescan.customscanmainpanel.scanLogCheckBox.text"));
         if (selectedScanRule != null) {
-            scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
+            scanLogCheckBox.setSelected(selectedScanRule.getDoScanLogOutput());
         } else {
             scanLogCheckBox.setSelected(false);
         }
@@ -216,7 +266,7 @@ public class CustomScanMainPanel extends JPanel {
             CustomScanJSONData.ScanRule currentScanRule = getSelectedScanRule();
             if (currentScanRule != null && !this.ruleComboBoxActionIsNoNeedSave) {
                 LOGGER4J.debug("START scanLogCheckBox addActionListener called.");
-                currentScanRule.doScanLogOutput = this.scanLogCheckBox.isSelected();
+                currentScanRule.setDoScanLogOutput(this.scanLogCheckBox.isSelected());
                 fileSaveAction();// The scanLog CheckBox is focusout when the save dialog appears
                 LOGGER4J.debug("END scanLogCheckBox addActionListener called.");
             }
@@ -400,7 +450,10 @@ public class CustomScanMainPanel extends JPanel {
 
                 if (scanLogCheckBox != null) {
                     LOGGER4J.debug("scanLogCheckBox setSelected in createRuleTable");
-                    scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
+                    scanLogCheckBox.setSelected(selectedScanRule.getDoScanLogOutput());
+                }
+                if (convertURLencodedToRawValueChexkBox != null) {
+                    convertURLencodedToRawValueChexkBox.setSelected(selectedScanRule.isConvertURLdecodedValue());
                 }
 
                 if (selectedScanRule.ruleType == CustomScanJSONData.RuleType.SQL) {
@@ -540,7 +593,8 @@ public class CustomScanMainPanel extends JPanel {
             CustomScanJSONData.ScanRule selectedScanRule = scanDataModel.getScanRule(selectedScanRuleIndex);
             createRuleTable(selectedScanRule);
             LOGGER4J.debug("scanLogCheckBox setSelected in ruleComboBoxActionPerformed");
-            this.scanLogCheckBox.setSelected(selectedScanRule.doScanLogOutput);
+            this.scanLogCheckBox.setSelected(selectedScanRule.getDoScanLogOutput());
+            this.convertURLencodedToRawValueChexkBox.setSelected(selectedScanRule.isConvertURLdecodedValue());
             this.randomizeIdleTimeCheckBox.setSelected(selectedScanRule.isRandomIdleTime());
             this.requestCountTextField.setText(Integer.toString(selectedScanRule.getRequestCount()));
             this.minimumIdleTimeTextField.setText(Integer.toString(selectedScanRule.getMinIdleTime()));
@@ -800,7 +854,8 @@ public class CustomScanMainPanel extends JPanel {
     public void addNewScanRule(String ruleName, CustomScanJSONData.RuleType ruleType, boolean scanLogIsSelected) {
         CustomScanJSONData.ScanRule scanRule = new CustomScanJSONData.ScanRule();
         scanRule.ruleType = ruleType;
-        scanRule.doScanLogOutput = scanLogIsSelected;
+        scanRule.setDoScanLogOutput(scanLogIsSelected);
+        scanRule.setConvertURLdecodedValue(false);
         scanRule.patterns.name = ruleName;
         scanRule.patterns.addPattern(ModifyType.Add,"", "", "", "", "", "");
         this.scanDataModel.addNewScanRule(scanRule);
