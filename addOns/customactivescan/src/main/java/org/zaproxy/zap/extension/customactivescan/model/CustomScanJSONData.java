@@ -138,7 +138,9 @@ public class CustomScanJSONData {
         @Expose
         public boolean randomIdleTime = false;
         @Expose
-        public boolean doScanLogOutput;
+        private boolean doScanLogOutput;
+        @Expose
+        private boolean convertURLdecodedValue;
         @Expose
         public InjectionPatterns patterns;
         @Expose
@@ -152,6 +154,7 @@ public class CustomScanJSONData {
         public ScanRule() {
             this.ruleType = RuleType.SQL;
             this.doScanLogOutput = false;
+            this.convertURLdecodedValue = false;
             this.patterns = new InjectionPatterns();
             this.flagResultItems = new ArrayList<>();
         }
@@ -235,6 +238,11 @@ public class CustomScanJSONData {
         public void setRandomIdleTime(boolean randomIdleTime) {
             this.randomIdleTime = randomIdleTime;
         }
+
+        public void setDoScanLogOutput(boolean doScanLogOutput) { this.doScanLogOutput = doScanLogOutput; }
+        public boolean getDoScanLogOutput() { return this.doScanLogOutput; }
+        public void setConvertURLdecodedValue(boolean convertURLdecodedValue) { this.convertURLdecodedValue = convertURLdecodedValue; }
+        public boolean isConvertURLdecodedValue() { return this.convertURLdecodedValue; }
 
         public long getIdleTime(Random random) {
             long rangeTime = this.maxIdleTime - this.minIdleTime;

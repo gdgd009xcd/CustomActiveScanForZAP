@@ -8,6 +8,9 @@ import org.parosproxy.paros.core.scanner.PluginFactory;
 import org.zaproxy.zap.extension.pscan.ExtensionPassiveScan;
 import org.zaproxy.zap.extension.pscan.PluginPassiveScanner;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -619,5 +622,62 @@ public class Utilities {
 
     public static String normlizedId(int id) {
         return id != -1 ? Integer.toString(id) : "";
+    }
+
+    public static String PartialURLDecodeISO8859_1(String value) {
+        String regex = "%[0-9a-fA-F][0-9a-fA-F]";
+        Pattern pattern = Pattern.compile(regex);
+        StringBuffer buffer = new StringBuffer(value);
+        StringBuffer output = new StringBuffer();
+        int valueLen = buffer.length();
+        int startIndex = 0;
+        int endIndex = -1;
+
+        for(endIndex = 3; endIndex <= valueLen; endIndex += 3) {
+            String digit3String = buffer.substring(startIndex, endIndex);
+            Matcher matcher = pattern.matcher(digit3String);
+            if (matcher.find()) {
+                try {
+                    String decodedValue = URLDecoder.decode(digit3String, StandardCharsets.ISO_8859_1);
+                    output.append(decodedValue);
+                } catch (Exception ex) {
+                    output.append(digit3String);
+                }
+            } else {
+                output.append(digit3String);
+            }
+            startIndex = endIndex;
+        }
+        if(startIndex < valueLen) {
+            output.append(buffer.substring(startIndex, valueLen));
+        }
+        return output.toString();
+    }
+
+    public static String partialURLencodeUTF8(String value) {
+        String regex = "%[0-9a-fA-F][0-9a-fA-F]";
+        Pattern pattern = Pattern.compile(regex);
+        StringBuffer buffer = new StringBuffer(value);
+        StringBuffer output = new StringBuffer();
+        int valueLen = buffer.length();
+        int startIndex = 0;
+        int endIndex = -1;
+
+        for(endIndex = 3; endIndex <= valueLen; endIndex += 3) {
+            String digit3String = buffer.substring(startIndex, endIndex);
+            Matcher matcher = pattern.matcher(digit3String);
+            if (matcher.find()) {
+                output.append(digit3String);
+            } else {
+                String encodedValue = URLEncoder.encode(digit3String, StandardCharsets.UTF_8);
+                output.append(encodedValue);
+            }
+            startIndex = endIndex;
+        }
+        if(startIndex < valueLen) {
+            String encodedValue = URLEncoder.encode(buffer.substring(startIndex, valueLen), StandardCharsets.UTF_8);
+            output.append(encodedValue);
+        }
+        return output.toString();
     }
 }

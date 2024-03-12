@@ -33,7 +33,7 @@ public class PrintableString {
 
             convertedString = istream.mapToObj(ci -> {
                 String value = "";
-                if (ci <= 0x001f || ci == 0x007f || (ci >= 0x0080 && ci <= 0x009f)) {
+                if (ci <= 0x001f || ci == 0x007f || (ci >= 0x0080)) {
                     try {
                         value = String.format("%%%02x", ci);
                     } catch (Exception e) {

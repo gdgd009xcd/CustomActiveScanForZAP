@@ -82,9 +82,10 @@ $
 ## how to use
 This is automatically called when you start active scannig after already installed default scanners.
 If you have any doubts whether this scanner is actually being called, you can import the [CustomScan.policy](CustomScan.policy) file. This policy forces the use of CustomScan when invoking active scan. using guide is follows:
-1) download [CustomScan.policy](CustomScan.policy)
-1) select menu [Analyse->Scan Policy Manager->import], and load CustomScan.policy file.
-2) when you start scan, select policy [Custom Scan]. 
+
+1) download [CustomScan.policy](CustomScan.policy)  
+2) select menu [Analyse->Scan Policy Manager->import], and load CustomScan.policy file.  
+3) when you start scan, select policy [Custom Scan].   
 
 Information on how to use can be found at the following link: <BR>
 [Basic Usage](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/1.0.-Basic-Usage)
