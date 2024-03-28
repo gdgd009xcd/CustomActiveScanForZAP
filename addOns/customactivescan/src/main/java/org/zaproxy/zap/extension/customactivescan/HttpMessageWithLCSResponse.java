@@ -307,5 +307,26 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
         return originalMessageString;
     }
 
-
+    /**
+     * update request body with bodyBytes and update Content-Length with bodyBytes.length
+     * this method may not need because plugin's SendAndReceive method always update Content-Length by calling updateRequestContentLength.
+     *
+     * @param message
+     * @param bodyBytes
+     */
+    public static void updateRequestContent(HttpMessage message, byte[] bodyBytes) {
+        message.getRequestBody().setContent(bodyBytes);
+        int bodyLength = message.getRequestBody().length();
+        String method = message.getRequestHeader().getMethod();
+        if (bodyLength == 0
+                && (HttpRequestHeader.GET.equalsIgnoreCase(method)
+                || HttpRequestHeader.CONNECT.equalsIgnoreCase(method)
+                || HttpRequestHeader.DELETE.equalsIgnoreCase(method)
+                || HttpRequestHeader.HEAD.equalsIgnoreCase(method)
+                || HttpRequestHeader.TRACE.equalsIgnoreCase(method))) {
+            message.getRequestHeader().setHeader(HttpHeader.CONTENT_LENGTH, null);
+            return;
+        }
+        message.getRequestHeader().setContentLength(bodyLength);
+    }
 }
