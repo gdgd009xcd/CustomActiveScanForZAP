@@ -1661,7 +1661,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     UUID uuid = UUIDGenerator.getUUID();
                     String embedDummy = "X___" + uuid.toString() + "~~~Y";
                     setParameter(msg2, paramName, embedDummy);
-                    byte[] bodyBytes = msg2.getRequestBody().getBytes();
+                    byte[] bodyBytes = msg2.getRequestBody().getContent();
                     String charsetName = msg2.getRequestBody().getCharset();
                     Charset charset = Charset.forName(charsetName);
                     LOGGER4J.debug("embed charset:" + charset);
@@ -1687,7 +1687,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                             keyString.getBytes(StandardCharsets.UTF_8),
                             binBytes.getBytes());
                     byte[] outputBodyBytes = replaceByteSequence.action(0);
-                    httpMessage.setRequestBody(outputBodyBytes);
+                    httpMessage.getRequestBody().setContent(outputBodyBytes);
                 }
                 break;
             case NameValuePair.TYPE_GRAPHQL_INLINE:// inline arguments in GRAPH QL
@@ -1719,6 +1719,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     String charsetName = msg2.getRequestBody().getCharset();
                     Charset charset = Charset.forName(charsetName);
                     LOGGER4J.debug("embed charset:" + charset);
+
                     boolean isURLEncoded = false;
                     org.apache.commons.httpclient.URI uri = msg2.getRequestHeader().getURI();
                     try {
@@ -1785,7 +1786,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         if (isURLEncoded) {
                             setEscapedParameter(httpMessage, paramName, paramValueEncoded);
                         } else {
-                            byte[] bodyBytes = msg2.getRequestBody().getBytes();
+                            byte[] bodyBytes = msg2.getRequestBody().getContent();//this decode request body with using Content-Encoding method and return it.
                             ParmGenBinUtil replaceBytes = new ParmGenBinUtil(originalValue.getBytes(charset));
                             if (isConvertURLDecodedValue) {
                                 PartialURLDecodeISO8859_1ToBytes partialURLDecodeISO88591ToBytes =
@@ -1802,7 +1803,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                                             embedDummy.getBytes(StandardCharsets.UTF_8),
                                             replaceBytes.getBytes());
                             byte[] outputBodyBytes = replaceByteSequence.action(0);
-                            httpMessage.setRequestBody(outputBodyBytes);
+
+                            httpMessage.getRequestBody().setContent(outputBodyBytes);// This encode specified binary with using the Content-Encoding method and set it to request body.
                         }
                     }
                 }
@@ -1832,7 +1834,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         UUID uuid = UUIDGenerator.getUUID();
         String embedDummy = "X___" + uuid.toString() + "~~~Y";
         setParameter(msg2, paramName, embedDummy);
-        byte[] bodyBytes = msg2.getRequestBody().getBytes();
+        byte[] bodyBytes = msg2.getRequestBody().getContent();
         String charsetName = msg2.getRequestBody().getCharset();
         Charset charset = Charset.forName(charsetName);
         LOGGER4J.debug("embed charset:" + charset);
@@ -1850,7 +1852,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 embedDummy.getBytes(StandardCharsets.UTF_8),
                 binBuffer.getBytes());
         byte[] outputBodyBytes = replaceByteSequence.action(0);
-        httpMessage.setRequestBody(outputBodyBytes);
+        httpMessage.getRequestBody().setContent(outputBodyBytes);
     }
 
     private String getEscapedParamValueUTF8(String originalValue, String patternValue) {

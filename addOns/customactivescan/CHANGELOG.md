@@ -2,6 +2,11 @@
 All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [v0.8.9] - 2024-03-28
+### Changed
+- bugfix: Changed to correctly encode and decode the HttpRequest body based on Content-Encoding.
+
 ## [v0.8.8] - 2024-03-12
 ### Added
 - new feature: Supported URLEncoded(%XX) value within pattern for embeding binary data on the request. see [this](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/2.0.-CustomActiveScan-Main-Panel/#5-decode-urlencodedxx-value-check-box)
