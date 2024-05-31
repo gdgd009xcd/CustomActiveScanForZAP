@@ -1,7 +1,7 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
 
-version = "0.8.9"
+version = "0.8.10"
 description = "a Active Scanner with custmizable rules"
 
 val jar by tasks.getting(Jar::class) {
@@ -20,8 +20,29 @@ zapAddOn {
         url.set("https://gdgd009xcd.github.io/CustomActiveScanForZAP")
         repo.set("https://github.com/gdgd009xcd/CustomActiveScanForZAP")
         helpSet {
-            baseName.set("help%LC%.helpset")
-            localeToken.set("%LC%")
+            // baseName and localToken are used for determinating javahelp helpset(.hs)  file path
+            // In English (default) locale, %LC% token is convert to "" then helpset file path is:
+            // main/java/javahelp/help/helpset.hs
+            // In ja_JP locale, %LC% token is convert to "_ja_JP" then helpset file path is:
+            // main/java/javahelp/help_ja_JP/helpset_ja_JP.hs
+            // * if you use %LC% locale token, then you must provide "all" locale specific helpset files for ZAP.
+            //   otherwise you may remove %LC% to support any locale helpset in English only.
+            // * if you comment out both baseName and localeToken property,
+            //   zaproxy expects the help directory to be in the following path:
+            //
+            //   main/java/javahelp/[addon package dir]/resources/help
+            //                                                    help_ja_JP
+            //                                                    ...
+            //   [addon package dir] = org/zaproxy/zap/extension/customactivescan
+            //
+            //   ** this help directory hierarchy is used for providing localization help by crowdin.
+            //
+            // ----locale supported helpset configurations.---
+            //baseName.set("help%LC%.helpset")
+            //localeToken.set("%LC%")
+            // ---- no locale supported(English only) configurations.---
+            baseName.set("help.helpset")
+            localeToken.set("")
         }
     }
 }
