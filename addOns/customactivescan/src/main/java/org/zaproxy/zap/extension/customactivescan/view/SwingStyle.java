@@ -1,6 +1,10 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
+import org.zaproxy.zap.extension.customactivescan.CastUtils;
+
+import javax.swing.*;
 import javax.swing.text.*;
+import java.awt.*;
 import java.util.Enumeration;
 
 public class SwingStyle {
@@ -26,8 +30,8 @@ public class SwingStyle {
         return styleContext;
     }
 
-    public StyledDocument createStyledDocument() {
-        return new DefaultStyledDocument(styleContext);
+    public DefaultStyledDocument createStyledDocument() {
+        return new ManagedStyledDocument(styleContext);
     }
 
     public static Style getDefaultStyle(StyledDocument doc) {
@@ -52,11 +56,16 @@ public class SwingStyle {
      * but remain other component attributes such as image component.
      * @param doc StyledDocument
      */
-    public static void clearAllCharacterAttributes(StyledDocument doc) {
+    public static void clearAllCharacterAttributes(ManagedStyledDocument doc, JTextPane pane) {
         Style defaultStyle = getDefaultStyle(doc);
         // replace "true" means overwrite char attributes with defaultStyle. existing character attributes is deleted.
-        // but remain other component attributes such as image component.
-        doc.setCharacterAttributes(0, doc.getLength(), defaultStyle, true);
+        // but we must remain other component attributes such as image component.
+        doc.setCharacterAttributeExceptComponents(0, doc.getLength(), defaultStyle, true);
+        if (pane != null) {
+            // reset character input attribute.
+            pane.setCharacterAttributes(defaultStyle, true);
+        }
     }
+
 
 }

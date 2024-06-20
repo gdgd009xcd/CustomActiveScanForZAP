@@ -528,9 +528,9 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
             String responseString = selectedMessage.getResponseHeader().toString() + selectedMessage.getResponseBody().toString();
             String LcsResponseString = selectedMessage.getLCSResponse();
             RegexTestDialog.PaneContents paneContents = new RegexTestDialog.PaneContents(this.flagColumnRegexString);
-            paneContents.addTitleAndContent("Request", requestString, selectedMessage.getLcsCharacterIndexOfLcsRequest());
+            paneContents.addTitleAndContent("Request", requestString, selectedMessage.getLcsCharacterIndexOfLcsRequest(),true);
             //paneContents.addTitleAndContent("Response", responseString, null);
-            paneContents.addTitleAndContent("Response(LCS)", LcsResponseString, selectedMessage.getLcsCharacterIndexOfLcsResponse());
+            paneContents.addTitleAndContent("Response(LCS)", LcsResponseString, selectedMessage.getLcsCharacterIndexOfLcsResponse(),false);
             Alert alert = selectedMessage.getAlert();
             if (alert != null) {
                 addAlertToTitleAndContent(paneContents, alert);
