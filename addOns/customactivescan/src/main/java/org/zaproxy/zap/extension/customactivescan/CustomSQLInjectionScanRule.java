@@ -16,7 +16,6 @@ import org.zaproxy.zap.network.HttpResponseBody;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +25,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.zaproxy.zap.extension.customactivescan.DecoderTag.getDecodedStringList;
 
 /**
  * this is special custmizable SQL injection logic test.
@@ -973,9 +974,11 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         int worstResponseStatus = -1;
 
         StartEndPosition userDefinedStartEnd = null;
+        boolean userDefinedPositionIsOutOfRangeInDecoderTags = false;
         if (nameValuePair.getType() == NameValuePair.TYPE_UNDEFINED) {
             HttpMessageWithLCSResponse httpMessageWithLCSResponse = new HttpMessageWithLCSResponse(msg2);
-            userDefinedStartEnd = httpMessageWithLCSResponse.getNameValuePairStartEnd(nameValuePair);
+            userDefinedStartEnd = httpMessageWithLCSResponse.getUserDefinedNameValuePairStartEnd(nameValuePair);
+            userDefinedPositionIsOutOfRangeInDecoderTags = httpMessageWithLCSResponse.isUserDefinedPositionOutOfDecoderTagsRange(userDefinedStartEnd);
         }
         for(int cn = 0 ; cn<2; cn++) {
             msg2 = getNewMsg();
@@ -987,7 +990,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         origParamName,
                         msg2,
                         nameValuePair,
-                        patternValue);
+                        patternValue,
+                        userDefinedPositionIsOutOfRangeInDecoderTags);
             }
 
             // wait until specified MSec passed
@@ -1305,10 +1309,12 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
 
         HttpMessage msg2 = getNewMsg();
 
+        boolean userDefinedPositionIsOutOfRangeInDecoderTags = false;
         StartEndPosition userDefinedStartEnd = null;
         if (nameValuePair.getType() == NameValuePair.TYPE_UNDEFINED) {
             HttpMessageWithLCSResponse httpMessageWithLCSResponse = new HttpMessageWithLCSResponse(msg2);
-            userDefinedStartEnd = httpMessageWithLCSResponse.getNameValuePairStartEnd(nameValuePair);
+            userDefinedStartEnd = httpMessageWithLCSResponse.getUserDefinedNameValuePairStartEnd(nameValuePair);
+            userDefinedPositionIsOutOfRangeInDecoderTags = httpMessageWithLCSResponse.isUserDefinedPositionOutOfDecoderTagsRange(userDefinedStartEnd);
         }
 
         if (patternValue != null) {
@@ -1321,7 +1327,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     origParamName,
                     msg2,
                     nameValuePair,
-                    patternValue);
+                    patternValue,
+                    userDefinedPositionIsOutOfRangeInDecoderTags);
         }
 
 
@@ -1564,7 +1571,8 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             String paramName,
             HttpMessage httpMessage,
             NameValuePair nameValuePair,
-            String patternValue) {
+            String patternValue,
+            boolean userDefinedPositionIsOutOfRangeInDecoderTags) {
 
         String originalValue = nameValuePair.getValue();
         if (modifyType != ModifyType.Add) {
@@ -1744,9 +1752,11 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     String requestHeaderStrings = msg2.getRequestHeader().getHeadersAsString();
                     String headerPartString = primeHeaderWithOutCrLf + CRLF + requestHeaderStrings + CRLF;
                     boolean insertionPointIsHeaderPart = false;
-                    if (headerPartString.indexOf(embedDummy) != -1){
+                    int headerInsertionPointOfEmbedDummy = headerPartString.indexOf(embedDummy);
+                    if (headerInsertionPointOfEmbedDummy != -1){
                         insertionPointIsHeaderPart = true;
                     }
+
                     if (!isURLEncoded) {
                         String contentTypeValue = msg2.getRequestHeader().getHeader(HttpRequestHeader.CONTENT_TYPE);
                         if (contentTypeValue != null
@@ -1772,6 +1782,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         paramValueRaw = originalValue + getRawParamValueUTF8(patternValue);
                     }
 
+                    if (userDefinedPositionIsOutOfRangeInDecoderTags) {
+                        isURLEncoded = false;
+                    }
 
                     if (insertionPointIsHeaderPart) {
                         // embed position is header

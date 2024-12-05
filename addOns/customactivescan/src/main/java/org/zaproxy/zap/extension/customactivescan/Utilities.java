@@ -5,6 +5,9 @@ import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Plugin;
 import org.parosproxy.paros.core.scanner.PluginFactory;
+import org.parosproxy.paros.network.HttpHeader;
+import org.parosproxy.paros.network.HttpMessage;
+import org.parosproxy.paros.network.HttpRequestHeader;
 import org.zaproxy.zap.extension.pscan.ExtensionPassiveScan;
 import org.zaproxy.zap.extension.pscan.PluginPassiveScanner;
 
@@ -12,6 +15,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -679,5 +683,28 @@ public class Utilities {
             output.append(encodedValue);
         }
         return output.toString();
+    }
+
+    public static String encodeURL(String value, Encode enc) {
+        return URLEncoder.encode(value, enc.getIANACharset());
+    }
+
+    public static String encodeBase64(String value, Encode enc) {
+        return new String(Base64.getEncoder().encode(value.getBytes(enc.getIANACharset())));
+    }
+
+    /**
+     * get whole request string from HttpMessage
+     * @param httpMessage
+     * @return request string
+     */
+    public static String getWholeMessageString(HttpMessage httpMessage) {
+        HttpRequestHeader requestHeader = httpMessage.getRequestHeader();
+        String CRLF = HttpHeader.CRLF;
+        String primeHeaderWithOutCrLf = requestHeader.getPrimeHeader();
+        String requestHeaderStrings = requestHeader.getHeadersAsString();
+        String headerPartString = primeHeaderWithOutCrLf + CRLF + requestHeaderStrings + CRLF;
+        String originalMessageString = headerPartString + httpMessage.getRequestBody().toString();
+        return originalMessageString;
     }
 }
