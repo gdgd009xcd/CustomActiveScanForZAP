@@ -741,7 +741,7 @@ public class ScanLogPanel extends JPanel implements DisposeChildInterface, Inter
     }
 
     protected void postPmtParamsToScanLogPanel(int selectedRequestNo, int lastRequestNo, int tabIndex) {
-        LOGGER4J.info("ScanLogPanel postPmtParamsToScanLogPanel selectedRequestNo="
+        LOGGER4J.debug("ScanLogPanel postPmtParamsToScanLogPanel selectedRequestNo="
                 + selectedRequestNo + " lastRequestNo=" + lastRequestNo + " tabIndex=" + tabIndex);
 
         this.pmtParams = new ParmGenMacroTraceParams(this.scannerId, selectedRequestNo, lastRequestNo, tabIndex);

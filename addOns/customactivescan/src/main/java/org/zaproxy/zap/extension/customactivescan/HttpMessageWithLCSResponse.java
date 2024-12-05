@@ -10,7 +10,6 @@ import org.zaproxy.zap.extension.customactivescan.model.AttackTitleType;
 import org.zaproxy.zap.extension.customactivescan.view.InterfacePopUpAction;
 
 import java.awt.*;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -268,14 +267,14 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
      * @param nameValuePair
      * @return start/end index
      */
-    public StartEndPosition getNameValuePairStartEnd(NameValuePair nameValuePair) {
+    public StartEndPosition getUserDefinedNameValuePairStartEnd(NameValuePair nameValuePair) {
         VariantUserDefined variantUserDefined = new VariantUserDefined();
-        int originalLength = getWholeMessageString(this).length();
+        int originalLength = Utilities.getWholeMessageString(this).length();
         String value = "!___CUSTOM12345ACTIVE___$";
         HttpMessage copiedThis = new HttpMessage(this);
         variantUserDefined.setMessage(copiedThis);
         variantUserDefined.setParameter(copiedThis, nameValuePair, "", value);
-        String wholeString = getWholeMessageString(copiedThis);
+        String wholeString = Utilities.getWholeMessageString(copiedThis);
         int newLength = wholeString.length();
         int start = wholeString.indexOf(value);
         int difference = newLength - originalLength;
@@ -295,16 +294,6 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
      */
     public boolean isNameValuePariWithInUrlEncoded(StartEndPosition startEndPosition) {
         return isWithInUrlEncodedRange(startEndPosition.start, startEndPosition.end);
-    }
-
-    private String getWholeMessageString(HttpMessage httpMessage) {
-        HttpRequestHeader requestHeader = httpMessage.getRequestHeader();
-        String CRLF = HttpHeader.CRLF;
-        String primeHeaderWithOutCrLf = requestHeader.getPrimeHeader();
-        String requestHeaderStrings = requestHeader.getHeadersAsString();
-        String headerPartString = primeHeaderWithOutCrLf + CRLF + requestHeaderStrings + CRLF;
-        String originalMessageString = headerPartString + httpMessage.getRequestBody().toString();
-        return originalMessageString;
     }
 
     /**
@@ -328,5 +317,17 @@ public class HttpMessageWithLCSResponse extends HttpMessage implements Interface
             return;
         }
         message.getRequestHeader().setContentLength(bodyLength);
+    }
+
+    public boolean isUserDefinedPositionOutOfDecoderTagsRange(StartEndPosition userDefinedPosition) {
+        String requestString = Utilities.getWholeMessageString(this);
+        List<StartEndPosition> decoderTagsRangeList =  DecoderTag.getDecodedStringList(requestString);
+        for(StartEndPosition decoderTagsRange: decoderTagsRangeList) {
+            if (userDefinedPosition.start >= decoderTagsRange.start &&
+            userDefinedPosition.end <= decoderTagsRange.end) {
+                return true;
+            }
+        }
+        return false;
     }
 }
