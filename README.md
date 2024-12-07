@@ -74,10 +74,13 @@ $
 
 ## Install
 
-1）Start ZAPROXY in your PC's Desktop.  
-2）Install add-on customactivescan-alpha-N.N.N.zap file according to the ZAP add-on installation method (example: File menu "Load add-on file").<BR>
+This addon is 3rd party addon, so you must add this addon file to ZAPROXY manually. this addon does not have any telemetry feature.
+
+1. download add on file customactivescan-xxx-n.n.n.zap on [this release page](https://github.com/gdgd009xcd/CustomActiveScanForZAP/releases)
+1. Start ZAPROXY in your PC's Desktop.  
+1. Install add-on customactivescan-xxx-n.n.n.zap file according to the ZAP add-on installation method (example: File menu "Load add-on file").<BR>
 ![AddonInstall](https://raw.githubusercontent.com/gdgd009xcd/RELEASES/master/IMG/ZAP/addoninst.png)<BR>    
-3）restart zap(sorry, currently this addon does not work unless restart zap after install it.)
+1. restart zap(sorry, currently this addon does not work unless restart zap after install it.)
 
 ## how to use
 This is automatically called when you start active scannig after already installed default scanners.
