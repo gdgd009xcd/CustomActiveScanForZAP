@@ -9,7 +9,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 
 @SuppressWarnings("serial")
-public class AddRuleDialogByCopy extends GridBagJDialog<String> {
+public final class AddRuleDialogByCopy extends GridBagJDialog<String> {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
@@ -24,6 +24,7 @@ public class AddRuleDialogByCopy extends GridBagJDialog<String> {
 
     AddRuleDialogByCopy(CustomScanMainPanel mainPanel, String title, ModalityType modalityType) {
         super(mainPanel, title, modalityType, null, GridBagConstraints.HORIZONTAL);
+        postSuper(null);
         this.mainPanel = mainPanel;
     }
 

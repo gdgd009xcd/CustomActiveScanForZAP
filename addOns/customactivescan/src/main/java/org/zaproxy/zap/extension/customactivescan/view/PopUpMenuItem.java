@@ -7,7 +7,7 @@ import org.zaproxy.zap.view.popup.PopupMenuItemHttpMessageContainer;
 import javax.swing.*;
 import java.awt.*;
 
-public class PopUpMenuItem extends PopupMenuItemHttpMessageContainer {
+public final class PopUpMenuItem extends PopupMenuItemHttpMessageContainer {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();

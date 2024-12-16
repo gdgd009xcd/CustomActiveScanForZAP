@@ -20,6 +20,11 @@ import java.awt.*;
 @SuppressWarnings("serial")
 public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildInterface {
 
+    private int fill;
+    private int anchor;
+    private Component mainPanel;
+    private T optionalObject;
+
     /**
      *
      * @param owner  You may set owner parameter by<BR> SwingUtilities.windowForComponent(yourComponent)<P></P><P></P>
@@ -44,28 +49,43 @@ public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildI
      */
     public GridBagJDialog(Window owner, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(owner, title, modalityType);
-        init(fill, -1, createMainPanelContent(null, optionalObject));
+        this.fill = fill;
+        this.anchor = -1;
+        this.mainPanel = null;
+        this.optionalObject = optionalObject;
     }
 
     public GridBagJDialog(Dialog dialog, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(dialog, title, modalityType);
-        init(fill, -1, createMainPanelContent(null, optionalObject));
+        this.fill = fill;
+        this.anchor = -1;
+        this.mainPanel = null;
+        this.optionalObject = optionalObject;
     }
 
     public GridBagJDialog(Frame frame, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(frame, title, modalityType);
-        init(fill, -1, createMainPanelContent(null, optionalObject));
+        this.fill = fill;
+        this.anchor = -1;
+        this.mainPanel = null;
+        this.optionalObject = optionalObject;
     }
 
     public GridBagJDialog(Component mainPanel, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(SwingUtilities.windowForComponent(mainPanel), title, modalityType);
-        init(fill, -1, createMainPanelContent(mainPanel, optionalObject));
+        this.fill = fill;
+        this.anchor = -1;
+        this.mainPanel = mainPanel;
+        this.optionalObject = optionalObject;
     }
 
 
     public GridBagJDialog(Dialog dialog, Component mainPanel, String title, ModalityType modalityType, T optionalObject, int fill) {
         super(dialog, title, modalityType);
-        init(fill, -1, createMainPanelContent(mainPanel, optionalObject));
+        this.fill = fill;
+        this.anchor = -1;
+        this.mainPanel = mainPanel;
+        this.optionalObject = optionalObject;
     }
     /**
      *
@@ -97,24 +117,43 @@ public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildI
      */
     public GridBagJDialog(Window owner, String title, ModalityType modalityType, T optionalObject, int fill, int anchor) {
         super(owner, title, modalityType);
-        init(fill, anchor, createMainPanelContent(null, optionalObject));
+        this.fill = fill;
+        this.anchor = anchor;
+        this.mainPanel = null;
+        this.optionalObject = optionalObject;
     }
 
     public GridBagJDialog(Dialog dialog, Component component, String title, ModalityType modalityType, T optionalObject, int fill, int anchor) {
         super(dialog, title, modalityType);
-        init(fill, anchor, createMainPanelContent(null, optionalObject));
+        this.fill = fill;
+        this.anchor = anchor;
+        this.mainPanel = null;
+        this.optionalObject = optionalObject;
     }
 
+    /**
+     * This method must specify in the final class's constructor,<br>
+     * immediately following the super() method.<br>
+     * Ex:
+     * <pre>
+     * someDialog extends GridBagJDialog...
+     * public someDialog() {
+     *   super(...);
+     *   postSuper();
+     *   ... some codes....
+     * }
+     * </pre>
+     */
+    public final void postSuper(Window relativeToWindow) {
+        init(this.fill, this.anchor, createMainPanelContent(this.mainPanel, this.optionalObject), relativeToWindow);
+    }
 
     /**
      * create this dialog contents<br>
      * you must implement createMainPanelContent method and pass this method's mainPanelContent.<br>
-     * Caution: you MUST NOT initialize member parameter that are set in createMainPanelContent method.<br>
-     * because createMainPanelContent is called before member parameter initialization process.<br>
      *<br>
      * class yourDialog extends GridBagJDialog&lt;String&gt; {<br>
      *     &nbsp;private JTextPane regexTextPane;// Ok. this parameter value is set in createMainPanelContent method.<br>
-     *     &nbsp;private JTextPane regexTextPane = null;// AAUGH. NG. this value will be null after createMainPanelContent is called<br>
      *     &nbsp;private JPanel mainPanel;<br>
      *<br>
      *     &nbsp;public yourDialog(Component mainPanelComponent, String title, null, ModalityType modalityType) {<br>
@@ -130,7 +169,7 @@ public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildI
      *     &nbsp;}<br>
      * }
      */
-    protected void init(int fill, int anchor, Component mainPanelContent) {
+    private void init(int fill, int anchor, Component mainPanelContent, Window relativeToWindow) {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         GridBagLayout layout = new GridBagLayout();
         JPanel panel = new JPanel();
@@ -211,7 +250,10 @@ public abstract class GridBagJDialog<T> extends JDialog implements DisposeChildI
         setResizable(true);
         pack();
         // set dialog position to centre of Owner window.
-        setLocationRelativeTo(getOwner());
+        if (relativeToWindow == null) {
+            relativeToWindow = getOwner();
+        }
+        setLocationRelativeTo(relativeToWindow);
     }
 
     /**

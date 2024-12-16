@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
-public class CustomScanMainPanel extends JPanel {
+public final class CustomScanMainPanel extends JPanel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -50,8 +50,21 @@ public class CustomScanMainPanel extends JPanel {
 
     private MainWorkPanelTab mainWorkPanelTab = null;
 
+    private GridBagLayout getGridBagLayout() {
+        return (GridBagLayout) getLayout();
+    }
+
     public CustomScanMainPanel(MainWorkPanelTab mainWorkPanelTab) {
         super(new GridBagLayout());
+        buildPanel();
+    }
+
+    /**
+     * build panel contents.
+     */
+    private void buildPanel() {
+
+        GridBagLayout gridBagLayout = getGridBagLayout();
 
         this.mainWorkPanelTab = mainWorkPanelTab;
 
@@ -68,7 +81,7 @@ public class CustomScanMainPanel extends JPanel {
         CustomScanJSONData.ScanRule selectedScanRule = getSelectedScanRule();
 
         // create GUI
-        GridBagLayout gridBagLayout = (GridBagLayout) getLayout();
+
         GridBagConstraints gbc = new GridBagConstraints();
         // menu for configuring rule
         JPanel scanRuleMenuBarPanel = new JPanel();
@@ -832,7 +845,7 @@ public class CustomScanMainPanel extends JPanel {
         }
     }
 
-    public CustomScanJSONData.ScanRule getSelectedScanRule() {
+    public final CustomScanJSONData.ScanRule getSelectedScanRule() {
         return scanDataModel.getScanRule(selectedScanRuleIndex);
     }
 

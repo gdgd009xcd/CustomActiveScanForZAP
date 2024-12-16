@@ -7,7 +7,7 @@ import java.io.IOException;
 //
 // ByteArray
 //
-public class ParmGenBinUtil {
+public final class ParmGenBinUtil {
 
     private ByteArrayOutputStream bstream = null;
 
@@ -19,7 +19,7 @@ public class ParmGenBinUtil {
         initParmGenBinUtil(bin);
     }
 
-    public void initParmGenBinUtil(byte[] bin) {
+    private void initParmGenBinUtil(byte[] bin) {
         bstream = new ByteArrayOutputStream();
         concat(bin);
     }

@@ -1,6 +1,6 @@
 package org.zaproxy.zap.extension.customactivescan;
 
-public class ParmGenMacroTraceParams {
+public final class ParmGenMacroTraceParams {
     int scannerId = -1;
     private int tabIndex = -1; // Macro Request List tabindex in MacroBuilderUI
     private int selected_request = -1; // scan target request stepno in ParmGenMacroTrace stepno
@@ -10,7 +10,7 @@ public class ParmGenMacroTraceParams {
         this.setParams(scannerId, selected_request, lastStepNo, tabindex);
     }
 
-    public void setParams(int scannerId, int selected_request, int lastStepNo, int tabindex) {
+    private void setParams(int scannerId, int selected_request, int lastStepNo, int tabindex) {
         this.scannerId = scannerId;
         setSelectedRequestNo(selected_request);
         setLastStepNo(lastStepNo);

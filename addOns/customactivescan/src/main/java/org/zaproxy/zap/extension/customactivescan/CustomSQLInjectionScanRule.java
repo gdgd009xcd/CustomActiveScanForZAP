@@ -1388,7 +1388,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 pauseActionObject.terminate();
                 if (th.isAlive() && th.getState() == Thread.State.WAITING) {// join if thread is alive, then join until thread is terminated.
                     try {
-                        LOGGER4J.debug("Thread id[" + th.getId() + "] join started");
+                        LOGGER4J.debug("Thread id[" + Utilities.getThreadId(th) + "] join started");
                         th.join();
                         ScanLogPanelFrame scanLogPanelFrame = ExtensionAscanRules.getScanLogPanelFrame(scannerId);
                         if (scanLogPanelFrame != null) {
@@ -1397,7 +1397,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     } catch (InterruptedException e) {
                         LOGGER4J.error(e.getMessage(), e);
                     }
-                    LOGGER4J.debug("Thread id[" + th.getId() + "] join ended.");
+                    LOGGER4J.debug("Thread id[" + Utilities.getThreadId(th) + "] join ended.");
                 } else {
                     pauseActionObject.notifyAll();
                 }

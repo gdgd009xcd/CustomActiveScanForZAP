@@ -707,4 +707,13 @@ public class Utilities {
         String originalMessageString = headerPartString + httpMessage.getRequestBody().toString();
         return originalMessageString;
     }
+
+    // since java version 19, getId will be deprecated. use threadId instead.
+    @SuppressWarnings("deprecation")
+    public static long getThreadId(Thread th) {
+        if (th != null) {
+            return th.getId();
+        }
+        return 0;
+    }
 }
