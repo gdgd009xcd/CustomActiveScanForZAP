@@ -56,7 +56,7 @@ public class InjectionPatterns implements DeepClone {
     public InjectionPatterns() {
         clearPatterns();
     }
-    public void clearPatterns() {
+    public final void clearPatterns() {
         patterns = new ArrayList<>();
     }
 

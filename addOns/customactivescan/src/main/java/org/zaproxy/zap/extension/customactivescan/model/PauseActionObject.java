@@ -1,6 +1,7 @@
 package org.zaproxy.zap.extension.customactivescan.model;
 
 import org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules;
+import org.zaproxy.zap.extension.customactivescan.Utilities;
 
 import java.util.Random;
 
@@ -67,7 +68,7 @@ public class PauseActionObject {
                     LOGGER4J.debug("new thread state[" + stateString + "]");
                 }
             }
-            LOGGER4J.debug("thread id[" + pauseActionThread.getId() + "] started");
+            LOGGER4J.debug("thread id[" + Utilities.getThreadId(pauseActionThread) + "] started");
             if (pauseActionThread.isAlive() && pauseActionThread.getState() == Thread.State.WAITING ) {
                 isCreatedNewThread = true;
                 ExtensionAscanRules.scannerIdThreadMap.put(scannerId, pauseActionThread);

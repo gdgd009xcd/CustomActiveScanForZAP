@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
-public class AddFlagRegex extends GridBagJDialog<String>{
+public final class AddFlagRegex extends GridBagJDialog<String>{
     private JTextField regexPatternField;
     private JList<String> flagPatternList;
     private int selectedIndex = -1;
@@ -16,13 +16,16 @@ public class AddFlagRegex extends GridBagJDialog<String>{
 
     AddFlagRegex(CustomScanMainPanel mainPanel, String title, ModalityType modarityType) {
         super(SwingUtilities.windowForComponent(mainPanel), title, modarityType, null, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
+        postSuper(null);
         this.mainPanel = mainPanel;
     }
 
     AddFlagRegex(Dialog dialog, CustomScanMainPanel mainPanel, String title, ModalityType modarityType) {
         super(dialog, mainPanel, title, modarityType, null, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
+        postSuper(null);
         this.mainPanel = mainPanel;
     }
+
     @Override
     protected Component createMainPanelContent(Component mainPanel, String optionalObject) {
         JPanel panel = new JPanel();

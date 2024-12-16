@@ -12,7 +12,7 @@ import java.awt.*;
 import static org.zaproxy.zap.extension.customactivescan.view.RegexTestDialog.*;
 
 @SuppressWarnings("serial")
-public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.RegexTestOptions> {
+public final class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.RegexTestOptions> {
 
     private JLabel messageLabel;
     private RegexTestDialog.SearchTextPane searchTextPane;
@@ -31,11 +31,10 @@ public class RegexTestOptionPane extends GridBagJDialog<RegexTestOptionPane.Rege
 
     public RegexTestOptionPane(RegexTestDialog dialog, String title, ModalityType modalityType,  RegexTestOptions options, int fill) {
         super(dialog, dialog, title, modalityType, options, fill);
+        postSuper(dialog);
         this.searchTextPane = options.searchTextPane;
         pos = 0;
         this.dialog = dialog;
-        pack();
-        setLocationRelativeTo(dialog);
     }
 
     @Override

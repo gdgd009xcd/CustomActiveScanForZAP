@@ -23,7 +23,7 @@ import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.tri
 
 
 @SuppressWarnings("serial")
-public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
+public final class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -181,6 +181,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
 
     public RegexTestDialog(Dialog dialog, String title, ModalityType modalityType, PaneContents paneContents) {
         super(dialog, title, modalityType, paneContents, GridBagConstraints.BOTH);
+        postSuper(null);
         this.dialog = dialog;
     }
 
@@ -192,6 +193,7 @@ public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents
             PaneContents paneContents
            ) {
         super(frame, title, modalityType, paneContents, GridBagConstraints.BOTH);
+        postSuper(null);
         this.frame = frame;
         this.parent = parent;
     }

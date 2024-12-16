@@ -18,7 +18,7 @@ import org.zaproxy.zap.extension.customactivescan.model.ModifyType;
 import static org.zaproxy.zap.extension.customactivescan.view.MyFontUtils.getScale;
 
 @SuppressWarnings("serial")
-public class CustomJTable extends JTable implements CellEditorListener {
+public final class CustomJTable extends JTable implements CellEditorListener {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
     DefaultTableModel tableModel = null;

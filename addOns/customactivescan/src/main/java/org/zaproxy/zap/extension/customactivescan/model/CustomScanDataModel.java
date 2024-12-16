@@ -43,10 +43,6 @@ public class CustomScanDataModel {
 
     public CustomScanDataModel() {
         this.customScanData = null;
-        init();
-    }
-
-    private void init() {
         Gson gson = new Gson();
         boolean isLoaded = false;
         try (Reader configReader = new FileReader(CONFIG_FILE_PATH)) {
@@ -159,7 +155,7 @@ public class CustomScanDataModel {
         }
     }
 
-    public void saveConfig() throws FileNotFoundException, UnsupportedEncodingException {
+    public final void saveConfig() throws FileNotFoundException, UnsupportedEncodingException {
         FileWriterPlus writerConfigFile = new FileWriterPlus(CONFIG_FILE_PATH);
         GsonBuilder gbuilder = new GsonBuilder();
         gbuilder.setPrettyPrinting();

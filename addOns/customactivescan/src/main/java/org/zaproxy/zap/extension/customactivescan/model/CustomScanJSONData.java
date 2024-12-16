@@ -100,7 +100,7 @@ public class CustomScanJSONData {
         createSampleRuleList();
     }
 
-    public void createSampleRuleList() {
+    public final void createSampleRuleList() {
         sampleRuleList = new ArrayList<>();
         ScanRule scanRule = new ScanRule();
         scanRule.initSampleSQL();

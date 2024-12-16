@@ -55,22 +55,33 @@ LCS remove the different token values ​​from the two responses as follows:
 
 ## Download & Building
 
+### build with command line tools(Ubuntu)
+
 The add-on is built with [Gradle]: https://gradle.org/  
 
 To download & build this addon, simply run:  
 
-$ git clone https://github.com/gdgd009xcd/CustomActiveScanForZAP.git  
-$ cd CustomActiveScanForZAP  
-$ ./gradlew addOns:customactivescan:jarZapAddOn  
+    $ git clone https://github.com/gdgd009xcd/CustomActiveScanForZAP.git  
+    $ cd CustomActiveScanForZAP  
+    $ ./gradlew addOns:customactivescan:jarZapAddOn  
 
 The add-on will be placed in the directory `CustomActiveScanForZAP/addOns/customactivescan/build/zapAddOn/bin`
 
-$ cd addOns/customactivescan/build/zapAddOn/bin  
-$ ls  
-customactivescan-alpha-0.0.2.zap  
-$  
+    $ cd addOns/customactivescan/build/zapAddOn/bin  
+    $ ls  
+      customactivescan-alpha-0.0.2.zap  
+    $  
 
 * Gradle builds may fail due to network connection timeouts for downloading dependencies. If you have such problems, please retry the gradlew command each time. or you can download addon file from [release page](https://github.com/gdgd009xcd/CustomActiveScanForZAP/releases)
+
+### build with IntelliJ IDEA(Hereafter referred to as IJ)
+
+1. start IJ, click [Clone Repository]
+1. specify URL of this repository. for example:<br>https://github.com/gdgd009xcd/CustomActiveScanForZAP.git
+1. click [Clone]. IJ's IDE is opened.
+1. In the IJ's IDE, To display the Gradle tool window,<br>select menu:[View->Tool Windows->Gradle] or click [gradle] icon.<br>It shows a tree of Gradle tasks.
+1. double click gradle task named:<br>[zap-extensions->Tasks->build->jarZapAddon]
+1. The addon zap file will be placed in the directory:<br>`CustomActiveScanForZAP/addOns/customactivescan/build/zapAddOn/bin`
 
 ## Install
 

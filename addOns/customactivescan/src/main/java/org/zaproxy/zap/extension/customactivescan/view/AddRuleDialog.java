@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 
 @SuppressWarnings("serial")
-public class AddRuleDialog extends GridBagJDialog<String> {
+public final class AddRuleDialog extends GridBagJDialog<String> {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
@@ -23,6 +23,7 @@ public class AddRuleDialog extends GridBagJDialog<String> {
 
     AddRuleDialog(CustomScanMainPanel mainPanel, String title, ModalityType modalityType) {
         super(SwingUtilities.windowForComponent(mainPanel), title, modalityType, null, GridBagConstraints.HORIZONTAL);
+        postSuper(null);
         this.mainPanel = mainPanel;
     }
 

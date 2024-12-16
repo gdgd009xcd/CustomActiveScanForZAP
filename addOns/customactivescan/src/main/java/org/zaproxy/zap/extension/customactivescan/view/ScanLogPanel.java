@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.ZAP_ICONS;
 
 @SuppressWarnings("serial")
-public class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition, InterfacePopUpAction {
+public final class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition, InterfacePopUpAction {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
     final static Level LAPSETIME = Level.getLevel("LAPSETIME");
