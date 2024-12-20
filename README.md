@@ -94,17 +94,27 @@ This addon is 3rd party addon, so you must add this addon file to ZAPROXY manual
 1. restart zap(sorry, currently this addon does not work unless restart zap after install it.)
 
 ## how to use
-This is automatically called when you start active scannig after already installed default scanners.<br>
+
+1. Active Scan Input Vectors option panel<br>
+This is automatically called when you start active scannig after already installed default scanners.
 If this addon look like doing nothing, you should check:<br> [Tools->Options->Active Scan Input Vectors] option panel.<br>
-If nothing is enabled in this options panel,<br>you may push [Reset to factory defaults] button or check on individually.
+If nothing is enabled in this options panel, you may push<br>[Reset to factory defaults] button or check on individually.
 
 ![InputVectors](assets/images/activescaninputvectors.png)
 
-If you have any doubts whether this scanner is actually being called, you can import the [CustomScan.policy](CustomScan.policy) file. This policy forces the use of CustomScan when invoking active scan. using guide is follows:
+2. Why does this scan hang at 37% on the scan integration gauge?<br>
+it's not a my addon's problem. it's a DOM XSS Active scanner rule addon problem.<br>
+it uses browser for detecting DOM XSS, but it cannot handle browser for unknown reasons.<br>
+You may setting browser id in [tools-options->rule configuration->rules.domxss.browserid] to avoid this problem.
+value is "firefox", "firefox-headless"(default), "chrome", "chrome-headles".<br>I use "chrome-headless".
 
-1) download [CustomScan.policy](CustomScan.policy)  
-2) select menu [Analyse->Scan Policy Manager->import], and load CustomScan.policy file.  
-3) when you start scan, select policy [Custom Scan].   
+
+3. I think this addon is not working.<br>
+If you have any doubts whether this scanner is actually being called, you can import the [CustomScan.policy](CustomScan.policy) file. This policy forces the use of CustomScan when invoking active scan. using guide is follows:<br><br>
+
+   1) download [CustomScan.policy](CustomScan.policy)  
+   2) select menu [Analyse->Scan Policy Manager->import], and load CustomScan.policy file.  
+   3) when you start scan, select policy [Custom Scan].   
 
 Information on how to use can be found at the following link: <BR>
 [Basic Usage](https://github.com/gdgd009xcd/CustomActiveScanForZAP/wiki/1.0.-Basic-Usage)
