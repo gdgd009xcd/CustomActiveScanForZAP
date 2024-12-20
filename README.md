@@ -102,15 +102,15 @@ If nothing is enabled in this options panel, you may push<br>[Reset to factory d
 
 ![InputVectors](assets/images/activescaninputvectors.png)
 
-2. Why does this scan hang at 37% on the scan integration gauge?<br>
+2. Why does this scan hang at 37% on the scan progress gauge?<br>
 it's not a my addon's problem. it's a DOM XSS Active scanner rule addon problem.<br>
 it uses browser for detecting DOM XSS, but it cannot handle browser for unknown reasons.<br>
 You may setting browser id in [tools-options->rule configuration->rules.domxss.browserid] to avoid this problem.
-value is "firefox", "firefox-headless"(default), "chrome", "chrome-headles".<br>I use "chrome-headless".
+value is "firefox", "firefox-headless"(default), "chrome", "chrome-headless".<br>I use "chrome-headless". or you can import CustomScan.policy file to avoid this problem.
 
 
-3. I think this addon is not working.<br>
-If you have any doubts whether this scanner is actually being called, you can import the [CustomScan.policy](CustomScan.policy) file. This policy forces the use of CustomScan when invoking active scan. using guide is follows:<br><br>
+3. CustomScan.policy file<br>
+If you have any doubts whether this scanner is actually being called, you can import the [CustomScan.policy](CustomScan.policy) file. This policy forces only the use of CustomScanRules when invoking active scan. using guide is follows:<br><br>
 
    1) download [CustomScan.policy](CustomScan.policy)  
    2) select menu [Analyse->Scan Policy Manager->import], and load CustomScan.policy file.  
