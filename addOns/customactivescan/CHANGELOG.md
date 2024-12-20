@@ -3,6 +3,10 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+# [v0.8.16] - 2024-12-20
+### Changed
+- maintenance: Added some description to README.md
+
 ## [v0.8.16] - 2024-12-20
 ### Changed
 - maintenance: Tweaked codes to prepare for new java version and ubuntu 24.04
