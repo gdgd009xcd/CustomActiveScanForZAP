@@ -133,7 +133,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
                             public void run() {
-                                ScanLogPanelFrame frame = new ScanLogPanelFrame(flagResultItemArray, finalScannerId);
+                                ScanLogPanelFrame frame = ScanLogPanelFrame.newInstance(flagResultItemArray, finalScannerId);
                                 ExtensionAscanRules.registerScanLogPanelFrame(finalScannerId, frame);
                                 ascan.addScannerListener(new CustomScannerListener());
                                 frame.updateRequestCounter(0);

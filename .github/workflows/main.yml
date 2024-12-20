@@ -27,6 +27,8 @@ jobs:
       - name: add JAVA_HOME/bin to PATH
         run: |
           echo "$JAVA_HOME/bin" >> $GITHUB_PATH
+      - name: check java version
+        run: java --version
       - name: set env.ZAP_ADDON_BUILD_BIN_DIR
         run: |
           echo "ZAP_ADDON_BUILD_BIN_DIR=${{env.ZAP_ADDON_BUILD_DIR}}/bin" >> $GITHUB_ENV

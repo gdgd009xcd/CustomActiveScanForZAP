@@ -94,7 +94,12 @@ This addon is 3rd party addon, so you must add this addon file to ZAPROXY manual
 1. restart zap(sorry, currently this addon does not work unless restart zap after install it.)
 
 ## how to use
-This is automatically called when you start active scannig after already installed default scanners.
+This is automatically called when you start active scannig after already installed default scanners.<br>
+If this addon look like doing nothing, you should check:<br> [Tools->Options->Active Scan Input Vectors] option panel.<br>
+If nothing is enabled in this options panel,<br>you may push [Reset to factory defaults] button or check on individually.
+
+![InputVectors](assets/images/activescaninputvectors.png)
+
 If you have any doubts whether this scanner is actually being called, you can import the [CustomScan.policy](CustomScan.policy) file. This policy forces the use of CustomScan when invoking active scan. using guide is follows:
 
 1) download [CustomScan.policy](CustomScan.policy)  

@@ -11,12 +11,43 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 
 @SuppressWarnings("serial")
-public final class MainWorkPanelTab extends AbstractPanel {
-    public MainWorkPanelTab(ExtensionHook exhook, ExtensionAscanRules extensionAscan) {
+public class MainWorkPanelTab extends AbstractPanel {
+    private final static org.apache.logging.log4j.Logger LOGGER4J =
+            org.apache.logging.log4j.LogManager.getLogger();
+    private ExtensionHook extensionHook;
+    private ExtensionAscanRules extensionAscan;
+    private boolean isBuildCalled = false;
+
+    protected MainWorkPanelTab(ExtensionHook extensionHook, ExtensionAscanRules extensionAscan) {
+        super();
+        this.extensionHook = extensionHook;
+        this.extensionAscan = extensionAscan;
+    }
+
+    /**
+     * new instance method<br>
+     * you must define this in your extended classes for instantiation
+     *
+     * @param extensionHook
+     * @param extensionAscan
+     * @return
+     */
+    public static final MainWorkPanelTab newInstance(ExtensionHook extensionHook, ExtensionAscanRules extensionAscan) {
+        MainWorkPanelTab mainWorkPanelTab = new MainWorkPanelTab(extensionHook, extensionAscan);
+        return mainWorkPanelTab.buildMainWorkPanelTab();
+    }
+
+    /**
+     * build this GUI.<br>
+     * you must call this method after creating this object.
+     *
+     * @return this object
+     */
+    protected final MainWorkPanelTab buildMainWorkPanelTab() {
         setLayout(new CardLayout());
         this.setName("CustomActiveScan");
         this.setIcon(ExtensionAscanRules.cIcon);
-        CustomScanMainPanel mainPanel = new CustomScanMainPanel(this);
+        CustomScanMainPanel mainPanel = new CustomScanMainPanel(this).build();
         extensionAscan.setCustomScanMainPanel(mainPanel);
         Border mainBorder = new LineBorder(Color.RED, 1);
         mainPanel.setBorder(mainBorder);
@@ -25,5 +56,16 @@ public final class MainWorkPanelTab extends AbstractPanel {
         scroller.setViewportView(mainPanel);
         scroller.setAutoscrolls(true);
         this.add(scroller);
+        this.isBuildCalled = true;
+        return this;
+    }
+
+    public void setVisible(boolean isVisible) {
+        if (this.isBuildCalled) {
+            super.setVisible(isVisible);
+        } else {
+            LOGGER4J.error("You must call build() method before calling setVisible()");
+            throw new IllegalStateException("You must call build() method before calling setVisible()");
+        }
     }
 }

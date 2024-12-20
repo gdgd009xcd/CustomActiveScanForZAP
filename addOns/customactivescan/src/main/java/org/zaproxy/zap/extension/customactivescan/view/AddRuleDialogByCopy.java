@@ -9,7 +9,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 
 @SuppressWarnings("serial")
-public final class AddRuleDialogByCopy extends GridBagJDialog<String> {
+public class AddRuleDialogByCopy extends GridBagJDialog<String> {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
@@ -21,7 +21,14 @@ public final class AddRuleDialogByCopy extends GridBagJDialog<String> {
     CustomScanJSONData.ScanRule sampleSQL;
     CustomScanJSONData.ScanRule samplePenTest;
 
-
+    /**
+     * default package private constructor
+     * this means that this class can be instantiated only in this package.
+     *
+     * @param mainPanel
+     * @param title
+     * @param modalityType
+     */
     AddRuleDialogByCopy(CustomScanMainPanel mainPanel, String title, ModalityType modalityType) {
         super(mainPanel, title, modalityType, null, GridBagConstraints.HORIZONTAL);
         postSuper(null);

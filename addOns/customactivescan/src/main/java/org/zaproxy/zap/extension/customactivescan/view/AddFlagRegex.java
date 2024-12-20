@@ -8,18 +8,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
-public final class AddFlagRegex extends GridBagJDialog<String>{
+public class AddFlagRegex extends GridBagJDialog<String>{
     private JTextField regexPatternField;
     private JList<String> flagPatternList;
     private int selectedIndex = -1;
     private CustomScanMainPanel mainPanel;
 
+    /**
+     * default package private constructor
+     * this means that this class can be instantiated only in this package.
+     *
+     * @param mainPanel
+     * @param title
+     * @param modarityType
+     */
     AddFlagRegex(CustomScanMainPanel mainPanel, String title, ModalityType modarityType) {
         super(SwingUtilities.windowForComponent(mainPanel), title, modarityType, null, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
         postSuper(null);
         this.mainPanel = mainPanel;
     }
 
+    /**
+     * default package private constructor
+     * this means that this class can be instantiated only in this package.
+     *
+     * @param dialog
+     * @param mainPanel
+     * @param title
+     * @param modarityType
+     */
     AddFlagRegex(Dialog dialog, CustomScanMainPanel mainPanel, String title, ModalityType modarityType) {
         super(dialog, mainPanel, title, modarityType, null, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTHEAST);
         postSuper(null);

@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 
 @SuppressWarnings("serial")
-public final class AddRuleDialog extends GridBagJDialog<String> {
+public class AddRuleDialog extends GridBagJDialog<String> {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
@@ -20,7 +20,14 @@ public final class AddRuleDialog extends GridBagJDialog<String> {
     JComboBox<String> ruleComboBox;
     JCheckBox scanLogCheckBox;
 
-
+    /**
+     * default package private constructor
+     * this means that this class can be instantiated only in this package.
+     *
+     * @param mainPanel
+     * @param title
+     * @param modalityType
+     */
     AddRuleDialog(CustomScanMainPanel mainPanel, String title, ModalityType modalityType) {
         super(SwingUtilities.windowForComponent(mainPanel), title, modalityType, null, GridBagConstraints.HORIZONTAL);
         postSuper(null);

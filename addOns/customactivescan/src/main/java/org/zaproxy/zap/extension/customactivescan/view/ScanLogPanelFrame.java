@@ -9,15 +9,48 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 @SuppressWarnings("serial")
-public final class ScanLogPanelFrame extends AbstractFrame {
+public class ScanLogPanelFrame extends AbstractFrame {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
     private ScanLogPanel scanLogPanel;
     private boolean isDisposed = false;
 
-    public ScanLogPanelFrame(String[] flagColumns, int scannerId) {
-        this.scanLogPanel = new ScanLogPanel(this, ExtensionAscanRules.customScanMainPanel,flagColumns, scannerId, false);
+    /**
+     * Constructor for calling super class constructor.<br>
+     * Do not call this constructor directly for instantiating this class.<br>
+     * use newInstance() method instead.
+     *
+     * @param flagColumns
+     * @param scannerId
+     */
+    protected ScanLogPanelFrame(String[] flagColumns, int scannerId) {
+        super();
+    }
+
+    /**
+     * new instance method<br>
+     * you must define this in your extended classes<br>
+     *
+     * @param flagColumns
+     * @param scannerId
+     * @return
+     */
+    public final static ScanLogPanelFrame newInstance(String[] flagColumns, int scannerId) {
+        ScanLogPanelFrame scanLogPanelFrame = new ScanLogPanelFrame(flagColumns, scannerId);
+        return scanLogPanelFrame.buildScanLogPanelFrame(flagColumns, scannerId);
+    }
+
+    /**
+     * you must call this method after creating this object.<br>
+     * See newInstace() method.
+     *
+     * @param flagColumns
+     * @param scannerId
+     * @return
+     */
+    protected final ScanLogPanelFrame buildScanLogPanelFrame(String[] flagColumns, int scannerId) {
+        this.scanLogPanel = ScanLogPanel.newInstance(this, ExtensionAscanRules.customScanMainPanel,flagColumns, scannerId, false);
 
         add(this.scanLogPanel);
         pack();// fit frame size with it's contents size.
@@ -51,6 +84,7 @@ public final class ScanLogPanelFrame extends AbstractFrame {
         setTitle("ScanLogPanel");
 
         setVisible(true);
+        return this;
     }
 
     public ScanLogPanel getScanLogPanel() {

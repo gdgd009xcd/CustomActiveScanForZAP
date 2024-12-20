@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
-public final class CustomScanMainPanel extends JPanel {
+public class CustomScanMainPanel extends JPanel {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -47,6 +47,7 @@ public final class CustomScanMainPanel extends JPanel {
     JTextField minimumIdleTimeTextField;
     JTextField maximumIdleTimeTextField;
     JTextField requestCountTextField;
+    private boolean isBuildCalled = false;
 
     private MainWorkPanelTab mainWorkPanelTab = null;
 
@@ -56,13 +57,13 @@ public final class CustomScanMainPanel extends JPanel {
 
     public CustomScanMainPanel(MainWorkPanelTab mainWorkPanelTab) {
         super(new GridBagLayout());
-        buildPanel();
     }
 
     /**
-     * build panel contents.
+     * build panel contents.<br>
+     * you must call this method after creating this object.
      */
-    private void buildPanel() {
+    public final CustomScanMainPanel build() {
 
         GridBagLayout gridBagLayout = getGridBagLayout();
 
@@ -452,6 +453,8 @@ public final class CustomScanMainPanel extends JPanel {
         gridBagLayout.setConstraints(idleTimePanel, gbc);
         add(idleTimePanel);
 
+        this.isBuildCalled = true;
+        return this;
     }
 
     private void createRuleTable(CustomScanJSONData.ScanRule selectedScanRule) {
@@ -501,7 +504,7 @@ public final class CustomScanMainPanel extends JPanel {
             } else {
                 ruleTypeLabel.setText("");
             }
-            JTable rulePatternTable = new CustomJTable(this, this.rulePatternScroller, defaultTableModel);
+            JTable rulePatternTable = CustomJTable.newInstance(this, this.rulePatternScroller, defaultTableModel);
             // disable column move(reordering)
             JTableHeader jtableHeader = rulePatternTable.getTableHeader();
             jtableHeader.setReorderingAllowed(false);
@@ -946,4 +949,13 @@ public final class CustomScanMainPanel extends JPanel {
         this.maximumIdleTimeTextField.setText(Integer.toString(selectedScanRule.getMaxIdleTime()));
     }
 
+    @Override
+    public void setVisible(boolean b) {
+        if (isBuildCalled) {
+            super.setVisible(b);
+        } else {
+            LOGGER4J.error("setVisible is called before build method is called.");
+            throw new RuntimeException("setVisible is called before build method is called.");
+        }
+    }
 }
