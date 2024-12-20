@@ -131,7 +131,7 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 			scannerIdWaitTimerMap = new ConcurrentHashMap<>();
 		}
 
-		this.mainWorkPanelTab = new MainWorkPanelTab(hook, this);
+		this.mainWorkPanelTab = MainWorkPanelTab.newInstance(hook, this);
 
 		hook
 				.getHookView()
@@ -141,7 +141,7 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 		//hook.getHookMenu().addPopupMenuItem(getPopUpMenuInAlert());
 
 		// popUp item for ScanLogPanel.
-		hook.getHookMenu().addPopupMenuItem(new PopUpMenuItem(ScanLogPanel.class,"showMessage", cIcon));
+		hook.getHookMenu().addPopupMenuItem(PopUpMenuItem.newInstance(ScanLogPanel.class,"showMessage", cIcon));
 	}
 
 	private PopUpMenuInAlert getPopUpMenuInAlert() {

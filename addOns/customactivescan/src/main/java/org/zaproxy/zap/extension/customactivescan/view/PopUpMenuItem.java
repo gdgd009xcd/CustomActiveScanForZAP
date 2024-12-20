@@ -7,7 +7,7 @@ import org.zaproxy.zap.view.popup.PopupMenuItemHttpMessageContainer;
 import javax.swing.*;
 import java.awt.*;
 
-public final class PopUpMenuItem extends PopupMenuItemHttpMessageContainer {
+public class PopUpMenuItem extends PopupMenuItemHttpMessageContainer {
 
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
@@ -15,15 +15,50 @@ public final class PopUpMenuItem extends PopupMenuItemHttpMessageContainer {
 
     private Class<? extends Object> clazz;
 
-    public PopUpMenuItem(Class<? extends Component> clazz,
+    /**
+     * Constructor for calling super class constructor.<br>
+     * Do not call this constructor directly for instantiating this class.<br>
+     * use newInstance() method instead.
+     *
+     * @param clazz
+     * @param label
+     * @param icon
+     */
+    protected PopUpMenuItem(Class<? extends Component> clazz,
             String label, Icon icon) {
         super(label);
         this.clazz = clazz;
+    }
 
+   /**
+     * new instance method<br>
+     * you must define this in your extended classes for instantiation<br>
+     *
+     * @param clazz
+     * @param label
+     * @param icon
+     * @return this object
+     */
+    public static PopUpMenuItem newInstance(Class<? extends Component> clazz,
+            String label, Icon icon) {
+        PopUpMenuItem popupMenuItem = new PopUpMenuItem(clazz, label, icon);
+        // you must call buildPopUpMenuItem() method after instanciated this object.
+        return popupMenuItem.buildPopUpMenuItem(icon);
+    }
+
+    /**
+     * you must call this method after creating this object.<br>
+     * See newInstace() method.
+     *
+     * @param icon
+     * @return this object
+     */
+    protected final PopUpMenuItem buildPopUpMenuItem(Icon icon) {
         if (icon != null) {
             setIcon(icon);
         }
         setMenuIndex(1);
+        return this;
     }
 
     @Override

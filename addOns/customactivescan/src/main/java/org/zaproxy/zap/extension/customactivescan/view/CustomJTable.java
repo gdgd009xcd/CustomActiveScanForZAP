@@ -2,7 +2,6 @@ package org.zaproxy.zap.extension.customactivescan.view;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableModel;
@@ -15,15 +14,14 @@ import java.awt.event.MouseListener;
 import org.parosproxy.paros.Constant;
 import org.zaproxy.zap.extension.customactivescan.model.ModifyType;
 
-import static org.zaproxy.zap.extension.customactivescan.view.MyFontUtils.getScale;
-
 @SuppressWarnings("serial")
-public final class CustomJTable extends JTable implements CellEditorListener {
+public class CustomJTable extends JTable implements CellEditorListener {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
     DefaultTableModel tableModel = null;
-    CustomScanMainPanel mainPanel;
-    JPopupMenu popupTableMenu;
+    private CustomScanMainPanel mainPanel;
+    private JPopupMenu popupTableMenu;
+    private JScrollPane scroller;
 
     private static final int[] columnSizes = {
             5,
@@ -49,11 +47,49 @@ public final class CustomJTable extends JTable implements CellEditorListener {
             Constant.messages.getString("customactivescan.CustomJTable.headerColumnNames.col6.tooltip.text")
     };
 
-    public CustomJTable(CustomScanMainPanel mainPanel, JScrollPane scroller, DefaultTableModel model) {
+    /**
+     * new instance method<br>
+     * you must define this in your extended classes for instantiation<br>
+     *
+     * @param mainPanel
+     * @param scroller
+     * @param model
+     * @return this object
+     */
+    public static CustomJTable newInstance(CustomScanMainPanel mainPanel, JScrollPane scroller, DefaultTableModel model) {
+         CustomJTable customJtable =  new CustomJTable(mainPanel, scroller, model);
+
+         // you must call buildXXX() method after instanciated this object.
+         return customJtable.buildCustomJTable();
+    }
+
+    /**
+     * Constructor for calling super class constructor.<br>
+     * Do not call this constructor directly for instantiating this class.<br>
+     * use newInstance() method instead.
+     *
+     * @param mainPanel
+     * @param scroller
+     * @param model
+     */
+    protected CustomJTable(CustomScanMainPanel mainPanel, JScrollPane scroller, DefaultTableModel model) {
         super(model);
-        this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);// you can select only 1 row at a time.
         this.tableModel = model;
         this.mainPanel = mainPanel;
+        this.scroller = scroller;
+    }
+
+    /**
+     * build this GUI.<br>
+     * you must call this method after creating this object.<br>
+     * See newInstace() method.
+     *
+     * @return this object
+     */
+    protected final CustomJTable buildCustomJTable() {
+        // you can select only 1 row at a time.
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
 
         scroller.setViewportView(this);
 
@@ -180,6 +216,8 @@ public final class CustomJTable extends JTable implements CellEditorListener {
 
             }
         });
+
+        return this;
     }
 
     @Override

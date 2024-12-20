@@ -7,7 +7,7 @@ import java.io.IOException;
 //
 // ByteArray
 //
-public final class ParmGenBinUtil {
+public class ParmGenBinUtil {
 
     private ByteArrayOutputStream bstream = null;
 
@@ -34,7 +34,7 @@ public final class ParmGenBinUtil {
      * @param bin
      * @return
      */
-    public boolean concat(byte[] bin) {
+    public final boolean concat(byte[] bin) {
 
         if ((bin == null)) {
             return false;

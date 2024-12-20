@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.ZAP_ICONS;
 
 @SuppressWarnings("serial")
-public final class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition, InterfacePopUpAction {
+public class ScanLogPanel extends JPanel implements DisposeChildInterface, InterfaceRenderCondition, InterfacePopUpAction {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
     final static Level LAPSETIME = Level.getLevel("LAPSETIME");
@@ -97,8 +97,65 @@ public final class ScanLogPanel extends JPanel implements DisposeChildInterface,
 
     private ParmGenMacroTraceParams pmtParams = null;
 
-    public ScanLogPanel(JFrame jFrame, CustomScanMainPanel customScanMainPanel, String[] flagColumns, int scannerId, boolean isPaused) {
+    /**
+     * Constructor for calling super class constructor.<br>
+     * Do not call this constructor directly for instantiating this class.<br>
+     * use newInstance() method instead.
+     *
+     * @param jFrame
+     * @param customScanMainPanel
+     * @param flagColumns
+     * @param scannerId
+     * @param isPaused
+     */
+    protected ScanLogPanel(
+            JFrame jFrame,
+            CustomScanMainPanel customScanMainPanel,
+            String[] flagColumns,
+            int scannerId,
+            boolean isPaused) {
         super();
+    }
+
+    /**
+     * new instance method<br>
+     * you must define this in your extended classes for instantiation<br>
+     *
+     * @param jFrame
+     * @param customScanMainPanel
+     * @param flagColumns
+     * @param scannerId
+     * @param isPaused
+     * @return this object
+     */
+    public final static ScanLogPanel newInstance(
+            JFrame jFrame,
+            CustomScanMainPanel customScanMainPanel,
+            String[] flagColumns,
+            int scannerId,
+            boolean isPaused) {
+        ScanLogPanel scanLogPanel = new ScanLogPanel(jFrame, customScanMainPanel, flagColumns, scannerId, isPaused);
+        return scanLogPanel.buildScanLogPanel(jFrame, customScanMainPanel, flagColumns, scannerId, isPaused);
+    }
+
+    /**
+     * build this GUI.<br>
+     * you must call this method after creating this object.<br>
+     * See newInstace() method.
+     *
+     * @param jFrame
+     * @param customScanMainPanel
+     * @param flagColumns
+     * @param scannerId
+     * @param isPaused
+     * @return this object
+     */
+    protected final ScanLogPanel buildScanLogPanel(
+            JFrame jFrame,
+            CustomScanMainPanel customScanMainPanel,
+            String[] flagColumns,
+            int scannerId,
+            boolean isPaused) {
         this.scannerId = scannerId;
         this.jFrame = jFrame;
         this.currentSelectedTableRowIndex = -1;
@@ -329,6 +386,7 @@ public final class ScanLogPanel extends JPanel implements DisposeChildInterface,
         });
         scanLogScroller.setViewportView(scanLogTable);
         add(scanLogScroller, BorderLayout.CENTER);
+        return this;
     }
 
     public void disablePauseCheckBox() {

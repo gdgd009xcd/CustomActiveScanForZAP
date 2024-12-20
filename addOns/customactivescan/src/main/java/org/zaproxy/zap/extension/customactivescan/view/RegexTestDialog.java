@@ -23,7 +23,7 @@ import static org.zaproxy.zap.extension.customactivescan.ExtensionAscanRules.tri
 
 
 @SuppressWarnings("serial")
-public final class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
+public class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneContents> {
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
@@ -179,13 +179,34 @@ public final class RegexTestDialog extends GridBagJDialog<RegexTestDialog.PaneCo
     private JTextField targetTextField;
 
 
-    public RegexTestDialog(Dialog dialog, String title, ModalityType modalityType, PaneContents paneContents) {
+    //
+
+    /**
+     * default package private constructor<br>
+     * this means that this class can be instantiated only in this package.
+     *
+     * @param dialog
+     * @param title
+     * @param modalityType
+     * @param paneContents
+     */
+    RegexTestDialog(Dialog dialog, String title, ModalityType modalityType, PaneContents paneContents) {
         super(dialog, title, modalityType, paneContents, GridBagConstraints.BOTH);
         postSuper(null);
         this.dialog = dialog;
     }
 
-    public RegexTestDialog(
+    /**
+     * default package private constructor<br>
+     * this means that this class can be instantiated only in this package.
+     *
+     * @param frame
+     * @param parent
+     * @param title
+     * @param modalityType
+     * @param paneContents
+     */
+    RegexTestDialog(
             Frame frame,
             DisposeChildInterface parent,
             String title,
