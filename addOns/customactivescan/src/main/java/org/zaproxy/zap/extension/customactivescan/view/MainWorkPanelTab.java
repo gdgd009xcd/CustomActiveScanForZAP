@@ -47,7 +47,7 @@ public class MainWorkPanelTab extends AbstractPanel {
         setLayout(new CardLayout());
         this.setName("CustomActiveScan");
         this.setIcon(ExtensionAscanRules.cIcon);
-        CustomScanMainPanel mainPanel = new CustomScanMainPanel(this).build();
+        CustomScanMainPanel mainPanel = CustomScanMainPanel.newInstance(this);
         extensionAscan.setCustomScanMainPanel(mainPanel);
         Border mainBorder = new LineBorder(Color.RED, 1);
         mainPanel.setBorder(mainBorder);

@@ -96,7 +96,7 @@ This addon is 3rd party addon, so you must add this addon file to ZAPROXY manual
 ## how to use
 
 1. Active Scan Input Vectors option panel<br>
-This is automatically called when you start active scannig after already installed default scanners.
+This addon is automatically called when you start active scannig after already installed default scanners.
 If this addon look like doing nothing, you should check:<br> [Tools->Options->Active Scan Input Vectors] option panel.<br>
 If nothing is enabled in this options panel, you may push<br>[Reset to factory defaults] button or check on individually.
 ![InputVectors](assets/images/activescaninputvectors.png)
@@ -107,8 +107,8 @@ Zaproxy's DOM XSS Active scanner rule(DomXssScanRule) plugin uses selenium to sc
 In ubuntu latest version, selenium may not work with the Firefox Snap Version(default).<br>
 Workarounds have many ways, so I can't explain all of them. but I can explain some of them.<br>
 You may change browser id in<br> [tools-options->rule configuration->rules.domxss.browserid] to avoid this problem.<br>
-Because this problem occurs on the Firefox Snap Version only.<br>
-value is "firefox", "firefox-headless"(default), "chrome", "chrome-headless".<br>
+Because this problem occurs with using the Firefox Snap Version.<br>
+Available values are "firefox", "firefox-headless"(default), "chrome", "chrome-headless".<br>
 I choosed "chrome-headless". but despite changed this value, you may need proper chrome browser and WebDriver for using DomXssScanRule. so this solution is to avoid hangup only and DomXssScanRule will still skipped in scanning.<br>
 
 3. CustomScan.policy file<br>
