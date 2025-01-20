@@ -55,19 +55,39 @@ public class CustomScanMainPanel extends JPanel {
         return (GridBagLayout) getLayout();
     }
 
-    public CustomScanMainPanel(MainWorkPanelTab mainWorkPanelTab) {
+    /**
+     * Constructor for calling super class constructor.<br>
+     * Do not call this constructor directly for instantiating this class.<br>
+     * use newInstance() method instead.
+     */
+    protected CustomScanMainPanel() {
         super(new GridBagLayout());
     }
 
     /**
-     * build panel contents.<br>
-     * you must call this method after creating this object.
+     * new instance method<br>
+     * you must define this in your extended classes
+     *
+     * @param mainWorkPanelTab
+     * @return this new instance
      */
-    public final CustomScanMainPanel build() {
+    public static CustomScanMainPanel newInstance(MainWorkPanelTab mainWorkPanelTab) {
+        return new CustomScanMainPanel().build(mainWorkPanelTab);
+    }
 
-        GridBagLayout gridBagLayout = getGridBagLayout();
+    /**
+     * build panel contents.<br>
+     * you must call this method after creating this object.<br>
+     * See newInstace() method.
+     *
+     * @param mainWorkPanelTab
+     * @return this
+     */
+    protected final CustomScanMainPanel build(MainWorkPanelTab mainWorkPanelTab) {
 
         this.mainWorkPanelTab = mainWorkPanelTab;
+
+        GridBagLayout gridBagLayout = getGridBagLayout();
 
         this.showFileDialog = false;
         this.ruleComboBoxActionIsNoNeedSave = false;

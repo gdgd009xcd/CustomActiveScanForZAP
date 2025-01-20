@@ -3,19 +3,23 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-# [v0.8.16] - 2024-12-21-02
+## [v0.8.17] - 2025-01-20
+### Changed
+- bugfix: fixed null exception errors with using CustomScan Main Panel GUI. I apologize for the inconvenience.
+
+## [v0.8.16] - 2024-12-21-02
 ### Changed
 - maintenance: Tweaked some description in README.md for generating page with jeykill 
 
-# [v0.8.16] - 2024-12-21
+## [v0.8.16] - 2024-12-21
 ### Changed
 - maintenance: Tweaked some description in README.md
 
-# [v0.8.16] - 2024-12-20-02
+## [v0.8.16] - 2024-12-20-02
 ### Changed
 - maintenance: Tweaked some description in README.md
 
-# [v0.8.16] - 2024-12-20
+## [v0.8.16] - 2024-12-20
 ### Changed
 - maintenance: Added some description to README.md
 
