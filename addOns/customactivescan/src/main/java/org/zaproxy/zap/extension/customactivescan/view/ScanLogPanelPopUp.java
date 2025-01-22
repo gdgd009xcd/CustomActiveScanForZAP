@@ -1,51 +1,28 @@
 package org.zaproxy.zap.extension.customactivescan.view;
 
-import org.parosproxy.paros.view.MainPopupMenu;
 import org.parosproxy.paros.view.View;
 import org.zaproxy.zap.view.messagecontainer.http.DefaultSingleHttpMessageContainer;
 
 import javax.swing.*;
-import javax.swing.text.Position;
 import java.awt.*;
 
 public class ScanLogPanelPopUp extends JPopupMenu {
 
+    private static final long serialVersionUID = 1L;
     private final static org.apache.logging.log4j.Logger LOGGER4J =
             org.apache.logging.log4j.LogManager.getLogger();
 
-    private MainPopupMenu mainPopupMenu;
-    private ScanLogPanel scanLogPanel;
-    private JViewport scanLogViewPort = null;
+    final private ScanLogPanel scanLogPanel;
+    final private JViewport scanLogViewPort;
+
     ScanLogPanelPopUp(JScrollPane scanLogScroller, ScanLogPanel scanLogPanel) {
         this.scanLogPanel = scanLogPanel;
-        this.mainPopupMenu = View.getSingleton().getPopupMenu();
         this.scanLogViewPort = scanLogScroller.getViewport();
     }
-        private static final long serialVersionUID = 1L;
 
-
-    @Override
-    public JMenuItem add(JMenuItem item) {
-        return this.mainPopupMenu.add(item);
-    }
     @Override
     public void show(Component invoker, int x, int y) {
-        /**
-        if (!httpPanelTextArea.isFocusOwner()) {
-            httpPanelTextArea.requestFocusInWindow();
-        }
 
-        if (httpPanelTextArea.getMessage() instanceof HttpMessage) {
-            SingleHttpMessageContainer messageContainer =
-                    new DefaultSingleHttpMessageContainer(
-                            messageContainerName,
-                            httpPanelTextArea,
-                            (HttpMessage) httpPanelTextArea.getMessage());
-            View.getSingleton().getPopupMenu().show(messageContainer, x, y);
-        } else {
-            View.getSingleton().getPopupMenu().show(httpPanelTextArea, x, y);
-        }
-         **/
         LOGGER4J.debug("scanLogPane is " + (scanLogPanel==null ? "null" : "valid"));
         if (scanLogPanel.getSelectedMessage() != null) {
 
@@ -59,13 +36,14 @@ public class ScanLogPanelPopUp extends JPopupMenu {
                             scanLogPanel,
                             scanLogPanel.getSelectedMessage());
             Point viewPoint = this.scanLogViewPort.getViewPosition();
-            // fix popup is showed in outer area of scanLogViewPort
-            this.mainPopupMenu.show(messageContainer, x, y - viewPoint.y);
-
-            LOGGER4J.debug("x=" + x + " y=" + y);
+            // fix popup is showed in outer area of scanLogViewPort y ->  y -viewPoint.y
+            // Don't get the instance of org.parosproxy.paros.view.MainPopupMenu from View.getSingleton().getPopupMenu() directly.
+            // Because it is not a pure singleton instance. if you get the instance from View.getSingleton().getPopupMenu() and reuse it,
+            // you may encouter strange behavior that the popup menu enlarge its size each time when it is shown.
+            View.getSingleton().getPopupMenu().show(messageContainer, x, y - viewPoint.y);
+            LOGGER4J.debug("x=" + x + " y=" + (y - viewPoint.y));
         } else {
             LOGGER4J.debug("getSelectedMessage is NULL");
         }
-
     }
 }
