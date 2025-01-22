@@ -3,6 +3,10 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.8.18] - 2025-01-22
+### Changed
+- bugfix: Fixed a weird popup menu that enlarge each time when it is shown in the ScanLog panel.
+
 ## [v0.8.17] - 2025-01-20
 ### Changed
 - bugfix: fixed null exception errors with using CustomScan Main Panel GUI. I apologize for the inconvenience.

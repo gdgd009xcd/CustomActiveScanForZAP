@@ -96,7 +96,7 @@ This addon is 3rd party addon, so you must add this addon file to ZAPROXY manual
 ## how to use
 
 1. Active Scan Input Vectors option panel<br>
-This addon is automatically called when you start active scannig after already installed default scanners.
+When you start active scannig, This addon is automatically called next to the already installed default scanners.
 If this addon look like doing nothing, you should check:<br> [Tools->Options->Active Scan Input Vectors] option panel.<br>
 If nothing is enabled in this options panel, you may push<br>[Reset to factory defaults] button or check on individually.
 ![InputVectors](assets/images/activescaninputvectors.png)
