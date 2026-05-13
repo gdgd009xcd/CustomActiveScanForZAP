@@ -1,13 +1,20 @@
 package org.zaproxy.zap.extension.customactivescan.model;
 
+import org.zaproxy.zap.extension.customactivescan.CustomSQLInjectionScanRule;
+
 import java.util.Random;
 
 public class WaitTimerObject {
+    private final static org.apache.logging.log4j.Logger LOGGER4J =
+            org.apache.logging.log4j.LogManager.getLogger();
     private long prevNanoTime = -1;
     private Random random;
-    public WaitTimerObject() {
+    private CustomSQLInjectionScanRule scanRuleCode;
+    private final long POLLINTERVAL = 10; // MSec: polling interval when sleeping
+    public WaitTimerObject(CustomSQLInjectionScanRule scanRuleCode) {
         prevNanoTime = -1;
         random = new Random();
+        this.scanRuleCode = scanRuleCode;
     }
 
     public void waitUntilSpecifiedTimePassed(CustomScanJSONData.ScanRule selectedScanRule) {
@@ -20,12 +27,33 @@ public class WaitTimerObject {
                 // wait until nanoWaitTime passes
                 long sleepMSecTime = Math.round((double)(nanoWaitTime - lapseNanoTime) / 1000000);
                 try {
-                    Thread.sleep(sleepMSecTime);
+                    //Thread.sleep(sleepMSecTime);
+                    pollAndSleep(sleepMSecTime);
                 } catch (Exception ex) {
-
+                    LOGGER4J.error(ex.getMessage(), ex);
                 }
             }
         }
         this.prevNanoTime = System.nanoTime();
+    }
+
+    private void pollAndSleep(long mSecTime) throws InterruptedException {
+        long quotient = mSecTime / POLLINTERVAL;
+        long remainder = mSecTime % POLLINTERVAL;
+        for (long i = 0; i < quotient; i++) {
+            if(!this.scanRuleCode.isStoppedThisScan()) {
+                Thread.sleep(POLLINTERVAL);
+            } else {
+                LOGGER4J.debug("detected isStoppedThisScan when sleeping i=" + i);
+                return;
+            }
+        }
+        if (remainder > 0) {
+            if (!this.scanRuleCode.isStoppedThisScan()) {
+                Thread.sleep(remainder);
+            } else {
+                LOGGER4J.debug("detected isStoppedThisScan when sleeping remainder" + remainder);
+            }
+        }
     }
 }

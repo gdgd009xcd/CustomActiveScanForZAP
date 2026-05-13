@@ -142,6 +142,8 @@ public class ExtensionAscanRules extends ExtensionAdaptor {
 
 		// popUp item for ScanLogPanel.
 		hook.getHookMenu().addPopupMenuItem(PopUpMenuItem.newInstance(ScanLogPanel.class,"showMessage", cIcon));
+
+		hook.addScannerHook(new CustomScannerHook());
 	}
 
 	private PopUpMenuInAlert getPopUpMenuInAlert() {
