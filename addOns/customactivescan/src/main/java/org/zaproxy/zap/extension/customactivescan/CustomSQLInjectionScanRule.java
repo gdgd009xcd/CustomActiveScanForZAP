@@ -68,6 +68,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
     private String sqlErrorMsgRegex;
 
     private ExtensionActiveScan extensionActiveScan;
+    private int activeScannerId = -1; // parent ActiveScan Id
 
     String[] SQLERRORMSGS = {
             // Oracle
@@ -123,8 +124,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             }
             if (hPro == hProcess) {
                 scannerId = ascan.getId();
+                this.activeScannerId = scannerId;
                 ExtensionAscanRules.hostProcessScannerIdMap.put(hProcess, scannerId);
-                WaitTimerObject waitTimerObject = new WaitTimerObject();
+                WaitTimerObject waitTimerObject = new WaitTimerObject(this);
                 ExtensionAscanRules.scannerIdWaitTimerMap.put(scannerId, waitTimerObject);
                 if (selectedScanRule.getDoScanLogOutput()) {
                     final int finalScannerId = scannerId;
@@ -739,6 +741,10 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                     selectedScanRule,
                     AttackTitleType.PenTest
                     );
+            if (isStop()) {
+                LOGGER4J.info("scan stopped by user request");
+                return;
+            }
         }
     }
 
@@ -1883,6 +1889,9 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         return partialURLDecodeISO88591.action();
     }
 
+    public boolean isStoppedThisScan() {
+        return isStop();
+    }
 
     public void hello(String mess, Integer i) {
         LOGGER4J.info("ScanRule hello mess:" + mess + " i=" + i.toString());
