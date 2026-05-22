@@ -25,15 +25,18 @@ public class WaitTimerObject {
             long lapseNanoTime = currentNanoTime - this.prevNanoTime;
             if (lapseNanoTime < nanoWaitTime) {
                 // wait until nanoWaitTime passes
-                long sleepMSecTime = Math.round((double)(nanoWaitTime - lapseNanoTime) / 1000000);
+                long sleepMSecTime = Math.round((double) (nanoWaitTime - lapseNanoTime) / 1000000);
                 try {
-                    //Thread.sleep(sleepMSecTime);
                     pollAndSleep(sleepMSecTime);
                 } catch (Exception ex) {
                     LOGGER4J.error(ex.getMessage(), ex);
                 }
             }
         }
+        updatePrevNanoTimeWithSystemTime();
+    }
+
+    public void updatePrevNanoTimeWithSystemTime() {
         this.prevNanoTime = System.nanoTime();
     }
 
