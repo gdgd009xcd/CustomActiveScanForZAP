@@ -1003,7 +1003,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
             // wait until specified MSec passed
             waitTimerObject.waitUntilSpecifiedTimePassed(selectedScanRule);
             // take pause Action before sending message.
-            pauseAction(scannerId, pauseActionObject);
+            pauseAction(scannerId, pauseActionObject, waitTimerObject);
 
             try {
                 sendAndReceive(msg2, false); //do not follow redirects
@@ -1311,7 +1311,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         // wait until specified MSec passed
         waitTimerObject.waitUntilSpecifiedTimePassed(selectedScanRule);
         // take pause Action before sending message.
-        pauseAction(scannerId, pauseActionObject);
+        pauseAction(scannerId, pauseActionObject, waitTimerObject);
 
         HttpMessage msg2 = getNewMsg();
 
@@ -1358,7 +1358,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
         return msg2;
     }
 
-    void pauseAction(int scannerId, PauseActionObject pauseActionObject) {
+    void pauseAction(int scannerId, PauseActionObject pauseActionObject, WaitTimerObject waitTimerObject) {
         if (pauseActionObject != null) {
             if (pauseActionObject.isCounterDecrementable()) {
                 if (pauseActionObject.decrementCounter() <= 0) {
@@ -1404,6 +1404,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                         LOGGER4J.error(e.getMessage(), e);
                     }
                     LOGGER4J.debug("Thread id[" + Utilities.getThreadId(th) + "] join ended.");
+                    waitTimerObject.updatePrevNanoTimeWithSystemTime();
                 } else {
                     pauseActionObject.notifyAll();
                 }
