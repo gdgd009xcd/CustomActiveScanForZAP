@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -129,6 +130,7 @@ public class CustomSQLInjectionScanRule extends AbstractAppParamPlugin {
                 WaitTimerObject waitTimerObject = new WaitTimerObject(this);
                 ExtensionAscanRules.scannerIdWaitTimerMap.put(scannerId, waitTimerObject);
                 if (selectedScanRule.getDoScanLogOutput()) {
+                    ScanLogPanelFrame.resetWindowPrefs();
                     final int finalScannerId = scannerId;
                     try {
 

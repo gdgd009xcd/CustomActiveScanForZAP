@@ -37,6 +37,7 @@ public class CustomScanMainPanel extends JPanel {
     private CustomScanDataModel scanDataModel;
     private boolean showFileDialog = false;
     private JCheckBox scanLogCheckBox = null;
+    private JCheckBox scanLogPrefWinCheckBox = null;
     private boolean ruleComboBoxActionIsNoNeedSave;
     JPopupMenu flagPatternPopupMenu = null;
     JMenuItem flagPatternMod;
@@ -176,11 +177,19 @@ public class CustomScanMainPanel extends JPanel {
         });
         scanRuleMenuBarPanel.add(ruleComboBox, BorderLayout.CENTER);
 
+        // GridBagLayout
+        // Y|---------X:1---------|---------X:2---------| weightx weighty  The margin size of this.Panel to allocate to the content
+        // 0||------scanRuleMenuBarPanel:width:2-------|| 0.1     0        0.1 * this.Panel.width
+        // 1||----rulePatternBorderPanel:width:2-------|| 0       0.5      0.5/(0.5+0.5) * this.Panel.height
+        // 2||----separator1:width:2-------------------|| 0       0
+        // 3||----scanLogPanel:width:2-----------------|| 0       0.5      0.5/(0.5+0.5) * this.Panel.height
+        // 4||----separator2:width:2-------------------|| 0       0
+        // 5||----idleTimePanel:width:2----------------|| 0       0
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL; // expand width size until maximum size of HORIZONTAL
         gbc.weightx = 0.1d;
         gbc.weighty = 0d;
         gbc.insets = new Insets(1,1,1,1);
@@ -252,7 +261,7 @@ public class CustomScanMainPanel extends JPanel {
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
+        gbc.fill = GridBagConstraints.BOTH; // expand sizes of both width and height until MAXIMUM size.
         gbc.weightx = 0d;
         gbc.weighty = 0.5d;
         gbc.insets = new Insets(1,1,1,1);
@@ -267,7 +276,7 @@ public class CustomScanMainPanel extends JPanel {
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL; // expand width size until maximum size of HORIZONTAL
         gbc.weightx = 0d;
         gbc.weighty = 0d;
         gbc.insets = new Insets(1,0,1,0);
@@ -287,6 +296,19 @@ public class CustomScanMainPanel extends JPanel {
                 TitledBorder.TOP);
         scanLogPanel.setBorder(scanLogPanelTitledBorder);
 
+
+        //  |---------scanLogPanel:border layout PAGE_START-----------|
+        //  | |---scanLogCheckBoxPanel:Box layout BoxLayout.Y_AXIS--| |
+        //  | | scanLogCheckBox ------------|                       | |
+        //  | | savePrefOfScanLogCheckBox --|                       | |
+        //  |------scanLogPanel:border layout PAGE_CENTER-------------|
+        //  | |---------flagPatternScroller:JScrollPane-------------| |
+        //  | | |----------flagPatternList:JList -----------------| | |
+        //  | |-----------------------------------------------------| |
+
+        // create BoxLayout.Y=AXIS
+        JPanel scanLogCheckBoxPanel = new JPanel();
+        scanLogCheckBoxPanel.setLayout(new BoxLayout(scanLogCheckBoxPanel, BoxLayout.Y_AXIS));
         scanLogCheckBox = new JCheckBox(Constant.messages.getString("customactivescan.customscanmainpanel.scanLogCheckBox.text"));
         if (selectedScanRule != null) {
             scanLogCheckBox.setSelected(selectedScanRule.getDoScanLogOutput());
@@ -302,10 +324,40 @@ public class CustomScanMainPanel extends JPanel {
                 LOGGER4J.debug("START scanLogCheckBox addActionListener called.");
                 currentScanRule.setDoScanLogOutput(this.scanLogCheckBox.isSelected());
                 fileSaveAction();// The scanLog CheckBox is focusout when the save dialog appears
+                if (this.scanLogCheckBox.isSelected()) {
+                    scanLogPrefWinCheckBox.setEnabled(true);
+                } else {
+                    scanLogPrefWinCheckBox.setEnabled(false);
+                }
                 LOGGER4J.debug("END scanLogCheckBox addActionListener called.");
             }
         });
-        scanLogPanel.add(scanLogCheckBox, BorderLayout.PAGE_START);
+
+        scanLogCheckBoxPanel.add(scanLogCheckBox);
+
+        scanLogPrefWinCheckBox = new JCheckBox(Constant.messages.getString("customactivescan.customscanmainpanel.scanLogPrefWinCheckBox.text"));
+
+        if (ScanLogPanelFrame.getSavePrefValue()){
+            scanLogPrefWinCheckBox.setSelected(true);
+        } else {
+            scanLogPrefWinCheckBox.setSelected(false);
+        }
+        if (scanLogCheckBox.isSelected()) {
+            scanLogPrefWinCheckBox.setEnabled(true);
+        } else {
+            scanLogPrefWinCheckBox.setEnabled(false);
+        }
+        scanLogPrefWinCheckBox.addItemListener(e -> {
+            boolean isSave = false;
+            if ( e.getStateChange() == ItemEvent.SELECTED ) {
+                isSave = true;
+            }
+            ScanLogPanelFrame.updateSavePrefValue(isSave);
+        });
+
+        scanLogCheckBoxPanel.add(scanLogPrefWinCheckBox);
+
+        scanLogPanel.add(scanLogCheckBoxPanel, BorderLayout.PAGE_START);
 
         // Regexes for detecting keyword in Http response.
         this.flagPatternListModel = new DefaultListModel<>();
@@ -377,7 +429,7 @@ public class CustomScanMainPanel extends JPanel {
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
+        gbc.fill = GridBagConstraints.BOTH; // expand sizes of both width and height until MAXIMUM size.
         gbc.weightx = 0d;
         gbc.weighty = 0.5d;
         gbc.insets = new Insets(1,1,1,1);
@@ -390,7 +442,7 @@ public class CustomScanMainPanel extends JPanel {
         gbc.gridy = 4;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL; // expand width size until maximum size of HORIZONTAL
         gbc.weightx = 0d;
         gbc.weighty = 0d;
         gbc.insets = new Insets(1,0,1,0);
@@ -466,7 +518,7 @@ public class CustomScanMainPanel extends JPanel {
         gbc.gridy = 5;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL; // expand width size until maximum size of HORIZONTAL
         gbc.weightx = 0d;
         gbc.weighty = 0d;
         gbc.insets = new Insets(1,0,1,0);

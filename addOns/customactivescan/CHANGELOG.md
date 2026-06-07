@@ -3,6 +3,10 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.8.21] - 2026-06-07
+### Changed
+- maintenance: added a checkbox for allowing or dening to save ScanLogPanelFrame window preference.
+
 ## [v0.8.20] - 2026-05-22
 ### Changed
 - bugfix: Fixed an issue where the sleep mode was ignored when resuming a scan after pausing it.

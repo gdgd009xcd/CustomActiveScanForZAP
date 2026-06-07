@@ -7,6 +7,8 @@ import org.zaproxy.zap.extension.customactivescan.model.PauseActionObject;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 @SuppressWarnings("serial")
 public class ScanLogPanelFrame extends AbstractFrame {
@@ -15,6 +17,8 @@ public class ScanLogPanelFrame extends AbstractFrame {
 
     private ScanLogPanel scanLogPanel;
     private boolean isDisposed = false;
+    public static Class<ScanLogPanelFrame> frameClass = ScanLogPanelFrame.class;
+    public static Preferences prefs = Preferences.userNodeForPackage(frameClass);
 
     /**
      * Constructor for calling super class constructor.<br>
@@ -102,6 +106,42 @@ public class ScanLogPanelFrame extends AbstractFrame {
     public void postPmtParamsToScanLogPanel(int selectedRequestNo, int lastRequestNo, int tabIndex) {
         if (this.scanLogPanel != null) {
             this.scanLogPanel.postPmtParamsToScanLogPanel(selectedRequestNo, lastRequestNo, tabIndex);
+        }
+    }
+
+    public static void updateSavePrefValue(boolean isSave) {
+        String savePrefKey = getSavePrefKey();
+        String savePrefValue = isSave ? "true" : "false";
+        prefs.put(savePrefKey, savePrefValue);
+    }
+
+
+    public static boolean getSavePrefValue() {
+        String savePrefKey = getSavePrefKey();
+        String savePrefValue = prefs.get(savePrefKey, null);
+        boolean isSave = false;
+        if (savePrefValue != null) {
+            if (savePrefValue.equals("true")) {
+                isSave = true;
+            }
+        }
+        return isSave;
+    }
+
+    public static String getSavePrefKey() {
+        String keyPrefix = frameClass.getSimpleName() + ".";
+        return keyPrefix + "SavePrefOfScanLogPanelFrame";
+    }
+
+    public static void resetWindowPrefs() {
+        if (!getSavePrefValue()) {
+            try {
+                prefs.removeNode();
+                prefs.flush();
+                prefs = Preferences.userNodeForPackage(frameClass);
+            } catch (BackingStoreException e) {
+                LOGGER4J.error("Failed to remove node", e);
+            }
         }
     }
 }
